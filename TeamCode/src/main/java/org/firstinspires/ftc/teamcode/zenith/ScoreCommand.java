@@ -73,7 +73,10 @@ public class ScoreCommand extends CommandBase {
         launcher.closeGate();
         launcher.barClearOfShots(false);
         intake.stop();
-        if (feeding) pollen.launched(count);
+        if (feeding) {
+            pollen.launched(count);
+            launcher.emptied();
+        }
     }
 
     @Override

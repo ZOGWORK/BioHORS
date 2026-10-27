@@ -221,7 +221,8 @@ the wrong reason costs the team more than a plain stop does.
   - Gates: `gateRight` = pollen, `gateLeft` = nectar (confirmed)
   - Flower bar: `flowerLeft`, `flowerRight` (two servos facing away from each other; the right one
     is REVERSE in `FlowerBarController`). In total: 4 servos, 2 intake motors, 2 shooter motors with
-    a velocity controller each, 4 drive motors.
+    a velocity controller each, 4 drive motors. Both intake motors have encoders: `IntakeLoadSensor`
+    counts the pollen aboard from how much the intake slows (`docs/TUNING.md` 4c).
   - Odometry: `pinpoint`
 - **Subsystems:**
   - `DriveController`: mecanum mixing from stick inputs; inputs and outputs are unitless powers in [-1, 1].

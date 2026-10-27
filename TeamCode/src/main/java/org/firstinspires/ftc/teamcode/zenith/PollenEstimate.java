@@ -7,9 +7,10 @@ package org.firstinspires.ftc.teamcode.zenith;
  *   - every INTAKE_S_PER_PIECE seconds the intake runs inward counts as one more pollen;
  *   - a score of N takes N away.
  *
- * NEEDS A SENSOR: a beam break or colour sensor in the hopper would replace all of this. Until then
- * the hopperFull / holdingPiece / hopperEmpty conditions are only as good as the timing below, and
- * the SimLoop match test reports how far the estimate ended from the simulated truth.
+ * With the intake encoders (MechanismConstants.INTAKE_SENSOR_ENABLED), a reading from
+ * IntakeLoadSensor while collecting replaces the timing: the count is what the intake feels.
+ * Without it the hopperFull / holdingPiece / hopperEmpty conditions are only as good as the timing
+ * below.
  */
 public class PollenEstimate {
 
@@ -26,6 +27,11 @@ public class PollenEstimate {
     /** Call every loop with how long the intake ran inward this loop. */
     public void intakeRan(double seconds) {
         if (seconds > 0) held = Math.min(CAPACITY, held + seconds / INTAKE_S_PER_PIECE);
+    }
+
+    /** A count the intake sensor believes, taken while collecting. */
+    public void sensed(int count) {
+        if (count >= 0) held = Math.max(0, Math.min(CAPACITY, count));
     }
 
     public void launched(int count) {

@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.aim.Alliance;
 import org.firstinspires.ftc.teamcode.aim.PoseHandoff;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
+import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 
 import static org.firstinspires.ftc.teamcode.auto.AutoPoses.*;
 
@@ -141,7 +142,10 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         publish();
         telemetry.addData("State", "%s (%.1f s in, %.1f s total)", state, stateTimer.seconds(), matchTimer.seconds());
         telemetry.addData("Pose", "%s", follower.pose());
-        telemetry.addData("Pollen (estimate)", mech.pollen().held());
+        telemetry.addData("Pollen", "%d (%s)", mech.pollen().held(),
+                MechanismConstants.INTAKE_SENSOR_ENABLED ? "intake sensor" : "time estimate");
+        telemetry.addData("Intake speed", "%.0f ticks/s, slowdown %.0f %%", robot.intakeLoad.speedTicksPerS(),
+                100 * robot.intakeLoad.slowdown());
         telemetry.addData("Intake / pollen shooter", "%s / %s", mech.intakeState(), mech.pollenState());
     }
 
@@ -173,11 +177,14 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 if (!follower.isBusy() || mech.pollen().full() || stateTimer.seconds() >= GARDEN_TIMEOUT_S) next();
                 break;
             case WAIT_GARDEN_FULL:
-                if (mech.pollen().full() || stateTimer.seconds() >= GARDEN_EXTRA_WAIT_S) next();
+                // Full, or nothing new coming in (the sensor says so), or out of time: move on.
+                if (mech.pollen().full() || mech.noNewPollenFor(MechanismConstants.COLLECT_NO_PROGRESS_S)
+                        || stateTimer.seconds() >= GARDEN_EXTRA_WAIT_S) next();
                 break;
             case WAIT_FLOWER_WEST:
             case WAIT_FLOWER_NORTH:
-                if (mech.pollen().full() || stateTimer.seconds() >= FLOWER_WAIT_S) next();
+                if (mech.pollen().full() || mech.noNewPollenFor(MechanismConstants.COLLECT_NO_PROGRESS_S)
+                        || stateTimer.seconds() >= FLOWER_WAIT_S) next();
                 break;
 
             case DONE:

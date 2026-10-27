@@ -31,6 +31,9 @@ import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
  *   B ..................... toggle both gates (the flower bar lifts slightly while they are open)
  *   X ..................... toggle the flower bar: DOWN (collect from a flower) / STOWED
  *
+ * Pollen aboard: counted from how much the intake slows while pulling in (both intake encoders,
+ * IntakeLoadSensor). Both gamepads rumble once when it reads full.
+ *
  * Before PLAY: dpad left = RED, dpad right = BLUE. If an auto ran first, its alliance and last
  * pose are picked up from the blackboard.
  *
@@ -68,6 +71,7 @@ public class MainHorsTeleOp extends LinearOpMode {
 
     // Edge-detect state (a press fires once, not every loop).
     private boolean dpadDownLast, dpadLeftLast, dpadRightLast, bLast, xLast, aLast, lbLast;
+    private boolean fullRumbled;
 
     @Override
     public void runOpMode() {
@@ -230,9 +234,23 @@ public class MainHorsTeleOp extends LinearOpMode {
                 robot.intake.stop();
             }
 
+            // ----- Pollen aboard (intake encoders): rumble once when it reads full -----
+            boolean full = robot.intakeLoad.count() >= MechanismConstants.HOPPER_CAPACITY;
+            if (full && !fullRumbled) {
+                try {
+                    gamepad1.rumbleBlips(2);
+                    gamepad2.rumbleBlips(2);
+                } catch (Throwable ignored) {
+                }
+            }
+            fullRumbled = full;
+
             // ----- Telemetry -----
             telemetry.addData("Alliance", alliance);
             telemetry.addData("Flower bar", robot.flowerBar.position());
+            telemetry.addData("Pollen (intake sensor)", "%s  (speed %.0f ticks/s, slowdown %.0f %%)",
+                    robot.intakeLoad.hasReading() ? String.valueOf(robot.intakeLoad.count()) : "not read yet",
+                    robot.intakeLoad.speedTicksPerS(), 100 * robot.intakeLoad.slowdown());
             telemetry.addData("Target", "%s hive, %s cell", alliance, targetCell);
             if (aimHeld && !poseOk) {
                 telemetry.addData("Aiming", "OFF -- POSE INVALID, manual turn");
