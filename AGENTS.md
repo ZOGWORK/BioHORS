@@ -239,7 +239,12 @@ the wrong reason costs the team more than a plain stop does.
 - **Sim config lives in:** `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/sim/BioHorsSim.java`
   (fake devices under the real names, mecanum plant, fake Pinpoint, shooter motors, gate servo plants).
   The `simloop-starter/` example is still installed as the install check.
-- **Sim tests live in:** `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/sim/` (`MainHorsTeleOpSimTest`).
+- **Zenith autos:** `autos/` (robot, field, waypoints, `two-tip.auto.json`), linked by `zenith.json`
+  (command library SolversLib, robot class `zenith/BioHorsZenithRobot`). Use the `build-auto` skill and
+  read `.claude/skills/build-auto/references/robot.md` first. Edit with the Zenith MCP tools (`.mcp.json`),
+  or `npx zenith ... --json`; then `npx zenith deploy` and `codegen`. No mid-path markers (Pedro 3.0.2 lacks
+  `Follower.curveCompletion()`, which Zenith v0.1.2's marker runner calls).
+- **Sim tests live in:** `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/sim/` (`MainHorsTeleOpSimTest`, `ZenithAutoMatchTest`).
   Run OpModes with `OpModeRunner.forTeamClass(...)` and `.teamPackages("org.firstinspires.ftc.teamcode.",
   SimClockLoader.PEDRO_PATHING)` so the code's timers read sim time; pass data in through `OpMode.blackboard`.
 - **Conventions we hold to:**

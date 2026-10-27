@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "zenith": {
+      "command": "npx",
+      "args": ["-y", "@horizon36596/zenith-mcp@0.1.2"]
+    }
+  }
+}

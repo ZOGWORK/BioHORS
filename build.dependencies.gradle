@@ -1,6 +1,7 @@
 repositories {
     mavenCentral()
-    maven { url 'https://repo.dairy.foundation/releases/'}
+    maven { url 'https://repo.dairy.foundation/releases/'}   // SolversLib (and SimLoop's PsiKit)
+    maven { url = 'https://jitpack.io' }                         // Zenith runtime
     google() // Needed for androidx
 }
 
@@ -17,4 +18,11 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.2'
     implementation 'com.pedropathing:tuning:1.0.1'
+
+    // Zenith: plays autos/*.auto.json through the Pedro v3 follower and the named commands.
+    // Command library: SolversLib (zenith.json deploy.commandLibrary = "solverslib"), the one
+    // Horizon's own robot and its Zenith + SimLoop example run on. The Zenith runtime's POM brings
+    // no dependencies, so the command library is declared here.
+    implementation 'org.solverslib:core:0.3.6'
+    implementation 'com.github.Horizon-36596:zenith:v0.1.2'
 }

@@ -79,3 +79,5 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+# Zenith CLI / MCP (package.json)
+node_modules/
