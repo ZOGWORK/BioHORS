@@ -24,7 +24,8 @@ import static org.firstinspires.ftc.teamcode.auto.AutoPoses.*;
  *
  * <pre>
  *  start: aim, spin up, volley 4 (preload) from where the robot starts
- *        -> one curve to the garden: 4 pollen -> back out, volley 4 from there: south cell tips (tip 1)
+ *        -> one curve round onto the garden lane: sweep west along the row, intake toward the red
+ *           alliance wall, taking the 4 pollen in a line -> up off the lane, volley 4: tip 1
  *        -> one curve to flower0 (west wall): 4 -> round the hive's west side -> volley 4 into the north cell
  *        -> flower1 (north wall): 4 -> volley 4: north cell tips (tip 2) -> park
  * </pre>
@@ -49,8 +50,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     public static double DEFAULT_SPEED = 0.8;   // SET BY HAND
     public static double GARDEN_SPEED = 0.35;   // SET BY HAND: slow, nose-first into the garden line
     public static double SLIDE_SPEED = 0.4;     // SET BY HAND: slow sideways onto the garden lane, so it stops on time
+    public static double BACK_OUT_SPEED = 0.6;  // SET BY HAND: up off the garden lane, sideways and back
     public static double FLOWER_SPEED = 0.3;    // SET BY HAND: slow, nose-in to a flower's opening
-    public static double GARDEN_TIMEOUT_S = 2.0;      // SET BY HAND: give up waiting for a full hopper
+    public static double GARDEN_TIMEOUT_S = 2.5;      // SET BY HAND: a stuck sweep gives up after this
     public static double GARDEN_EXTRA_WAIT_S = 0.8;   // SET BY HAND
     public static double FLOWER_WAIT_S = 1.0;         // SET BY HAND
     public static final int PRELOAD = 4;              // SET BY HAND: the robot starts full (G407 max)
@@ -59,10 +61,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     public enum State {
         AIM_AND_SPIN_UP,        // a 2 deg turn to face the south cell from the start; the flywheel spins up
         SHOOT_PRELOADS,
-        TO_GARDEN,              // one curve, nose-first, ending heading west above the garden
-        TURN_SOUTH_AT_GARDEN,
-        SIDE_TO_GARDEN,
-        COLLECT_GARDEN,         // nose in slowly, intake on; ends at the line or when full
+        TO_GARDEN,              // one curve, nose-first, ending heading west above the garden lane
+        SLIDE_ONTO_LANE,        // down onto the lane, square to the south wall
+        COLLECT_GARDEN,         // sweep west along the row, intake on, taking the pollen in a line
         WAIT_GARDEN_FULL,
         BACK_OUT_OF_GARDEN,
         AIM_FROM_GARDEN,
@@ -173,8 +174,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
 
             case COLLECT_GARDEN:
-                // A race: the slow path to the line, or a full hopper, or the timeout.
-                if (!follower.isBusy() || mech.pollen().full() || stateTimer.seconds() >= GARDEN_TIMEOUT_S) next();
+                // The sweep always runs to its end: cut short when full, the robot rolls on toward
+                // the west wall. The timeout only guards a stuck path.
+                if (!follower.isBusy() || stateTimer.seconds() >= GARDEN_TIMEOUT_S) next();
                 break;
             case WAIT_GARDEN_FULL:
                 // Full, or nothing new coming in (the sensor says so), or out of time: move on.
@@ -213,20 +215,18 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
 
             case TO_GARDEN:
-                go(tangent(Paths.curve(here(), p(TO_GARDEN_C1), p(TO_GARDEN_C2), p(GARDEN_LANE))), 1.0);
+                go(tangent(Paths.curve(here(), p(TO_GARDEN_C1), p(TO_GARDEN_C2), p(ABOVE_GARDEN_LANE))), DEFAULT_SPEED);
                 break;
-            case TURN_SOUTH_AT_GARDEN:
-                turn(TURN_SOUTH_AT_GARDEN, FACING_WEST_NEGATIVE, FACING_SOUTH);
-                break;
-            case SIDE_TO_GARDEN:
-                // A short, slow sideways slide, square to the west wall: tilting the 22 in robot near the
-                // wall swings the flower bar's corner into it.
-                go(Paths.line(here(), p(GARDEN_APPROACH)).constant(h(FACING_SOUTH)), SLIDE_SPEED);
+            case SLIDE_ONTO_LANE:
+                // A short, slow slide down onto the lane, square to the south wall: near it the 22 in
+                // robot's corners swing into the wall if it turns at all.
+                go(Paths.line(here(), p(GARDEN_LANE_START)).constant(h(FACING_WEST)), SLIDE_SPEED);
                 break;
             case COLLECT_GARDEN:
                 mech.collect();
-                // Heading held square to the west wall: the last 0.35 in west is a tiny slide.
-                go(Paths.line(here(), p(GARDEN_PICKUP)).constant(h(FACING_SOUTH)), GARDEN_SPEED);
+                // West along the row, intake toward the red alliance wall, heading held square to the
+                // south wall: the pollen come in one after another.
+                go(Paths.line(here(), p(GARDEN_PICKUP)).constant(h(FACING_WEST)), GARDEN_SPEED);
                 break;
             case WAIT_GARDEN_FULL:
             case WAIT_FLOWER_WEST:
@@ -235,10 +235,11 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
             case BACK_OUT_OF_GARDEN:
                 mech.intakeOff();
-                go(Paths.line(here(), p(GARDEN_TURN)).constant(h(FACING_SOUTH)), DEFAULT_SPEED);
+                // Up off the lane still facing west (square to the south wall), to where it can turn.
+                go(Paths.line(here(), p(GARDEN_TURN)).constant(h(FACING_WEST)), BACK_OUT_SPEED);
                 break;
             case AIM_FROM_GARDEN:
-                turn(AIM_FROM_GARDEN, FACING_SOUTH, SOUTH_CELL_FROM_GARDEN);
+                turn(AIM_FROM_GARDEN, FACING_WEST, SOUTH_CELL_FROM_GARDEN);
                 break;
 
             case TO_FLOWER_WEST:

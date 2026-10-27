@@ -30,7 +30,7 @@ class AutoPosesTest {
         Json w = read("autos/waypoints.json").get("waypoints");
         Map<String, Pose> named = new LinkedHashMap<>();
         named.put("start", AutoPoses.START);
-        named.put("gardenApproach", AutoPoses.GARDEN_APPROACH);
+        named.put("gardenLaneStart", AutoPoses.GARDEN_LANE_START);
         named.put("gardenPickup", AutoPoses.GARDEN_PICKUP);
         named.put("gardenTurn", AutoPoses.GARDEN_TURN);
         named.put("flowerWestApproach", AutoPoses.FLOWER_WEST_APPROACH);
@@ -52,8 +52,7 @@ class AutoPosesTest {
         // Each step's literal points: the Bezier control points then the end, or just the end of a line.
         Map<String, Pose[]> byStep = new LinkedHashMap<>();
         byStep.put("aimAtSouthCell", new Pose[] {AutoPoses.AIM_FROM_START});
-        byStep.put("toGarden", new Pose[] {AutoPoses.TO_GARDEN_C1, AutoPoses.TO_GARDEN_C2, AutoPoses.GARDEN_LANE});
-        byStep.put("turnSouthAtGarden", new Pose[] {AutoPoses.TURN_SOUTH_AT_GARDEN});
+        byStep.put("toGardenLane", new Pose[] {AutoPoses.TO_GARDEN_C1, AutoPoses.TO_GARDEN_C2, AutoPoses.ABOVE_GARDEN_LANE});
         byStep.put("faceSouthCellFromGarden", new Pose[] {AutoPoses.AIM_FROM_GARDEN});
         byStep.put("toFlowerWest", new Pose[] {AutoPoses.TO_FLOWER_WEST_C1, AutoPoses.TO_FLOWER_WEST_C2});
         byStep.put("turnNorth", new Pose[] {AutoPoses.TURN_NORTH});
@@ -86,17 +85,16 @@ class AutoPosesTest {
         // Linear turns: {from, to} exactly as written (the numbers also set which way the robot turns).
         Map<String, double[]> turns = new LinkedHashMap<>();
         turns.put("aimAtSouthCell", new double[] {AutoPoses.FACING_NORTH, AutoPoses.SOUTH_CELL_FROM_START});
-        turns.put("turnSouthAtGarden", new double[] {AutoPoses.FACING_WEST_NEGATIVE, AutoPoses.FACING_SOUTH});
-        turns.put("faceSouthCellFromGarden", new double[] {AutoPoses.FACING_SOUTH, AutoPoses.SOUTH_CELL_FROM_GARDEN});
+        turns.put("faceSouthCellFromGarden", new double[] {AutoPoses.FACING_WEST, AutoPoses.SOUTH_CELL_FROM_GARDEN});
         turns.put("turnNorth", new double[] {AutoPoses.FACING_WEST, AutoPoses.FACING_NORTH});
         turns.put("turnToFlowerNorth", new double[] {AutoPoses.FACING_NORTH_CELL, AutoPoses.FACING_NORTH});
         turns.put("turnToScoreNorth", new double[] {AutoPoses.FACING_NORTH, AutoPoses.FACING_NORTH_CELL});
         turns.put("turnToPark", new double[] {AutoPoses.FACING_NORTH_CELL, AutoPoses.TOWARD_PARK});
         // Held (constant) headings.
         Map<String, Double> held = new LinkedHashMap<>();
-        held.put("sideToGarden", AutoPoses.FACING_SOUTH);
-        held.put("noseIntoGarden", AutoPoses.FACING_SOUTH);
-        held.put("backOutOfGarden", AutoPoses.FACING_SOUTH);
+        held.put("slideOntoLane", AutoPoses.FACING_WEST);
+        held.put("sweepGarden", AutoPoses.FACING_WEST);
+        held.put("backOutOfGarden", AutoPoses.FACING_WEST);
         held.put("collectFlowerWest", AutoPoses.FACING_WEST);
         held.put("collectFlowerNorth", AutoPoses.FACING_NORTH);
 

@@ -20,9 +20,9 @@ public final class AutoPoses {
 
     // ---- named waypoints (autos/waypoints.json) ----
     public static final Pose START = new Pose(-15.0, -64.2, Math.toRadians(90));
-    public static final Pose GARDEN_APPROACH = new Pose(-62.5, -45.0, -Math.PI / 2);
-    public static final Pose GARDEN_PICKUP = new Pose(-62.85, -57.0, -Math.PI / 2);
-    public static final Pose GARDEN_TURN = new Pose(-50.0, -44.0, -Math.PI / 2);      // the garden volley is shot from here
+    public static final Pose GARDEN_LANE_START = new Pose(-40.0, -62.85, Math.PI);    // on the garden lane, heading west
+    public static final Pose GARDEN_PICKUP = new Pose(-56.0, -62.85, Math.PI);        // the end of the sweep along the row
+    public static final Pose GARDEN_TURN = new Pose(-50.0, -50.0, Math.PI);           // the garden volley is shot from here
     public static final Pose FLOWER_WEST_APPROACH = new Pose(-44.0, -24.0, Math.PI);
     public static final Pose FLOWER_WEST_PICKUP = new Pose(-52.4, -24.0, Math.PI);
     public static final Pose SCORE_NORTH = new Pose(-24.0, 44.0, -1.2576);
@@ -31,16 +31,15 @@ public final class AutoPoses {
 
     // ---- turn-on-the-spot points: an inch or less along the next heading (a path needs a length) ----
     public static final Pose AIM_FROM_START = new Pose(-14.98, -63.7);            // preloads are shot from the start
-    public static final Pose TURN_SOUTH_AT_GARDEN = new Pose(-52.0, -41.0);
-    public static final Pose AIM_FROM_GARDEN = new Pose(-49.27, -43.32);
+    public static final Pose AIM_FROM_GARDEN = new Pose(-49.33, -49.26);
     public static final Pose TURN_NORTH = new Pose(-44.0, -23.0);
     public static final Pose NORTH_OF_SCORE_NORTH = new Pose(-24.0, 45.0);
     public static final Pose TURN_TO_PARK = new Pose(-24.97, 43.75);
 
     // ---- other path points ----
-    public static final Pose GARDEN_LANE = new Pose(-52.0, -40.0);          // end of the curve from the start
-    public static final Pose TO_GARDEN_C1 = new Pose(-15.0, -50.0);         // Bezier control points
-    public static final Pose TO_GARDEN_C2 = new Pose(-30.0, -40.0);
+    public static final Pose ABOVE_GARDEN_LANE = new Pose(-36.0, -56.0);   // end of the curve from the start, heading west
+    public static final Pose TO_GARDEN_C1 = new Pose(-15.0, -46.0);         // Bezier control points
+    public static final Pose TO_GARDEN_C2 = new Pose(-26.0, -56.0);
     public static final Pose TO_FLOWER_WEST_C1 = new Pose(-38.0, -38.0);
     public static final Pose TO_FLOWER_WEST_C2 = new Pose(-33.0, -24.0);
     public static final Pose AROUND_WEST_C1 = new Pose(-46.0, 22.0);
@@ -50,9 +49,8 @@ public final class AutoPoses {
     public static final double FACING_NORTH = Math.PI / 2;
     public static final double FACING_SOUTH = -Math.PI / 2;
     public static final double FACING_WEST = Math.PI;
-    public static final double FACING_WEST_NEGATIVE = -Math.PI;   // west, written so a turn to south is +90 deg
     public static final double SOUTH_CELL_FROM_START = 1.5299;
-    public static final double SOUTH_CELL_FROM_GARDEN = 0.7505;
+    public static final double SOUTH_CELL_FROM_GARDEN = 0.8301;
     public static final double FACING_NORTH_CELL = -1.2576;
     public static final double TOWARD_PARK = -2.889;
 

@@ -158,10 +158,9 @@ class StateMachineAutoMatchTest {
     static Pose2d[] plannedRoute(org.firstinspires.ftc.teamcode.aim.Alliance alliance) {
         com.pedropathing.math.Pose[][] legs = {
                 {AutoPoses.START, AutoPoses.AIM_FROM_START},
-                {AutoPoses.AIM_FROM_START, AutoPoses.TO_GARDEN_C1, AutoPoses.TO_GARDEN_C2, AutoPoses.GARDEN_LANE},
-                {AutoPoses.GARDEN_LANE, AutoPoses.TURN_SOUTH_AT_GARDEN},
-                {AutoPoses.TURN_SOUTH_AT_GARDEN, AutoPoses.GARDEN_APPROACH},
-                {AutoPoses.GARDEN_APPROACH, AutoPoses.GARDEN_PICKUP},
+                {AutoPoses.AIM_FROM_START, AutoPoses.TO_GARDEN_C1, AutoPoses.TO_GARDEN_C2, AutoPoses.ABOVE_GARDEN_LANE},
+                {AutoPoses.ABOVE_GARDEN_LANE, AutoPoses.GARDEN_LANE_START},
+                {AutoPoses.GARDEN_LANE_START, AutoPoses.GARDEN_PICKUP},
                 {AutoPoses.GARDEN_PICKUP, AutoPoses.GARDEN_TURN},
                 {AutoPoses.GARDEN_TURN, AutoPoses.AIM_FROM_GARDEN},
                 {AutoPoses.AIM_FROM_GARDEN, AutoPoses.TO_FLOWER_WEST_C1, AutoPoses.TO_FLOWER_WEST_C2,
