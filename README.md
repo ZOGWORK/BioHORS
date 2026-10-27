@@ -20,6 +20,7 @@ The MainHORS teleop with odometry aim, and a Zenith-planned 2-tip pollen auto, b
 | MainHORS TeleOp | `teamcode/teleop/MainHorsTeleOp.java` | The teleop: MainHORS controls plus odometry aim (see below) |
 | Two tip | `teamcode/zenith/generated/TwoTipAuto.java` (generated) | The 2-tip pollen auto, played from `autos/two-tip.auto.json` by Zenith (see below) |
 | Choose Alliance | `teamcode/opmodes/ChooseAlliance.java` | Run before the auto: dpad left = RED, dpad right = BLUE |
+| Shooter Tuner | `teamcode/tuning/ShooterTuner.java` | Measures each shooter's feedforward (power sweep) and P (search), prints PIDF to paste into `MechanismConstants`. Robot on blocks, no pollen |
 | Tuning (Quickstart) | `teamcode/pedro/Tuning.java` + `procedures/` | PedroPathing tuners, including the Pinpoint Tuner |
 
 ## Hardware map (must match the Robot Controller config exactly)

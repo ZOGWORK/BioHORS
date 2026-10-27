@@ -51,20 +51,39 @@ All in `pedro/Constants.java`, all `SET FROM SIM` today. Run **Tuning OpMode -> 
 | `robot.json` `accelInPerS2` | 220 (CALIBRATED FROM SIM) | Re-run `npx zenith calibrate --write` on **robot** traces, not sim traces |
 | `robot.json` `maxAngularVelRadPerS` | 5 | Spin in place at full yaw, read the Pinpoint |
 
-## 3. Shooters
+## 3. Shooters (use the Shooter Tuner OpMode)
 
-Both shooters share these fields but are tuned separately, in `subsystems/MechanismConstants.java`
-(`POLLEN_SHOOTER`, `NECTAR_SHOOTER`).
+Both shooters are tuned separately; the **Shooter Tuner** OpMode (`tuning/ShooterTuner.java`,
+group "Tuning") does the measuring. Do section 0 (gear ratio, directions, which motor is which)
+first.
 
-| Item | Current | How | Done when |
-|---|---|---|---|
-| `ticksPerRev` | 28 (SPEC, 1:1) | Section 0 gear ratio | 28 x ratio |
-| `ffReferenceMaxTicksPerSec` | 2800 (SPEC no-load) | Run the shooter at power 1.0 on a full battery; read `getVelocity()` | Measured value (expect a little under 2800) |
-| Pollen `targetRpm` | 2000 (PLACEHOLDER) | Shoot from `scoreSouth` / `scoreNorth`; trim with dpad left/right in the teleop until pollen lands in the cell | Lands 10 of 10 |
-| Nectar `targetRpm` | 2000 (PLACEHOLDER, must differ) | Same, for nectar into the flower | Lands 10 of 10 |
-| `kF` | 1.0 | With kP = kI = 0, set kF so the shooter settles near target | Within 5 % of target with feedforward alone |
-| `kP`, `kI`, `kD` | 0.001 / 0.0005 / 0 | Raise kP until it recovers quickly after a shot without oscillating; small kI for steady error | Back within `rpmTolerance` < 0.3 s after each shot |
-| `rpmTolerance` | 75 rpm | Shot-to-shot spread vs rpm | Shots land with rpm inside it |
+1. Robot on blocks or in a clear area, **no pollen loaded**, a reasonably fresh battery.
+2. Run **Shooter Tuner**. It does the pollen shooter, then the nectar shooter, one at a time:
+   - **Feedforward:** runs 0.2, 0.4, 0.6, 0.8, 1.0 power, waits for a steady speed, records speed
+     and battery voltage, and fits a line. Slope -> `ffReferenceMaxTicksPerSec` (normalised to
+     12 V), intercept -> `kS` (static friction). `ShooterController` scales both by
+     12 V / measured voltage, so they hold as the battery drains.
+   - **P:** with that feedforward and I = D = 0, steps from 70 % to the target RPM and raises P
+     until the step overshoots more than 3 % or rings, then backs off 20 %.
+   - **Hold check:** spin-up time from rest, steady error band, and recovery after a 0.15 s power
+     cut (a simulated pollen passing through).
+3. Copy the printed lines (also in the robot log, tag `ShooterTuner`) into each shooter's
+   "tuned values" block in `subsystems/MechanismConstants.java`.
+4. **Done when** the hold check shows spin-up well under a second, steady within about 2 %, and quick
+   recovery; then shoot real pollen and watch it score.
+
+| Item | Current | Who sets it |
+|---|---|---|
+| `ffReferenceMaxTicksPerSec`, `kS`, `kF = 1` | 2800 (SPEC no-load), 0, 1.0 | Shooter Tuner |
+| `kP` | 0.001 (PLACEHOLDER) | Shooter Tuner |
+| `kI`, `kD` | 0.0005, 0 (PLACEHOLDER) | Shooter Tuner sets both to 0 (flywheels do not need them) |
+| Pollen `targetRpm` | 2000 (PLACEHOLDER) | **Field test**, not the tuner: shoot from `scoreSouth` / `scoreNorth`, trim with dpad left/right in the teleop until pollen lands 10 of 10 |
+| Nectar `targetRpm` | 2000 (PLACEHOLDER, must differ) | Field test, nectar into the flower |
+| `ticksPerRev` | 28 (SPEC, 1:1) | Section 0 gear ratio (the tuner works in encoder ticks/s, so it does not need it) |
+| `rpmTolerance` | 75 rpm | Shot-to-shot spread vs rpm |
+
+The tuner does not pick target RPM, does not guarantee scoring, and does not touch the
+drivetrain (Pedro's follower is a separate loop, section 2).
 
 ## 4. Gates
 

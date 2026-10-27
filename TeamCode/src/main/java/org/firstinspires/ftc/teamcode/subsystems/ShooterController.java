@@ -33,6 +33,11 @@ public class ShooterController {
         public double kI;
         public double kD;
         public double kF;
+        /**
+         * Static-friction power: the power it takes just to keep the flywheel turning, added while
+         * the target is above zero. Voltage-compensated like the feedforward. 0 = off.
+         */
+        public double kS;
         public double integralLimit;
         public double derivativeAlpha;
         public double rpmFilterAlpha;
@@ -177,6 +182,7 @@ public class ShooterController {
         if (maxTicksPerSec < 1e-3) maxTicksPerSec = 1e-3;
         double targetTicksPerSec = (targetRpm * config.ticksPerRev) / 60.0;
         double ff = (targetTicksPerSec / maxTicksPerSec) * config.kF;
+        if (targetRpm > 0) ff += config.kS * (config.ffReferenceVoltage / Math.max(voltage, 1e-3));
 
         // PIDF output, clamped.
         double out = ff + (config.kP * error) + (config.kI * integralSum) + (config.kD * deriv);
