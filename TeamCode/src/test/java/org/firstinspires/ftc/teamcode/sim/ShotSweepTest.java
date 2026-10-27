@@ -72,22 +72,41 @@ class ShotSweepTest {
         }
     }
 
-    @Test
-    void theTestTargetCannotReachTheCellFromAnywhereOnTheCentreLine() {
-        for (double y = -25; y >= -70; y -= 2.5) {
-            assertEquals(null, fire(y, 1600), "at 1600 rpm the ball tops out about 9 in above the exit; y " + y);
+    /** Runs body with the pollen shot set to pitch and grip, then puts ShotModel back. */
+    static void withShot(double pitchDeg, double grip, Runnable body) {
+        double savedPitch = ShotModel.POLLEN_PITCH_DEG, savedGrip = ShotModel.GRIP_EFFICIENCY;
+        ShotModel.POLLEN_PITCH_DEG = pitchDeg;
+        ShotModel.GRIP_EFFICIENCY = grip;
+        try {
+            body.run();
+        } finally {
+            ShotModel.POLLEN_PITCH_DEG = savedPitch;
+            ShotModel.GRIP_EFFICIENCY = savedGrip;
         }
     }
 
+    /** The farthest south the robot's centre can be, facing north: its back 7.8 in behind (CAD). */
+    static final double FARTHEST_Y_IN = -72 + 7.8;
+
     @Test
-    void someReachableRpmAndDistanceScores() {
-        boolean any = false;
-        for (int rpm = 2000; rpm <= 6000 && !any; rpm += 100) {
-            for (double y = -30; y >= -66 && !any; y -= 1) {
-                any = BiobuzzHive.cellName(true, false).equals(fire(y, rpm));
+    void atTheCadReadingNoSpotTheRobotCanReachScores() {
+        withShot(44.0, 0.5, () -> {
+            for (double y = -25; y >= FARTHEST_Y_IN; y -= 2.5) {
+                assertEquals(-1, minRpm(y), "44 deg / 0.5 grip scored from y " + y);
             }
-        }
-        assertTrue(any, "no rpm up to the motor's 6000 free speed seats a pollen from the centre line");
+        });
+    }
+
+    @Test
+    void underTheWhatIfAReachableSpotScoresNearTheTestTarget() {
+        withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+            int best = Integer.MAX_VALUE;
+            for (double y = -40; y >= FARTHEST_Y_IN; y -= 5) {
+                int r = minRpm(y);
+                if (r > 0) best = Math.min(best, r);
+            }
+            assertTrue(best <= 2000, "the what-if shot needs " + best + " rpm at best");
+        });
     }
 
     @Test

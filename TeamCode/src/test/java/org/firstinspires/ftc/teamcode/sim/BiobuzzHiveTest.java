@@ -43,12 +43,12 @@ class BiobuzzHiveTest {
     void calibrationSweepIsPrinted() {
         double si = BiobuzzHive.INERTIA, sd = BiobuzzHive.DAMPING_PER_S;
         try {
-            for (double inertia : new double[] {3000, 5000, 8000}) {
-                for (double damp : new double[] {0.3, 1.0}) {
+            for (double inertia : new double[] {20000, 30000, 40000}) {
+                for (double damp : new double[] {0.6}) {
                     BiobuzzHive.INERTIA = inertia;
                     BiobuzzHive.DAMPING_PER_S = damp;
                     StringBuilder sb = new StringBuilder(String.format(java.util.Locale.ROOT, "CAL I %.0f damp %.1f:", inertia, damp));
-                    for (double d = 2.25; d <= 3.01; d += 0.25) {
+                    for (double d = 6.6; d <= 7.81; d += 0.6) {
                         sb.append(String.format(java.util.Locale.ROOT, " com%.2f->%d", d, pollenToTip(d)));
                     }
                     sb.append(String.format(java.util.Locale.ROOT, " swing@8 %.1fs", swingSeconds()));

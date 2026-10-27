@@ -201,15 +201,18 @@ the hive's centre line, y = distance south of the hive axle; -1 = none up to 600
 | grip, pitch | y -35 | -40 | -45 | -50 | -55 | -60 |
 |---|---|---|---|---|---|---|
 | 0.5, 44 deg (CAD as read) | -1 | -1 | -1 | -1 | -1 | -1 |
-| 0.5, 60 deg | -1 | -1 | 3800 | 3100 | 2900 | 2900 |
-| 0.5, 70 deg | 3400 | 2700 | 2600 | 2700 | 2700 | 2800 |
-| 0.8, 60 deg | -1 | -1 | 2400 | 2000 | 1800 | 1800 |
-| 0.8, 70 deg | -1 | 1700 | 1700 | 1700 | 1700 | 1800 |
+| 0.5, 60 deg | -1 | -1 | -1 | 3500 | 3000 | 2900 |
+| 0.5, 70 deg | -1 | 2900 | 2700 | 2600 | 2700 | 2700 |
+| 0.8, 60 deg | -1 | -1 | 5600 | 2200 | 1900 | 1800 |
+| 0.8, 70 deg | 3600 | 1800 | 1700 | 1700 | 1700 | 1700 |
+
+The robot's centre cannot be south of y = -64.2 facing north (its back is 7.8 in behind it).
 
 Two findings:
 
 1. **At the CAD-read 44 deg nothing practical scores**: the cell opening is about 47 in above the
-   exit. If the robot really scores at 1600 rpm, the ball leaves steeper and faster than the CAD
+   exit, and at 44 deg a ball only gets in from y = -70, behind the south wall's reach. If the robot
+   really scores at 1600 rpm, the ball leaves steeper and faster than the CAD
    reading suggests. The measurement above settles it.
 2. **The auto's score spots are too close.** `scoreSouth` and `scoreNorth` are about 27 in from
    their cells (y = -36 above). Run with real balls, under even the generous 70 deg / 0.8 what-if,
@@ -218,8 +221,8 @@ Two findings:
    **Once the shot is measured, move both score spots out and set the rpm from the table.**
 
 `PhysicsTipDemoTest` shows the physics working: parked 50 in out under the what-if, the real
-ShooterController and gate fire 8 real balls at 1800 rpm, all 8 seat, the hive tips at 4.1 s and 7
-spill on the south floor. Open `TeamCode/build/sim/physics-tip-demo.rlog` in AdvantageScope's 3D
+ShooterController and gate fire 8 real balls at 1800 rpm, all 8 seat, the hive starts to tip at 5.1 s
+(3.7 s swing) and 7 spill on the south floor. Open `TeamCode/build/sim/physics-tip-demo.rlog` in AdvantageScope's 3D
 Field tab (Field/Robot, Field/Pollen as game pieces, Field/Hive as the hive bar's pose).
 
 ## 10. The tip rule

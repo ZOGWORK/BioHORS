@@ -18,28 +18,31 @@ import java.util.List;
  * Local frame (before the tilt): x along the axle, y along the bar (cells at -y and +y), z up.
  * The body angle turns about +X; at +30 deg the +y (north) cell is up, at -30 deg the south one.
  *
- * Geometry: SPEC where the field file / manual gives it, else APPROX fitted to it:
- *   - pivot x = +/-12.75 (SPEC, field file); the cells' outer face 18.528 in from the pivot along y
- *     (SPEC, FIRST CAD via Zenith's ledger); the bar is 20 in wide in x (SPEC, the pivot-bar box).
+ * Geometry, in the bar's own (untilted) frame: SPEC where the field file / manual gives it, else
+ * APPROX fitted to it:
+ *   - pivot x = +/-12.75 (SPEC, field file); the bar is 20 in wide in x (SPEC, the pivot-bar box).
+ *   - along the bar: the cells' inner faces 18.84 in apart and each cell 12.04 in deep (SPEC, manual
+ *     Fig 9-9, as the field file quotes it), so a cell runs from 9.42 to 21.46 in from the axle. At the
+ *     30 deg stop the outer face is 21.46 cos 30 = 18.58 in from the pivot in plan, as the field file says.
  *   - axle height and cell height APPROX: chosen so the up cell's opening spans about 53.5 to 65.6 in
- *     (manual Fig 9-10) at the 30 deg stop.
+ *     (manual Fig 9-10) at the 30 deg stop: the floor lip is 21.46 sin 30 = 10.73 in above the axle.
  *   - hold (mass, centre of mass, inertia, damping) CALIBRATED in BiobuzzHiveTest so that 8 pollen
  *     in the up cell tip it and 7 do not (the team's rule), and the swing takes a few seconds.
  */
 public final class BiobuzzHive {
 
     public static final double TILT_RAD = Math.toRadians(30.0);   // SPEC (manual: the bar rests at 30 deg)
-    public static final double AXLE_Z_IN = 44.2;                   // APPROX (fits the 53.5..65.6 in opening)
+    public static final double AXLE_Z_IN = 42.77;                  // APPROX: 53.5 - 10.73 (the opening's bottom)
     public static final double HALF_WIDTH_X_IN = 10.0;             // SPEC (20 in pivot bar)
-    public static final double OUTER_FACE_Y_IN = 18.528;           // SPEC
-    public static final double INNER_WALL_Y_IN = 2.0;              // APPROX: the axle housing
-    public static final double CELL_HEIGHT_IN = 14.0;              // APPROX (fits the opening)
+    public static final double OUTER_FACE_Y_IN = 21.46;            // SPEC: 18.84 / 2 + 12.04, along the bar
+    public static final double INNER_WALL_Y_IN = 9.42;             // SPEC: the inner faces are 18.84 in apart
+    public static final double CELL_HEIGHT_IN = 14.0;              // APPROX: (65.6 - 53.5) / cos 30
     public static final double WALL_IN = 0.75;                     // APPROX: wall thickness
 
     // Hold: CALIBRATED in BiobuzzHiveTest (8 pollen tip, 7 do not). Mass in pollen units.
     public static double HIVE_MASS = 20.0;          // CALIBRATED
-    public static double COM_HEIGHT_IN = 2.4;       // CALIBRATED: mid-band of 2.25..2.5 in, where the 8th pollen tips it
-    public static double INERTIA = 8000.0;          // CALIBRATED: the swing at the tip load takes about 4 s (DSim, APPROX)
+    public static double COM_HEIGHT_IN = 7.2;       // CALIBRATED: mid-band of 6.8..7.6 in, where the 8th pollen tips it
+    public static double INERTIA = 30000.0;         // CALIBRATED: the swing at the tip load takes 3.7 s (DSim: about 4 s, APPROX)
     public static double DAMPING_PER_S = 0.6;       // CALIBRATED
 
     private BiobuzzHive() {
