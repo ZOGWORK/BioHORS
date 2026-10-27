@@ -135,9 +135,11 @@ flower's opening at DOWN, shots never touch it at SHOOTING, and the robot fits t
 
 Both intake motors have encoders. Pollen aboard press on the rollers, so pulling in at full power
 the intake slows down; `IntakeLoadSensor` turns the slowdown into a count (0-4). The teleop shows
-"Pollen (intake sensor)" with the speed and slowdown, and rumbles when it reads full; the autos stop
-collecting as soon as it reads 4, and stop waiting once nothing new has come in for
-`COLLECT_NO_PROGRESS_S` (0.5 s).
+"Pollen (intake sensor)" with the speed and slowdown, and rumbles when it reads full (ejecting with Y
+makes the count unknown until the intake pulls in again). Both autos stop collecting as soon as it
+reads 4 (`hopperFull`). The state machine auto also stops waiting at a pickup once, after it
+arrives, a fresh reading shows nothing new for `COLLECT_NO_PROGRESS_S` (0.5 s); the Zenith auto's
+waits still run to `hopperFull` or their timeout.
 
 `MechanismConstants`, all PLACEHOLDER (the sim's values):
 1. `INTAKE_FREE_TICKS_PER_S` (2800): run the intake in, empty, and read the speed.

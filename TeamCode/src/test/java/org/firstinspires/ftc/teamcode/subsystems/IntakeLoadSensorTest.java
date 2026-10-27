@@ -56,4 +56,13 @@ class IntakeLoadSensorTest {
         run(sensor, l, r, 3, 0.0, 1.5);
         assertFalse(sensor.hasReading());
     }
+
+    @Test
+    void ejectingForgetsTheCount() {
+        FakeMotor l = new FakeMotor(2800.0, 8.0), r = new FakeMotor(2800.0, 8.0);
+        IntakeLoadSensor sensor = new IntakeLoadSensor(l, r, SimElapsedTime.factory(clock));
+        assertEquals(4, run(sensor, l, r, 4, 1.0, 1.5), "full before ejecting");
+        run(sensor, l, r, 0, -1.0, 0.1);
+        assertFalse(sensor.hasReading(), "after ejecting the count is unknown");
+    }
 }

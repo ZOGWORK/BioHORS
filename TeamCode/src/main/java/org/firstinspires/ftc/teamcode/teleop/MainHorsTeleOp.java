@@ -235,6 +235,7 @@ public class MainHorsTeleOp extends LinearOpMode {
             }
 
             // ----- Pollen aboard (intake encoders): rumble once when it reads full -----
+            // (Ejecting with Y makes the count unknown until the intake pulls in again.)
             boolean full = robot.intakeLoad.count() >= MechanismConstants.HOPPER_CAPACITY;
             if (full && !fullRumbled) {
                 try {

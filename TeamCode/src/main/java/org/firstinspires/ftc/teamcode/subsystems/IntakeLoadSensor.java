@@ -12,7 +12,8 @@ import java.util.function.Supplier;
  *
  * The count is only read while the intake runs inward at INTAKE_SENSE_MIN_POWER or more, after it
  * has run for INTAKE_SENSE_SETTLE_S (the start-up transient looks like load), and a new count must
- * hold for INTAKE_SENSE_DEBOUNCE_S before it is believed. Otherwise the last count is kept.
+ * hold for INTAKE_SENSE_DEBOUNCE_S before it is believed. Otherwise the last count is kept, except
+ * that running the intake outward (ejecting) forgets it.
  *
  * Calibrate on the robot (MechanismConstants, PLACEHOLDER): run the intake empty and read
  * "Intake speed" for INTAKE_FREE_TICKS_PER_S; then hold 1, 2, 3, 4 pollen and read the slowdown
@@ -29,6 +30,7 @@ public class IntakeLoadSensor {
     private double filteredTicksPerS = Double.NaN;
     private int count = -1;        // -1: not read yet
     private int candidate = -1;
+    private long readings;         // settled loops read so far (lets callers ask for a fresh one)
 
     public IntakeLoadSensor(DcMotorEx left, DcMotorEx right) {
         this(left, right, ElapsedTime::new);
@@ -44,6 +46,11 @@ public class IntakeLoadSensor {
 
     /** Once per loop, with the power the intake was just given. */
     public void update(double intakePower) {
+        // Running outward ejects pollen: whatever was counted is no longer known.
+        if (intakePower < -0.1) {
+            count = -1;
+            candidate = -1;
+        }
         boolean runningIn = intakePower >= MechanismConstants.INTAKE_SENSE_MIN_POWER;
         if (runningIn && !wasRunning) {
             running.reset();
@@ -57,6 +64,7 @@ public class IntakeLoadSensor {
         double a = MechanismConstants.INTAKE_SENSE_FILTER_ALPHA;
         filteredTicksPerS = Double.isNaN(filteredTicksPerS) ? v : a * v + (1 - a) * filteredTicksPerS;
         if (running.seconds() < MechanismConstants.INTAKE_SENSE_SETTLE_S) return;
+        readings++;
 
         int now = countFor(slowdown());
         if (now != candidate) {
@@ -85,6 +93,11 @@ public class IntakeLoadSensor {
 
     public boolean hasReading() {
         return count >= 0;
+    }
+
+    /** How many settled loops have been read so far; compare two values to see a fresh reading. */
+    public long readings() {
+        return readings;
     }
 
     /** The volley emptied the robot: start the count again from nothing. */

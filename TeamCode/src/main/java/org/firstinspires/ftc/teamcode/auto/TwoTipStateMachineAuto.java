@@ -231,6 +231,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
             case WAIT_GARDEN_FULL:
             case WAIT_FLOWER_WEST:
             case WAIT_FLOWER_NORTH:
+                mech.waitingForPollen();   // at the pickup now: the no-progress clock starts here
                 break;
             case BACK_OUT_OF_GARDEN:
                 mech.intakeOff();

@@ -47,6 +47,7 @@ public class AutoMechanisms {
     private final ElapsedTime pollenTimer = new ElapsedTime();
     private final ElapsedTime sinceNewPollen = new ElapsedTime();
     private int lastHeld;
+    private long readingsAtWait;
 
     private IntakeState intake = IntakeState.OFF;
     private PollenState pollenShooter = PollenState.IDLE;
@@ -81,14 +82,22 @@ public class AutoMechanisms {
         lastHeld = pollen.held();
     }
 
+    /** The robot is at the pickup and waiting for pollen: the no-progress clock starts now. */
+    public void waitingForPollen() {
+        sinceNewPollen.reset();
+        lastHeld = pollen.held();
+        readingsAtWait = robot.intakeLoad.readings();
+    }
+
     /**
-     * True once the intake sensor has been reading for a while and no new pollen has come in for
-     * {@code seconds}: there is nothing more to collect here, so stop waiting. Always false without
-     * the sensor (the time estimate cannot tell).
+     * True once, since {@link #waitingForPollen()}, the intake sensor has taken a fresh settled
+     * reading and no new pollen has come in for {@code seconds}: there is nothing more to collect
+     * here, so stop waiting. Always false without the sensor (the time estimate cannot tell).
      */
     public boolean noNewPollenFor(double seconds) {
         return MechanismConstants.INTAKE_SENSOR_ENABLED && intake == IntakeState.COLLECT
-                && robot.intakeLoad.hasReading() && sinceNewPollen.seconds() >= seconds;
+                && robot.intakeLoad.hasReading() && robot.intakeLoad.readings() > readingsAtWait
+                && sinceNewPollen.seconds() >= seconds;
     }
 
     public void intakeOff() {
