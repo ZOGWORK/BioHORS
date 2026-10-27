@@ -43,4 +43,66 @@ class ShooterTuningTest {
         assertFalse(b.good(0.02, 0.03), "ringing step: " + b);
         assertTrue(b.overshoot > 0.03);
     }
+
+    // ---------------------------------------------------------------- the P search
+
+    private static final double BAND = 0.02, OVER = 0.03;
+    private static final ShooterTuning.Step WEAK = new ShooterTuning.Step(Double.NaN, 0, 0, 0.05);
+    private static final ShooterTuning.Step RINGING = new ShooterTuning.Step(0.1, 0.06, 3, 0.01);
+
+    private static ShooterTuning.Step good(double rise) {
+        return new ShooterTuning.Step(rise, 0.01, 0, 0.005);
+    }
+
+    private static ShooterTuning.PSearch search() {
+        return new ShooterTuning.PSearch(0.0002, 1.6, 0.00001, 0.05, BAND, OVER);
+    }
+
+    @Test
+    void theSearchKeepsTheFastestGoodPAndStopsWhenItOvershoots() {
+        ShooterTuning.PSearch s = search();
+        s.report(WEAK);                       // 0.0002: not there yet
+        s.report(good(0.30));                 // 0.00032
+        double fastest = s.current();
+        s.report(good(0.20));                 // 0.000512: fastest
+        s.report(RINGING);                    // 0.0008192: too far
+        assertTrue(s.done());
+        assertFalse(s.failed());
+        assertEquals(fastest, s.best(), 1e-12);
+    }
+
+    @Test
+    void ifTheFirstStepAlreadyOvershootsItSearchesDownward() {
+        ShooterTuning.PSearch s = search();
+        s.report(RINGING);                    // 0.0002 too aggressive
+        assertTrue(s.current() < 0.0002, "next P should be lower, was " + s.current());
+        s.report(RINGING);                    // 0.000125 still too aggressive
+        double low = s.current();             // 0.000078
+        s.report(good(0.4));
+        assertTrue(s.done());
+        assertEquals(low, s.best(), 1e-12);
+    }
+
+    @Test
+    void equalRiseTimesKeepTheFirstGainNotTheLargest() {
+        ShooterTuning.PSearch s = search();
+        double first = s.current();
+        s.report(good(0.2));
+        s.report(good(0.2));                  // no faster
+        s.report(good(0.2));                  // no faster again: stop
+        assertTrue(s.done());
+        assertEquals(first, s.best(), 1e-12, "the gain paired with the best rise, not the last one tried");
+    }
+
+    @Test
+    void noGoodStepIsAFailureNotAZeroGain() {
+        ShooterTuning.PSearch up = search();
+        while (!up.done()) up.report(WEAK);
+        assertTrue(up.failed(), "never reached target");
+
+        ShooterTuning.PSearch down = search();
+        down.report(RINGING);
+        down.report(WEAK);                    // too weak right below too aggressive
+        assertTrue(down.failed());
+    }
 }

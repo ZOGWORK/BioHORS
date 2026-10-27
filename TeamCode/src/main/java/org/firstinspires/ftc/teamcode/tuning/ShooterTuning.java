@@ -98,6 +98,11 @@ public final class ShooterTuning {
             return !Double.isNaN(riseTimeS) && overshoot <= maxOvershoot && bandExits <= 1 && steadyError <= band;
         }
 
+        /** Too much gain: it got there but overshot or rang. (Not good and not aggressive = too weak.) */
+        public boolean aggressive(double maxOvershoot) {
+            return !Double.isNaN(riseTimeS) && (overshoot > maxOvershoot || bandExits > 1);
+        }
+
         @Override
         public String toString() {
             return String.format(java.util.Locale.ROOT, "rise %.2fs overshoot %.1f%% exits %d steady %.1f%%",
@@ -132,5 +137,88 @@ public final class ShooterTuning {
             if (t.get(i) >= 0.6 * tEnd) steady = Math.max(steady, Math.abs(speed.get(i) - target) / target);
         }
         return new Step(rise, Math.max(0, over), exits, steady);
+    }
+
+    /**
+     * The P search, as a state machine the OpMode drives: run a step at {@link #current()}, then
+     * {@link #report} it, until {@link #done()}.
+     *
+     * Upward from the start: raise P while steps are too weak; among good steps keep the P with the
+     * fastest rise; stop when a step overshoots or rings, or after two good steps that are no faster.
+     * If the very first step is already too aggressive, search DOWNWARD until a step is good.
+     * {@link #best()} is the P paired with the fastest good rise; {@link #failed()} means none was good.
+     */
+    public static final class PSearch {
+        private final double growth, minP, maxP, band, maxOvershoot;
+        private double p;
+        private boolean down;
+        private boolean first = true;
+        private boolean done;
+        private double bestP;
+        private double bestRise = Double.MAX_VALUE;
+        private int noGain;
+
+        public PSearch(double start, double growth, double minP, double maxP, double band, double maxOvershoot) {
+            this.p = start;
+            this.growth = growth;
+            this.minP = minP;
+            this.maxP = maxP;
+            this.band = band;
+            this.maxOvershoot = maxOvershoot;
+        }
+
+        public double current() {
+            return p;
+        }
+
+        public boolean done() {
+            return done;
+        }
+
+        public boolean failed() {
+            return done && bestP == 0;
+        }
+
+        /** The P paired with the fastest good step (0 if none). */
+        public double best() {
+            return bestP;
+        }
+
+        public void report(Step s) {
+            boolean good = s.good(band, maxOvershoot);
+            boolean aggressive = !good && s.aggressive(maxOvershoot);
+            if (first) {
+                first = false;
+                if (aggressive) down = true;
+            }
+            if (down) {
+                if (good) {
+                    bestP = p;
+                    bestRise = s.riseTimeS;
+                    done = true;
+                } else if (aggressive) {
+                    p /= growth;
+                    if (p < minP) done = true;
+                } else {
+                    done = true; // too weak below too aggressive: no good gain in between
+                }
+                return;
+            }
+            if (good) {
+                if (s.riseTimeS < bestRise * 0.97) {
+                    bestP = p;
+                    bestRise = s.riseTimeS;
+                    noGain = 0;
+                } else if (++noGain >= 2) {
+                    done = true;
+                    return;
+                }
+            } else if (aggressive) {
+                done = true; // went too far: keep the best good P so far (none -> failed)
+                return;
+            }
+            p *= growth;
+            if (p > maxP) done = true;
+        }
     }
 }
