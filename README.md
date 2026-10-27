@@ -44,25 +44,26 @@ Shooter/gate names, directions, and tuning values live in
 |---|---|
 | Left stick | Drive (forward / strafe) |
 | Right stick X | Turn (overridden while aiming) |
-| Left trigger (hold) | **Aim**: turn the robot to face the selected cell of our hive |
-| A (press) | **Switch goal**: the other cell (north/south) of our hive, after a tip |
+| Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field |
 | Right bumper (hold) | Slow mode, 0.45x |
 | Right trigger | Intake in |
 | Y (hold) | Outtake |
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF) |
 | Dpad left / right | **Pollen** shooter target RPM -50 / +50 |
 | B | Toggle both gates (start CLOSED) |
-| X, left bumper | Unmapped |
+| A, X, left bumper | Unmapped |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
 alliance and final pose are picked up automatically (the SDK blackboard).
 
 **Aim.** No camera and no turret: holding the left trigger turns the whole chassis to face the
-selected hive cell, from the Pinpoint pose and the hive's fixed field coordinates (BIOBUZZ field
-file: RED hive pivot (-12.75, 0), BLUE (+12.75, 0), cell centres 9.264 in either side along y).
+hive cell on the robot's half of the field (north cell when y > 0, south when y < 0, with 2 in of
+hysteresis at the line), from the Pinpoint pose and the hive's fixed field coordinates (BIOBUZZ
+field file: RED hive pivot (-12.75, 0), BLUE (+12.75, 0), cell centres 9.264 in either side along
+y). A launch only scores from the up cell's own quarter, so the driver picks the cell by where
+they drive; there is no goal toggle.
 The driver keeps forward/strafe; yaw gets priority over translation, and a feedforward on the
-bearing rate keeps the aim on target while strafing. The robot does not detect tips: the driver
-presses A when the hive tips. If the Pinpoint is not READY or the pose is not a number, aim falls
+bearing rate keeps the aim on target while strafing. If the Pinpoint is not READY or the pose is not a number, aim falls
 back to manual turn and telemetry shows `POSE INVALID`. Telemetry always shows the alliance,
 target cell, aiming on/off, heading error and pose.
 

@@ -20,20 +20,21 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveController;
  * Controls (gamepad1; gamepad2 mirrors the mechanism buttons):
  *   Left stick ............ drive (forward / strafe)
  *   Right stick X ......... turn (overridden while aiming)
- *   Left trigger (hold) ... AIM: turn the robot to face the selected hive cell
- *   A (press) ............. switch goal: the other cell of our hive (after a tip)
+ *   Left trigger (hold) ... AIM: turn the robot to face our hive's cell on this half of the field
  *   Right bumper (hold) ... slow mode (0.45x)
  *   Right trigger ......... intake in
  *   Y (hold) .............. outtake
  *   Dpad down ............. toggle both shooters on/off (each at its own target)
  *   Dpad left / right ..... POLLEN shooter target RPM -50 / +50
  *   B ..................... toggle both gates
- *   X, left bumper ........ unmapped
+ *   A, X, left bumper ..... unmapped
  *
  * Before PLAY: dpad left = RED, dpad right = BLUE. If an auto ran first, its alliance and last
  * pose are picked up from the blackboard.
  *
- * Aim uses the Pinpoint pose and the hive's fixed field coordinates; there is no camera. If the
+ * Aim uses the Pinpoint pose and the hive's fixed field coordinates; there is no camera. The
+ * target cell follows the robot's half of the field (north cell when y > 0, south when y < 0),
+ * because a launch only scores from the up cell's own quarter. If the
  * Pinpoint is not READY or the pose is not a number, aiming falls back to manual turn and
  * telemetry warns. Drive and strafe stay with the driver while aiming.
  *
@@ -63,7 +64,7 @@ public class MainHorsTeleOp extends LinearOpMode {
     private boolean poseFromAuto = false;
 
     // Edge-detect state (a press fires once, not every loop).
-    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, bLast, aLast;
+    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, bLast;
 
     @Override
     public void runOpMode() {
@@ -95,6 +96,7 @@ public class MainHorsTeleOp extends LinearOpMode {
             // dpad from picking the alliance, say) is not read as a fresh press on the first loop.
             seedEdgeDetectors();
             localizer.update();
+            targetCell = FieldTargets.cellForHalf(localizer.pose().y(), targetCell);
             telemetry.addData("Alliance", "%s  (dpad left = RED, dpad right = BLUE)", alliance);
             telemetry.addData("Start pose", poseFromAuto ? "from auto" : "default (unmeasured)");
             addPoseTelemetry();
@@ -129,10 +131,8 @@ public class MainHorsTeleOp extends LinearOpMode {
             }
             lastPose = pose;
 
-            // ----- Goal switch: A press toggles the cell of our hive we aim at -----
-            boolean aNow = gamepad1.a || gamepad2.a;
-            if (aNow && !aLast) targetCell = targetCell.other();
-            aLast = aNow;
+            // ----- Target: the cell of our hive on the robot's half of the field -----
+            if (poseOk) targetCell = FieldTargets.cellForHalf(pose.y(), targetCell);
 
             // ----- Drive, with aim overriding manual turn while left trigger is held -----
             double scale = gamepad1.right_bumper ? SLOW_DRIVE_SCALE : NORMAL_DRIVE_SCALE;
@@ -240,7 +240,6 @@ public class MainHorsTeleOp extends LinearOpMode {
         dpadLeftLast = gamepad1.dpad_left || gamepad2.dpad_left;
         dpadRightLast = gamepad1.dpad_right || gamepad2.dpad_right;
         bLast = gamepad1.b || gamepad2.b;
-        aLast = gamepad1.a || gamepad2.a;
     }
 
     /** The default start pose for an alliance: the RED value, point-mirrored for BLUE. */
