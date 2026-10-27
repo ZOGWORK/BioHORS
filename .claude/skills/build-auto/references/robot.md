@@ -7,7 +7,9 @@ model. Do not plan a real-field auto around them as if they were real (see `docs
 ## Intake archetype
 
 - One intake across the FRONT (two motors, `intakeLeft` + `intakeRight`, run together).
-  `autos/robot.json` mouth: 16 in wide, 4 in deep, centre 7 in ahead of the robot centre (PLACEHOLDER).
+  `autos/robot.json` mouth: 13.2 in wide (between the flower mech's side plates), 4.6 in deep, centre
+  11.9 in ahead of the drive centre (MEASURED FROM CAD, docs/ROBOT_CAD.md). The body is wider (17.84 in)
+  than the mouth, so pollen against a wall are only just reachable.
 - Holds **4 pollen** (confirmed by the team; also G407). "Full" = 4.
 - **No pollen sensor.** `holdingPiece` / `hopperFull` / `hopperEmpty` are an ESTIMATE
   (`zenith/PollenEstimate`): preload 4, +1 per 0.35 s of inward intake, minus each volley. Always give
@@ -36,8 +38,16 @@ model. Do not plan a real-field auto around them as if they were real (see `docs
 - **Turn on the spot, drive nose-first.** Big heading changes are 1 in "turn" path steps with a
   linear heading; the legs between them are `tangent` or `tangentReversed`. This keeps strafing
   under a fifth of the driving (the match test checks it).
-- Do not turn next to a wall: an 18 in robot needs its centre 12.73 in off a wall to rotate, and
-  FIRST's CAD walls are at +/-70.67, not the field file's +/-72.
+- Do not turn next to a wall: this robot turns about its drive centre, and its far corner (the flower
+  bar tip) is 16.8 in from it, so a turn on the spot needs the centre 16.8 in off every wall and
+  structure.
+- Plan in the field file's frame (walls at +/-72), where its pieces are placed. FIRST's CAD walls are at
+  +/-70.67; the field file's garden pollen (x -70.6, radius 1.4) touch its -72 wall, so planning against
+  70.67 would put them inside the wall. Which is right is a measure-on-the-field item (docs/TUNING.md 7),
+  and any pose within about 1.5 in of a wall is listed there.
+- Near a wall, keep the heading square to it: tilting the 22 in body even a few degrees swings the
+  bar's corner 14.2 in x the angle toward the wall. The garden lane (x = -62.7) is reached by a short
+  sideways slide with the heading held at -90 deg for this reason.
 - Tip rule: **8 pollen per tip** (team rule; `autos/field/biobuzz.field.json` rules.tipTable = [8],
   which deliberately differs from the season package's DSim table).
 
