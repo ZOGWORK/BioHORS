@@ -28,14 +28,14 @@ public class SimpleParkAuto extends LinearOpMode {
     // TODO: CHANGE THIS -- encoder ticks to drive forward. Small placeholder.
     // (Ticks are per-motor encoder counts; the number for a given distance
     // depends on your drive motors' ticks/rev and your wheel size.)
-    private static final int DRIVE_TICKS = 1000;
+    private static final int DRIVE_TICKS = 1000; // PLACEHOLDER
 
     // TODO: CHANGE THIS -- drive power for the park move (0..1).
-    private static final double DRIVE_POWER = 0.5;
+    private static final double DRIVE_POWER = 0.5; // PLACEHOLDER
 
     // TODO: CHANGE THIS -- give up after this many seconds even if the
     // motors have not reached their targets (so auto never hangs).
-    private static final double TIMEOUT_SECONDS = 3.0;
+    private static final double TIMEOUT_SECONDS = 3.0; // PLACEHOLDER
 
     private DcMotor frontLeftDrive, backLeftDrive, frontRightDrive, backRightDrive;
 

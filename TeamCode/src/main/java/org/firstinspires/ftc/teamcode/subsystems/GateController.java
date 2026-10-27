@@ -3,56 +3,45 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import com.qualcomm.robotcore.hardware.Servo;
 
 /**
- * Two gate servos (left + right). Both move together by default; each side
- * can also be set on its own if the gates ever need to move independently.
+ * One gate servo, feeding one shooter. The robot has two of these and they
+ * are independent: viewed from the top with the intake facing up, the
+ * RIGHT gate (gateRight) feeds the pollen shooter and the LEFT gate
+ * (gateLeft) feeds the nectar shooter.
  *
- * Gate positions are passed in by the OpMode because they depend on how the
- * servos are mounted on THIS robot.
- *
- * TODO: TUNE THESE in the teleop -- GATE_OPEN / GATE_CLOSED there are
- * placeholders. Move the gates by hand in the driver station, read the
- * positions that actually open and close them, and put those numbers in.
+ * Open / closed positions are per gate (passed in from MechanismConstants)
+ * because the two servos are mounted separately and need not share values.
  */
 public class GateController {
 
-    private final Servo gateLeft;
-    private final Servo gateRight;
-    private final double gateOpenPos;
-    private final double gateClosedPos;
+    private final String label;
+    private final Servo servo;
+    private final double openPos;
+    private final double closedPos;
 
-    private boolean gateClosed = true;
+    private boolean closed = true;
 
-    public GateController(Servo gateLeft, Servo gateRight,
-                          double gateOpenPos, double gateClosedPos) {
-        this.gateLeft = gateLeft;
-        this.gateRight = gateRight;
-        this.gateOpenPos = gateOpenPos;
-        this.gateClosedPos = gateClosedPos;
-        setGateClosed(true);
+    public GateController(String label, Servo servo, double openPos, double closedPos) {
+        this.label = label;
+        this.servo = servo;
+        this.openPos = openPos;
+        this.closedPos = closedPos;
+        setClosed(true);
     }
 
-    /** Open or close both gates together. */
-    public void setGateClosed(boolean closed) {
-        gateClosed = closed;
-        double pos = closed ? gateClosedPos : gateOpenPos;
-        gateLeft.setPosition(pos);
-        gateRight.setPosition(pos);
+    public String getLabel() {
+        return label;
     }
 
-    /** Flip both gates between open and closed. */
-    public void toggleGate() {
-        setGateClosed(!gateClosed);
+    public void setClosed(boolean closed) {
+        this.closed = closed;
+        servo.setPosition(closed ? closedPos : openPos);
     }
 
-    public void setLeftGateClosed(boolean closed) {
-        gateLeft.setPosition(closed ? gateClosedPos : gateOpenPos);
+    public void toggle() {
+        setClosed(!closed);
     }
 
-    public void setRightGateClosed(boolean closed) {
-        gateRight.setPosition(closed ? gateClosedPos : gateOpenPos);
-    }
-
-    public boolean isGateClosed() {
-        return gateClosed;
+    public boolean isClosed() {
+        return closed;
     }
 }

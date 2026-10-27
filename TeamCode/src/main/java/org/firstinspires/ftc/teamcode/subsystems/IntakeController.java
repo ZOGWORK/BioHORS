@@ -14,8 +14,8 @@ public class IntakeController {
     private final DcMotor intakeLeft;
     private final DcMotor intakeRight;
 
-    public static double INTAKE_POWER = 1.0;
-    public static double OUTTAKE_POWER = -1.0;
+    public static double INTAKE_POWER = 1.0; // PLACEHOLDER
+    public static double OUTTAKE_POWER = -1.0; // PLACEHOLDER
 
     public IntakeController(DcMotor intakeLeft, DcMotor intakeRight) {
         this.intakeLeft = intakeLeft;
