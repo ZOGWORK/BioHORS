@@ -113,11 +113,16 @@ public final class MechanismConstants {
     public static boolean INTAKE_SENSOR_ENABLED = true;          // false: fall back to the time estimate
     /** Average intake speed running inward, empty, ticks/s. PLACEHOLDER (the sim's): read it on the robot. */
     public static double INTAKE_FREE_TICKS_PER_S = 2800.0;
-    /** Fraction of that speed lost per pollen aboard. PLACEHOLDER (SET FROM SIM): measure with 1-4 pollen. */
-    public static double INTAKE_SLOWDOWN_PER_PIECE = 0.06;
+    /** Intake speed at or below which the robot is loaded (full). CARRIED OVER from MAINHORS26's
+     *  IntakeBallDetector (DECODE): the same team's field-tested intake threshold. */
+    public static double INTAKE_LOADED_TICKS_PER_S = 2100.0;
+    /** Fraction of the free speed lost per pollen aboard: set so a full hopper reads exactly the
+     *  loaded threshold, (free - loaded) / free / capacity = 0.0625. SET FROM the two above. */
+    public static double INTAKE_SLOWDOWN_PER_PIECE =
+            (INTAKE_FREE_TICKS_PER_S - INTAKE_LOADED_TICKS_PER_S) / INTAKE_FREE_TICKS_PER_S / HOPPER_CAPACITY;
     public static double INTAKE_SENSE_MIN_POWER = 0.5;          // SET BY HAND: read only while pulling in hard
     public static double INTAKE_SENSE_SETTLE_S = 0.4;           // PLACEHOLDER: ignore the spin-up after starting
-    public static double INTAKE_SENSE_DEBOUNCE_S = 0.12;        // PLACEHOLDER: a new count must hold this long
+    public static double INTAKE_SENSE_DEBOUNCE_S = 0.15;        // CARRIED OVER: MAINHORS26's SPEED_STABLE_HOLD_SECONDS
     public static double INTAKE_SENSE_FILTER_ALPHA = 0.3;       // PLACEHOLDER: speed smoothing per loop
     /** In auto, stop waiting for more pollen once none has come in for this long. PLACEHOLDER. */
     public static double COLLECT_NO_PROGRESS_S = 0.5;
