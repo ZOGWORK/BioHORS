@@ -107,4 +107,6 @@ public final class MechanismConstants {
     public static double FLOWER_BAR_STOWED = 0.15;   // PLACEHOLDER
     public static double FLOWER_BAR_DOWN = 0.80;     // PLACEHOLDER
     public static double FLOWER_BAR_SHOOTING = 0.65; // PLACEHOLDER
+    /** Time for the bar to reach SHOOTING before a volley feeds, seconds. PLACEHOLDER: film it. */
+    public static double FLOWER_BAR_SETTLE_S = 0.25;
 }

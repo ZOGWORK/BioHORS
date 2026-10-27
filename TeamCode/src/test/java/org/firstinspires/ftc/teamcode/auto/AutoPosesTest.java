@@ -82,6 +82,40 @@ class AutoPosesTest {
     }
 
     @Test
+    void turnAndHeldHeadingsMatchTheZenithDraft() throws IOException {
+        // Linear turns: {from, to} exactly as written (the numbers also set which way the robot turns).
+        Map<String, double[]> turns = new LinkedHashMap<>();
+        turns.put("aimAtSouthCell", new double[] {AutoPoses.FACING_NORTH, AutoPoses.SOUTH_CELL_FROM_START});
+        turns.put("turnSouthAtGarden", new double[] {AutoPoses.FACING_WEST_NEGATIVE, AutoPoses.FACING_SOUTH});
+        turns.put("faceSouthCellFromGarden", new double[] {AutoPoses.FACING_SOUTH, AutoPoses.SOUTH_CELL_FROM_GARDEN});
+        turns.put("turnNorth", new double[] {AutoPoses.FACING_WEST, AutoPoses.FACING_NORTH});
+        turns.put("turnToFlowerNorth", new double[] {AutoPoses.FACING_NORTH_CELL, AutoPoses.FACING_NORTH});
+        turns.put("turnToScoreNorth", new double[] {AutoPoses.FACING_NORTH, AutoPoses.FACING_NORTH_CELL});
+        turns.put("turnToPark", new double[] {AutoPoses.FACING_NORTH_CELL, AutoPoses.TOWARD_PARK});
+        // Held (constant) headings.
+        Map<String, Double> held = new LinkedHashMap<>();
+        held.put("sideToGarden", AutoPoses.FACING_SOUTH);
+        held.put("noseIntoGarden", AutoPoses.FACING_SOUTH);
+        held.put("backOutOfGarden", AutoPoses.FACING_SOUTH);
+        held.put("collectFlowerWest", AutoPoses.FACING_WEST);
+        held.put("collectFlowerNorth", AutoPoses.FACING_NORTH);
+
+        Map<String, Json> steps = new LinkedHashMap<>();
+        collect(read("autos/two-tip.auto.json").get("steps"), steps);
+        for (Map.Entry<String, double[]> e : turns.entrySet()) {
+            Json h = steps.get(e.getKey()).get("heading");
+            assertEquals("linear", h.str("mode"), e.getKey() + " heading mode");
+            assertEquals(h.num("fromRad"), e.getValue()[0], 0.001, e.getKey() + " fromRad");
+            assertEquals(h.num("toRad"), e.getValue()[1], 0.001, e.getKey() + " toRad");
+        }
+        for (Map.Entry<String, Double> e : held.entrySet()) {
+            Json h = steps.get(e.getKey()).get("heading");
+            assertEquals("constant", h.str("mode"), e.getKey() + " heading mode");
+            assertEquals(h.num("headingRad"), e.getValue(), 0.001, e.getKey() + " headingRad");
+        }
+    }
+
+    @Test
     void blueIsTheRedRoutePointMirrored() {
         Pose b = AutoPoses.of(Alliance.BLUE, AutoPoses.SCORE_NORTH);
         assertEquals(-AutoPoses.SCORE_NORTH.x(), b.x(), 1e-9);

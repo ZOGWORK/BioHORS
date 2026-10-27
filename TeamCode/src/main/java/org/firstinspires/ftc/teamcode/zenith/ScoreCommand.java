@@ -3,11 +3,14 @@ package org.firstinspires.ftc.teamcode.zenith;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
+import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
+
 /**
  * Launches {@code count} pollen into the up hive cell. The robot stands still while it runs (it is
  * "stationary" in autos/robot.json), so the follower holds the score pose.
  *
- * Sequence: spin the pollen shooter up (or give up waiting after SPINUP_TIMEOUT_S), then open the
+ * Sequence: lift the flower bar clear of the shots and spin the pollen shooter up (or give up
+ * waiting after SPINUP_TIMEOUT_S); once both are done (the bar gets FLOWER_BAR_SETTLE_S), open the
  * pollen gate and run the intake inward to feed pollen past the gate for count * FEED_S_PER_PIECE,
  * then close the gate and stop the intake. The shooter is left spinning for the next volley.
  *
@@ -50,7 +53,9 @@ public class ScoreCommand extends CommandBase {
     @Override
     public void execute() {
         if (!feeding) {
-            if (launcher.atSpeed() || timer.seconds() >= SPINUP_TIMEOUT_S) {
+            boolean atSpeed = launcher.atSpeed() || timer.seconds() >= SPINUP_TIMEOUT_S;
+            boolean barClear = timer.seconds() >= MechanismConstants.FLOWER_BAR_SETTLE_S;
+            if (atSpeed && barClear) {
                 feeding = true;
                 launcher.openGate();
                 intake.feed();

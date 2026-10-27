@@ -211,8 +211,10 @@ public final class BiobuzzMatch {
 
         // ---- intake: flower retrieval opening ----
         Flower at = null;
-        boolean barDown = Math.abs(sim.flowerLeftPlant.getPosition()
-                - org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN) < 0.05;
+        // Both servos really at DOWN. The right one is mounted mirrored (REVERSE), so its output is 1 - p.
+        double down = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN;
+        boolean barDown = Math.abs(sim.flowerLeftPlant.getPosition() - down) < 0.05
+                && Math.abs(sim.flowerRightPlant.getPosition() - (1.0 - down)) < 0.05;
         if (intakeIn && held < 4 && barDown) {
             double mx = x + fwdX * (mouthOffsetX + mouthHalfDepth) - fwdY * mouthOffsetY;
             double my = y + fwdY * (mouthOffsetX + mouthHalfDepth) + fwdX * mouthOffsetY;

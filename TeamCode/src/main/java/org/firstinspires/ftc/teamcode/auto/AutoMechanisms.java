@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.auto;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
+import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.zenith.PollenEstimate;
 import org.firstinspires.ftc.teamcode.zenith.ScoreCommand;
 
@@ -15,8 +16,9 @@ import org.firstinspires.ftc.teamcode.zenith.ScoreCommand;
  *   <li><b>Intake</b> (both motors, intakeLeft + intakeRight): OFF, COLLECT (taking pollen in; the
  *       pollen estimate counts it), FEED (pushing pollen through the open gate into the shooter;
  *       not counted), OUTTAKE.</li>
- *   <li><b>Pollen shooter + gate</b> (shooterRight, gateRight): IDLE, SPIN_UP (gate shut, waiting
- *       for speed or the spin-up timeout), FIRING (gate open, intake feeding, for count x the feed
+ *   <li><b>Pollen shooter + gate</b> (shooterRight, gateRight): IDLE, SPIN_UP (gate shut, the
+ *       flower bar lifting clear; waiting for speed or the spin-up timeout, and for the bar to
+ *       settle), FIRING (gate open, intake feeding, for count x the feed
  *       time), then IDLE with the flywheel left spinning for the next volley.</li>
  *   <li><b>Nectar shooter + gate</b> (shooterLeft, gateLeft): held OFF and SHUT every loop. AUTO
  *       is pollen only (team rule), so nothing here can open it.</li>
@@ -90,6 +92,7 @@ public class AutoMechanisms {
         volleyCount = count;
         robot.pollenShooter.setShooterOn(true);
         robot.pollenGate.setClosed(true);
+        robot.flowerBar.setShooting(true);   // lift the bar clear first; feeding waits for it
         pollenShooter = PollenState.SPIN_UP;
         pollenTimer.reset();
     }
@@ -109,7 +112,9 @@ public class AutoMechanisms {
             case IDLE:
                 break;
             case SPIN_UP:
-                if (robot.pollenShooter.isAtTarget() || pollenTimer.seconds() >= ScoreCommand.SPINUP_TIMEOUT_S) {
+                boolean atSpeed = robot.pollenShooter.isAtTarget() || pollenTimer.seconds() >= ScoreCommand.SPINUP_TIMEOUT_S;
+                boolean barClear = pollenTimer.seconds() >= MechanismConstants.FLOWER_BAR_SETTLE_S;
+                if (atSpeed && barClear) {
                     robot.pollenGate.setClosed(false);
                     setIntake(IntakeState.FEED);
                     pollenShooter = PollenState.FIRING;

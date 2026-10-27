@@ -379,6 +379,10 @@ class MainHorsTeleOpSimTest {
         assertEquals(0.485, x.pollenGatePlant.getPosition(), 0.02, "X (flower bar) does not move the gates");
         assertEquals(0.485, x.nectarGatePlant.getPosition(), 0.02, "X (flower bar) does not move the gates");
         assertEquals(MechanismConstants.FLOWER_BAR_DOWN, x.flowerLeftPlant.getPosition(), 0.02, "X puts the bar down");
+        assertEquals(com.qualcomm.robotcore.hardware.Servo.Direction.REVERSE, x.flowerRight.getDirection(),
+                "the right bar servo is mounted mirrored");
+        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_DOWN, x.flowerRightPlant.getPosition(), 0.02,
+                "the right servo goes down too (mirrored output)");
         OpMode.blackboard.clear();
 
         BioHorsSim xTwice = new BioHorsSim();
@@ -389,6 +393,8 @@ class MainHorsTeleOpSimTest {
         }, null);
         assertEquals(MechanismConstants.FLOWER_BAR_STOWED, xTwice.flowerLeftPlant.getPosition(), 0.02,
                 "X again stows the bar");
+        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_STOWED, xTwice.flowerRightPlant.getPosition(), 0.02,
+                "X again stows the right side too");
         OpMode.blackboard.clear();
 
         BioHorsSim shoot = new BioHorsSim();
@@ -400,6 +406,8 @@ class MainHorsTeleOpSimTest {
         }, null);
         assertEquals(MechanismConstants.FLOWER_BAR_SHOOTING, shoot.flowerLeftPlant.getPosition(), 0.02,
                 "with the gates open the bar sits at its shooting position");
+        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_SHOOTING, shoot.flowerRightPlant.getPosition(), 0.02,
+                "both sides at the shooting position");
     }
 
     @Test
