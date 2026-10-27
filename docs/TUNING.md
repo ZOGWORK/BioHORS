@@ -143,7 +143,7 @@ Pinpoint pose (after setting the start pose), and replace the number and its pro
 |---|---|---|
 | `start` | (-15, -64.2, 90 deg) | The fixed start at the hive that is up at kickoff: back on the south wall |
 | `scoreSouth` | (-15, -36, 85 deg) | Volleys 1-2, facing the south cell |
-| `gardenApproach` / `Pickup` | (-62.7, -45) / (-62.7, -57.4), -90 deg | Garden line, nose-first south. x = -62.7 is the narrow fit: the 13.2 in mouth just reaches the west-most pollen while the 17.84 in body stays 0.38 in off the west wall. **Check on the field** (FIRST's CAD walls are 1.3 in inside the field file's) |
+| `gardenApproach` / `Pickup` | (-62.7, -45) / (-62.7, -57.4), -90 deg | Garden line, nose-first south. x = -62.7 is the narrow fit: the 13.2 in mouth just reaches the west-most pollen while the 17.84 in body stays 0.38 in off the field file's west wall (-72). **Check on the field**: FIRST's CAD puts the walls at +/-70.67, 1.3 in inside the field file's, and the field file's garden pollen (x -70.6, radius 1.4) touch its -72 wall, so at least the pollen and walls move together; measure the lane from the real wall and the real pollen |
 | `gardenTurn` | (-50, -44, -90 deg) | Room to turn after the garden |
 | `flowerWestApproach` / `Pickup` | (-44, -24) / (-52.4, -24), 180 deg | flower0 (near the garden): the flower bar stops 0.5 in short of the foot |
 | `scoreNorth` | (-24, 44, -72 deg) | Volleys 3-4, north cell, facing it |
