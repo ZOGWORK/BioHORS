@@ -41,7 +41,7 @@ public final class BiobuzzMatch {
 
     static final double FLOWER_S_PER_PIECE = 0.15;  // APPROX (DSim, per Zenith's BIOBUZZ ledger)
     static final double LAUNCH_S_PER_PIECE = 0.30;  // PLACEHOLDER: real launch cadence NEEDS MEASUREMENT
-    static final double LAUNCH_MIN_RPM = 1800.0;    // PLACEHOLDER: 90 % of the 2000 rpm target
+    static final double LAUNCH_MIN_RPM = 1440.0;    // PLACEHOLDER: 90 % of the 1600 rpm test target
     static final double LAUNCH_CONE_DEG = 15.0;     // PLACEHOLDER: how far off the cell a launch still goes in
     static final double OPENING_REACH_IN = 2.0;     // PLACEHOLDER: mouth to retrieval opening
     static final double FACING_CONE_DEG = 25.0;     // PLACEHOLDER

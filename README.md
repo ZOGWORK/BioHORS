@@ -30,8 +30,8 @@ The MainHORS teleop with odometry aim, and a Zenith-planned 2-tip pollen auto, b
 | frontLeft, backLeft | DcMotor | Drive, FORWARD |
 | frontRight, backRight | DcMotor | Drive, REVERSE |
 | intakeLeft, intakeRight | DcMotor | Intakes, run together |
-| shooterRight | DcMotorEx | **Pollen** shooter (assumed; confirm on the robot) |
-| shooterLeft | DcMotorEx | **Nectar** shooter (assumed; confirm on the robot) |
+| shooterRight | DcMotorEx | **Pollen** shooter (confirmed: right side, top-down with the intake up) |
+| shooterLeft | DcMotorEx | **Nectar** shooter (confirmed: left side) |
 | gateRight | Servo | **Pollen** gate (confirmed) |
 | gateLeft | Servo | **Nectar** gate (confirmed) |
 | pinpoint | GoBildaPinpointDriver | Pinpoint odometry computer (2 pods), used by the Pedro localizer |
@@ -50,9 +50,10 @@ Shooter/gate names, directions, and tuning values live in
 | Right trigger | Intake in |
 | Y (hold) | Outtake |
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF) |
-| Dpad left / right | **Pollen** shooter target RPM -50 / +50 |
+| Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
+| X / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
 | B | Toggle both gates (start CLOSED) |
-| A, X, left bumper | Unmapped |
+| Left bumper | Unmapped |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
 alliance and final pose are picked up automatically (the SDK blackboard).

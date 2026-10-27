@@ -111,12 +111,12 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
-    void inTheNorthHalfItAimsAtTheNorthCellAndAIsUnmapped() {
+    void inTheNorthHalfItAimsAtTheNorthCellAndADoesNotChangeTheTarget() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -40.0, 40.0, 0.0);
         OpModeRunResult result = run(sim, 150, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
-            g1.a = tick >= 2 && tick < 6; // A no longer does anything
+            g1.a = tick >= 2 && tick < 6; // A trims nectar; it must not touch the target
             g1.left_trigger = 1f;
         }, null);
 
@@ -300,11 +300,11 @@ class MainHorsTeleOpSimTest {
             g2.dpad_right = tick >= 10 && tick < 13;  // operator trims pollen +50
         }, null);
 
-        assertEquals(2050.0, sim.pollenShooterRpm(), 120.0, "pollen shooter should hold its trimmed target");
-        assertEquals(2000.0, sim.nectarShooterRpm(), 120.0, "nectar shooter keeps its own target");
+        assertEquals(1650.0, sim.pollenShooterRpm(), 100.0, "pollen shooter should hold its trimmed target");
+        assertEquals(1600.0, sim.nectarShooterRpm(), 100.0, "nectar shooter keeps its own target");
         String shown = lastTelemetry(result);
-        assertTrue(shown.contains("target=2050"), "pollen target shown as 2050: " + shown);
-        assertTrue(shown.contains("target=2000"), "nectar target shown as 2000: " + shown);
+        assertTrue(shown.contains("target=1650"), "pollen target shown as 1650: " + shown);
+        assertTrue(shown.contains("target=1600"), "nectar target shown as 1600: " + shown);
     }
 
     @Test
@@ -317,8 +317,26 @@ class MainHorsTeleOpSimTest {
         }, null);
         String shown = lastTelemetry(result);
         assertTrue(shown.contains("BLUE"), "dpad right in INIT picks BLUE: " + shown);
-        assertTrue(shown.contains("target=2000"), "holding it through PLAY must not trim pollen: " + shown);
-        assertFalse(shown.contains("target=2050"), "no +50 trim: " + shown);
+        assertTrue(shown.contains("target=1600"), "holding it through PLAY must not trim pollen: " + shown);
+        assertFalse(shown.contains("target=1650"), "no +50 trim: " + shown);
+    }
+
+    @Test
+    void eachShooterHasItsOwnTrim() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        OpModeRunResult result = run(sim, 250, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_down = tick >= 2 && tick < 5;                                  // both on
+            g1.a = (tick >= 10 && tick < 13) || (tick >= 20 && tick < 23);         // nectar +50 twice
+            g2.x = tick >= 30 && tick < 33;                                        // nectar -50 (operator)
+            g1.dpad_left = tick >= 40 && tick < 43;                                // pollen -50
+        }, null);
+        String shown = lastTelemetry(result);
+        assertTrue(shown.contains("Pollen shooter : on=true target=1550"), "pollen trimmed alone: " + shown);
+        assertTrue(shown.contains("Nectar shooter : on=true target=1650"), "nectar trimmed alone: " + shown);
+        assertEquals(1550.0, sim.pollenShooterRpm(), 100.0, "pollen holds its own target");
+        assertEquals(1650.0, sim.nectarShooterRpm(), 100.0, "nectar holds its own target");
     }
 
     @Test
@@ -333,7 +351,7 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
-    void bTogglesBothGatesAndXDoesNothing() {
+    void bTogglesBothGatesAndXLeavesTheGatesAlone() {
         BioHorsSim open = new BioHorsSim();
         startAt(open, "RED", -13.0, -63.0, Math.PI / 2.0);
         run(open, 50, (phase, tick, g1, g2) -> {
@@ -357,8 +375,8 @@ class MainHorsTeleOpSimTest {
         run(x, 50, (phase, tick, g1, g2) -> {
             if (phase == OpModePhase.ACTIVE) g1.x = true;
         }, null);
-        assertEquals(0.485, x.pollenGatePlant.getPosition(), 0.02, "X is unmapped");
-        assertEquals(0.485, x.nectarGatePlant.getPosition(), 0.02, "X is unmapped");
+        assertEquals(0.485, x.pollenGatePlant.getPosition(), 0.02, "X (nectar trim) does not move the gates");
+        assertEquals(0.485, x.nectarGatePlant.getPosition(), 0.02, "X (nectar trim) does not move the gates");
     }
 
     @Test

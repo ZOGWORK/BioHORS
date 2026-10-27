@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.aim.PoseHandoff;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
 import org.firstinspires.ftc.teamcode.subsystems.DriveController;
+import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 
 /**
  * The MainHORS teleop: the MainHORS control scheme on this robot, plus odometry aim.
@@ -25,9 +26,10 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveController;
  *   Right trigger ......... intake in
  *   Y (hold) .............. outtake
  *   Dpad down ............. toggle both shooters on/off (each at its own target)
- *   Dpad left / right ..... POLLEN shooter target RPM -50 / +50
+ *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
+ *   X / A ................. NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
  *   B ..................... toggle both gates
- *   A, X, left bumper ..... unmapped
+ *   Left bumper ........... unmapped
  *
  * Before PLAY: dpad left = RED, dpad right = BLUE. If an auto ran first, its alliance and last
  * pose are picked up from the blackboard.
@@ -64,7 +66,7 @@ public class MainHorsTeleOp extends LinearOpMode {
     private boolean poseFromAuto = false;
 
     // Edge-detect state (a press fires once, not every loop).
-    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, bLast;
+    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, bLast, xLast, aLast;
 
     @Override
     public void runOpMode() {
@@ -170,12 +172,21 @@ public class MainHorsTeleOp extends LinearOpMode {
             dpadDownLast = dpadDownNow;
 
             boolean dpadLeftNow = gamepad1.dpad_left || gamepad2.dpad_left;
-            if (dpadLeftNow && !dpadLeftLast) robot.pollenShooter.adjustTargetRpm(-50.0);
+            if (dpadLeftNow && !dpadLeftLast) robot.pollenShooter.adjustTargetRpm(-MechanismConstants.POLLEN_TRIM_STEP_RPM);
             dpadLeftLast = dpadLeftNow;
 
             boolean dpadRightNow = gamepad1.dpad_right || gamepad2.dpad_right;
-            if (dpadRightNow && !dpadRightLast) robot.pollenShooter.adjustTargetRpm(50.0);
+            if (dpadRightNow && !dpadRightLast) robot.pollenShooter.adjustTargetRpm(MechanismConstants.POLLEN_TRIM_STEP_RPM);
             dpadRightLast = dpadRightNow;
+
+            // Nectar has its own trim and step: X down, A up.
+            boolean xNow = gamepad1.x || gamepad2.x;
+            if (xNow && !xLast) robot.nectarShooter.adjustTargetRpm(-MechanismConstants.NECTAR_TRIM_STEP_RPM);
+            xLast = xNow;
+
+            boolean aNow = gamepad1.a || gamepad2.a;
+            if (aNow && !aLast) robot.nectarShooter.adjustTargetRpm(MechanismConstants.NECTAR_TRIM_STEP_RPM);
+            aLast = aNow;
 
             robot.updateMechanisms();
 
@@ -239,6 +250,8 @@ public class MainHorsTeleOp extends LinearOpMode {
         dpadDownLast = gamepad1.dpad_down || gamepad2.dpad_down;
         dpadLeftLast = gamepad1.dpad_left || gamepad2.dpad_left;
         dpadRightLast = gamepad1.dpad_right || gamepad2.dpad_right;
+        xLast = gamepad1.x || gamepad2.x;
+        aLast = gamepad1.a || gamepad2.a;
         bLast = gamepad1.b || gamepad2.b;
     }
 

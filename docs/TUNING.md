@@ -18,9 +18,9 @@ with `autos/` or `TeamCode/src/test/`.
 
 | Item | Current | Where | How | Done when |
 |---|---|---|---|---|
-| Which shooter motor is pollen | `shooterRight` = pollen (assumed) | `subsystems/MechanismConstants.java` `POLLEN_SHOOTER_NAME` | Spin each shooter alone from the Driver Station; see which one sits behind the right (pollen) gate | Names confirmed or swapped |
+| Which shooter motor is pollen | `shooterRight` = pollen, `shooterLeft` = nectar, one motor each | `subsystems/MechanismConstants.java` | **Confirmed by the team (Oct 27)**: nectar left, pollen right (top-down, intake up) | Done; check the config names match |
 | Shooter directions | both `FORWARD` (placeholder) | `MechanismConstants.POLLEN/NECTAR_SHOOTER_DIRECTION` | Turn each on in the teleop; both must fire pollen/nectar outward, spinning the same physical way | Both launch outward |
-| Flywheel gear ratio | 1:1 assumed | `MechanismConstants` (`ticksPerRev = 28`) | Count belt/gear teeth between motor and flywheel | `ticksPerRev = 28 x ratio` (the 2800 ticks/s feedforward max does **not** change) |
+| Flywheel gear ratio | **1:1, confirmed by the team (Oct 27)** | `MechanismConstants` (`ticksPerRev = 28`) | — | Done |
 | Gate sides | `gateRight` pollen, `gateLeft` nectar (confirmed Oct 27) | `MechanismConstants` | Move each gate from the Driver Station | Matches |
 | How pollen reaches the shooter | intake pushes it through the open gate (assumed) | `zenith/ScoreCommand.java` | Watch a volley | If not, change ScoreCommand only |
 | Which way the shooter fires | out of the robot's front | `aim/AimController.SHOOTER_FACING_OFFSET_RAD = 0` | Look | `0` front, `Math.PI` back, etc. |
@@ -82,8 +82,8 @@ first.
 | `ffReferenceMaxTicksPerSec`, `kS`, `kF = 1` | 2800 (SPEC no-load), 0, 1.0 | Shooter Tuner |
 | `kP` | 0.001 (PLACEHOLDER) | Shooter Tuner |
 | `kI`, `kD` | 0.0005, 0 (PLACEHOLDER) | Shooter Tuner sets both to 0 (flywheels do not need them) |
-| Pollen `targetRpm` | 2000 (PLACEHOLDER) | **Field test**, not the tuner: shoot from `scoreSouth` / `scoreNorth`, trim with dpad left/right in the teleop until pollen lands 10 of 10 |
-| Nectar `targetRpm` | 2000 (PLACEHOLDER, must differ) | Field test, nectar into the flower |
+| Pollen `targetRpm` | **1600** (the team's test value) | **Field test**, not the tuner: shoot from `scoreSouth` / `scoreNorth`, trim with dpad left/right in the teleop until pollen lands 10 of 10 |
+| Nectar `targetRpm` | **1600** (the team's test value; trim with X / A) | Field test, nectar into the flower |
 | `ticksPerRev` | 28 (SPEC, 1:1) | Section 0 gear ratio (the tuner works in encoder ticks/s, so it does not need it) |
 | `rpmTolerance` | 75 rpm | Shot-to-shot spread vs rpm |
 
