@@ -3,58 +3,58 @@
   "formatVersion": 1,
   "waypoints": {
     "start": {
-      "xIn": -15.0,
+      "xIn": -13.0,
       "yIn": -64.2,
       "headingRad": 1.5708,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the fixed start at the hive that is up at kickoff (RED's south cell): back touching the south wall, in RED's half, facing the hive. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), start x; tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); back on the south wall (the drive centre 7.8 in off it). NEEDS MEASUREMENT on the real field."
     },
-    "gardenPickup": {
-      "xIn": -56.0,
-      "yIn": -62.85,
-      "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the end of the sweep along the garden row: the flower bar 1.8 in short of the west wall: the robot rolls on about 1.3 in past the end of a sweep, past the last pollen (x = -70.6, collected with the centre between -62.4 and -55). NEEDS MEASUREMENT on the real field."
-    },
-    "gardenTurn": {
-      "xIn": -50.0,
-      "yIn": -50.0,
-      "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); where the robot moves up to off the garden lane, still facing west: a 16.8 in turning circle clears both walls. The garden load is shot from here, 55 in from the south cell. NEEDS MEASUREMENT on the real field."
-    },
-    "flowerWestApproach": {
-      "xIn": -44.0,
-      "yIn": -24.0,
-      "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); east of flower0 on its centre line, intake facing it; the turning circle clears the hive frame's west foot bar. NEEDS MEASUREMENT on the real field."
-    },
-    "flowerWestPickup": {
-      "xIn": -52.4,
-      "yIn": -24.0,
-      "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar tip 0.5 in short of flower0's foot face (x = -67.1, field file), the side plates straddling the 6 in foot. The bar is built to slide INTO the retrieval opening; the field file's foot is solid, so Zenith stops short. NEEDS a field test: drive in until the bar seats."
+    "scoreSouth": {
+      "xIn": -13.0,
+      "yIn": -36.0,
+      "headingRad": 1.5708,
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), scoreSouth, unchanged: south of the RED hive, facing the south cell. NEEDS MEASUREMENT on the real field."
     },
     "scoreNorth": {
-      "xIn": -24.0,
+      "xIn": -13.0,
       "yIn": 44.0,
-      "headingRad": -1.2576,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); north of the RED hive, straight south of flower1, in the north cell's quarter and outboard of its outer face, facing the north cell's centre. NEEDS MEASUREMENT on the real field."
+      "headingRad": -1.5708,
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), scoreNorth, unchanged: north of the RED hive, facing the north cell. NEEDS MEASUREMENT on the real field."
+    },
+    "flowerNorthApproach": {
+      "xIn": -24.0,
+      "yIn": 42.0,
+      "headingRad": 1.5708,
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), flowerNorthApproach moved 4 in south, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); room for the longer robot below the flower. NEEDS MEASUREMENT on the real field."
     },
     "flowerNorthPickup": {
       "xIn": -24.0,
       "yIn": 52.4,
       "headingRad": 1.5708,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar tip 0.5 in short of flower1's foot face (y = 67.1), plates straddling it. NEEDS a field test: drive in until the bar seats."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), flowerNorthPickup, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar tip 0.5 in short of flower1's foot face (y = 67.1), so it can reach into the retrieval opening. NEEDS MEASUREMENT on the real field."
     },
-    "park": {
-      "xIn": -55.0,
-      "yIn": 36.0,
+    "aboveGardenLane": {
+      "xIn": -36.0,
+      "yIn": -56.0,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); partly inside RED's loading zone (x -72..-61, y 24..48) on the north side. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), garden approach, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); heading west above the garden lane, clear of the south wall (the 22 in robot cannot turn next to it). NEEDS MEASUREMENT on the real field."
     },
-    "gardenLaneStart": {
+    "gardenSweepStart": {
       "xIn": -40.0,
       "yIn": -62.85,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); where the robot comes onto the garden lane heading west, intake toward the red alliance wall, east of the first pollen. y = -62.85: heading west, the 13.2 in mouth reaches a pollen against the south wall only with the centre between y = -63.08 (the side on the wall) and -62.6. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepStart, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); on the lane heading west. y = -62.85: heading west, the 13.2 in mouth reaches a pollen against the south wall only with the centre between y = -63.08 (the side on the wall) and -62.6. NEEDS MEASUREMENT on the real field."
+    },
+    "gardenSweepEnd": {
+      "xIn": -56.0,
+      "yIn": -62.85,
+      "headingRad": 3.1416,
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepEnd, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar 1.8 in short of the west wall (the robot rolls on about 1.3 in past the end of a sweep), past the last pollen. NEEDS MEASUREMENT on the real field."
+    },
+    "offGardenLane": {
+      "xIn": -50.0,
+      "yIn": -50.0,
+      "headingRad": 3.1416,
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), garden exit, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); up off the lane still facing west, where a 16.8 in turning circle clears both walls. NEEDS MEASUREMENT on the real field."
     }
   }
 }
