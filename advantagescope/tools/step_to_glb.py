@@ -171,8 +171,20 @@ for lab in free:
 print("meshed in %.1f s, dropped %d small parts" % (time.time() - t0, dropped), flush=True)
 
 
+def vertex_normals(pos, idx):
+    """Area-weighted vertex normals. AdvantageScope draws a mesh without NORMAL as nothing at all."""
+    tri = np.asarray(idx, dtype=np.int64).reshape(-1, 3)
+    p = np.asarray(pos, dtype=np.float64)
+    face = np.cross(p[tri[:, 1]] - p[tri[:, 0]], p[tri[:, 2]] - p[tri[:, 0]])
+    n = np.zeros_like(p)
+    for k in range(3):
+        np.add.at(n, tri[:, k], face)
+    length = np.linalg.norm(n, axis=1, keepdims=True)
+    return np.where(length > 1e-12, n / np.maximum(length, 1e-12), [0.0, 0.0, 1.0]).astype(np.float32)
+
+
 def write_glb(path, groups):
-    """One mesh, one primitive per colour, positions float32 and indices uint32."""
+    """One mesh, one primitive per colour: float32 positions and normals, uint32 indices."""
     bin_parts, views, accessors, prims, materials = [], [], [], [], []
     offset = 0
     tris = 0
@@ -195,14 +207,16 @@ def write_glb(path, groups):
         idx = np.concatenate(idx_list).astype(np.uint32).ravel()
         tris += len(idx) // 3
         pv = add_view(pos.tobytes(), 34962)
+        nv = add_view(vertex_normals(pos, idx).tobytes(), 34962)
         iv = add_view(idx.tobytes(), 34963)
         accessors.append({"bufferView": pv, "componentType": 5126, "count": len(pos), "type": "VEC3",
                           "min": pos.min(axis=0).tolist(), "max": pos.max(axis=0).tolist()})
+        accessors.append({"bufferView": nv, "componentType": 5126, "count": len(pos), "type": "VEC3"})
         accessors.append({"bufferView": iv, "componentType": 5125, "count": len(idx), "type": "SCALAR"})
         materials.append({"pbrMetallicRoughness": {"baseColorFactor": [*rgb, 1.0], "metallicFactor": 0.1,
                                                    "roughnessFactor": 0.7}, "doubleSided": True})
-        prims.append({"attributes": {"POSITION": len(accessors) - 2}, "indices": len(accessors) - 1,
-                      "material": len(materials) - 1})
+        prims.append({"attributes": {"POSITION": len(accessors) - 3, "NORMAL": len(accessors) - 2},
+                      "indices": len(accessors) - 1, "material": len(materials) - 1})
     gltf = {"asset": {"version": "2.0", "generator": "BioHORS step_to_glb.py"}, "scene": 0,
             "scenes": [{"nodes": [0]}], "nodes": [{"mesh": 0}], "meshes": [{"primitives": prims}],
             "materials": materials, "accessors": accessors, "bufferViews": views,
