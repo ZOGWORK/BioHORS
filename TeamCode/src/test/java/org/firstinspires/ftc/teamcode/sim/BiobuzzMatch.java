@@ -312,6 +312,10 @@ public final class BiobuzzMatch {
         Logger.recordOutput("Match/missed", missed);
         Logger.recordOutput("Match/tips", tips);
         Logger.recordOutput("Match/upCellNorth", upIsNorth);
+        // AdvantageScope's hives are fixed field art and never tip, so mark the cell that is really
+        // up: a pose at its opening (draw it as Axes or a Cone), which moves when the hive tips.
+        Logger.recordOutput("Field/UpCell", Pose3d.struct, AdvantageScopeFrame.piece(hiveX,
+                (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0, CELL_AIM_Z_IN));
         Logger.recordOutput("Truth/xIn", x);
         Logger.recordOutput("Truth/yIn", y);
         Logger.recordOutput("Truth/headingRad", h);

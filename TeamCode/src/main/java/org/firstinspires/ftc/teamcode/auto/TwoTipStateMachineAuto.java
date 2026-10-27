@@ -5,6 +5,7 @@ import com.pedropathing.api.Paths;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
+import com.pedropathing.paths.interpolator.Interpolator;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -18,21 +19,22 @@ import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import static org.firstinspires.ftc.teamcode.auto.AutoPoses.*;
 
 /**
- * The two-tip pollen auto as a plain Pedro path follower and state machine. No Zenith runtime: the
- * route was drafted and checked in Zenith (autos/two-tip.auto.json), and its points are copied into
- * {@link AutoPoses}. 16 pollen, two tips, then park:
+ * Zenith's starter example auto (examples/starter collect-and-score), tuned to this robot, as a
+ * plain Pedro path follower and state machine. No Zenith runtime: the route was tuned and checked
+ * in Zenith (autos/two-tip.auto.json), and its points are copied into {@link AutoPoses}. 12 pollen,
+ * two tips:
  *
  * <pre>
- *  start: aim, spin up, volley 4 (preload) from where the robot starts
- *        -> one curve round onto the garden lane: sweep west along the row, intake toward the red
- *           alliance wall, taking the 4 pollen in a line -> up off the lane, volley 4: tip 1
- *        -> one curve to flower0 (west wall): 4 -> round the hive's west side -> volley 4 into the north cell
- *        -> flower1 (north wall): 4 -> volley 4: north cell tips (tip 2) -> park
+ *  start -> the south score spot: volley 4 preloads (the 3 staged nectar mean they tip the hive)
+ *        -> round the west of the hive to flower1 (north wall), bar down: 4 -> volley 4 north
+ *        -> back round to the garden lane: sweep west, bar down, intake toward the red alliance
+ *           wall, taking the 4 garden pollen in a line -> round to the north spot: volley 4: tip 2
  * </pre>
  *
  * Each {@link State} starts one thing when it is entered (a path, a volley, the intake) and ends
  * when that thing is done or a timeout passes. Every path starts from where the robot really is,
- * like the Zenith draft ("from: current"). Mechanisms are in {@link AutoMechanisms}.
+ * like the Zenith draft ("from: current"), and the headings follow the draft, piece by piece where
+ * it changes mode along a path. Mechanisms are in {@link AutoMechanisms}.
  *
  * Alliance: set with the Choose Alliance OpMode before INIT (RED if never set). The route is RED's;
  * BLUE is its point mirror.
@@ -48,41 +50,32 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     /** Fraction of top speed for paths with no stated speed (as the Zenith project's default). */
     public static double DEFAULT_SPEED = 0.8;   // SET BY HAND
-    public static double GARDEN_SPEED = 0.35;   // SET BY HAND: slow, nose-first into the garden line
-    public static double SLIDE_SPEED = 0.4;     // SET BY HAND: slow sideways onto the garden lane, so it stops on time
-    public static double BACK_OUT_SPEED = 0.6;  // SET BY HAND: up off the garden lane, sideways and back
-    public static double FLOWER_SPEED = 0.3;    // SET BY HAND: slow, nose-in to a flower's opening
-    public static double GARDEN_TIMEOUT_S = 2.5;      // SET BY HAND: a stuck sweep gives up after this
-    public static double GARDEN_EXTRA_WAIT_S = 0.8;   // SET BY HAND
-    public static double FLOWER_WAIT_S = 1.0;         // SET BY HAND
+    public static double PICKUP_SPEED = 0.3;    // the starter's: slow into the flower and along the garden row
+    public static double SLIDE_SPEED = 0.3;     // SET BY HAND: slow sideways onto the garden lane, so it stops on time
+    public static double OFF_LANE_SPEED = 0.6;  // SET BY HAND: up off the garden lane, sideways and back
+    public static double SWEEP_TIMEOUT_S = 3.0;       // SET BY HAND: a stuck sweep gives up after this
+    public static double FLOWER_WAIT_S = 1.0;         // the starter's
+    public static double GARDEN_WAIT_S = 0.8;         // SET BY HAND
+    public static double SPIN_UP_AFTER_S = 0.5;       // the starter's: spin up 0.5 s into the drive back
     public static final int PRELOAD = 4;              // SET BY HAND: the robot starts full (G407 max)
     public static final int VOLLEY = 4;
 
     public enum State {
-        AIM_AND_SPIN_UP,        // a 2 deg turn to face the south cell from the start; the flywheel spins up
-        SHOOT_PRELOADS,
-        TO_GARDEN,              // one curve, nose-first, ending heading west above the garden lane
+        DRIVE_OUT,              // start -> south score spot
+        SHOOT_PRELOADS,         // tip 1 (3 nectar staged in the south cell)
+        TO_OTHER_SIDE,          // round the west of the hive to below flower1
+        COLLECT_FLOWER,         // bar down, intake on, slowly in; ends at the opening or when full
+        WAIT_FLOWER_FULL,
+        BACK_OFF_FLOWER,        // straight back, still facing the flower, bar up
+        TO_SCORE_NORTH,
+        SHOOT_FLOWER,
+        TO_GARDEN,              // back round the west of the hive, ending heading west above the lane
         SLIDE_ONTO_LANE,        // down onto the lane, square to the south wall
-        COLLECT_GARDEN,         // sweep west along the row, intake on, taking the pollen in a line
+        SWEEP_GARDEN,           // bar down, intake on, west along the row: the pollen come in a line
         WAIT_GARDEN_FULL,
-        BACK_OUT_OF_GARDEN,
-        AIM_FROM_GARDEN,
-        SHOOT_GARDEN,           // the south cell reaches 8: tip 1
-        TO_FLOWER_WEST,         // one curve, no turn first: it starts the way the volley left the robot facing
-        COLLECT_FLOWER_WEST,
-        WAIT_FLOWER_WEST,
-        BACK_OFF_FLOWER_WEST,
-        TURN_NORTH,
-        AROUND_WEST_TO_SCORE_NORTH,
-        SHOOT_FLOWER_WEST,
-        TURN_TO_FLOWER_NORTH,
-        COLLECT_FLOWER_NORTH,
-        WAIT_FLOWER_NORTH,
-        BACK_OFF_FLOWER_NORTH,
-        TURN_TO_SCORE_NORTH,
-        SHOOT_FLOWER_NORTH,     // the north cell reaches 8: tip 2
-        TURN_TO_PARK,
-        PARK,
+        OFF_GARDEN_LANE,        // up off the lane still facing west, bar up
+        DRIVE_BACK,             // round to the north score spot, spinning up on the way
+        SHOOT_GARDEN,           // tip 2
         DONE
     }
 
@@ -91,7 +84,8 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     private ForesightConfig foresight;
     private AutoMechanisms mech;
     private Alliance alliance = Alliance.RED;
-    private State state = State.AIM_AND_SPIN_UP;
+    private State state = State.DRIVE_OUT;
+    private boolean spunUpOnTheWay;
     private final ElapsedTime stateTimer = new ElapsedTime();
     private final ElapsedTime matchTimer = new ElapsedTime();
 
@@ -133,7 +127,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     private void startAuto() {
         matchTimer.reset();
-        enter(State.AIM_AND_SPIN_UP);
+        enter(State.DRIVE_OUT);
     }
 
     private void loopOnce() {
@@ -167,26 +161,36 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     private void run() {
         switch (state) {
             case SHOOT_PRELOADS:
+            case SHOOT_FLOWER:
             case SHOOT_GARDEN:
-            case SHOOT_FLOWER_WEST:
-            case SHOOT_FLOWER_NORTH:
                 if (mech.volleyDone()) next();
                 break;
 
-            case COLLECT_GARDEN:
-                // The sweep always runs to its end: cut short when full, the robot rolls on toward
-                // the west wall. The timeout only guards a stuck path.
-                if (!follower.isBusy() || stateTimer.seconds() >= GARDEN_TIMEOUT_S) next();
+            case COLLECT_FLOWER:
+                // The starter's end condition: at the opening, or full.
+                if (!follower.isBusy() || mech.pollen().full()) next();
                 break;
-            case WAIT_GARDEN_FULL:
-                // Full, or nothing new coming in (the sensor says so), or out of time: move on.
-                if (mech.pollen().full() || mech.noNewPollenFor(MechanismConstants.COLLECT_NO_PROGRESS_S)
-                        || stateTimer.seconds() >= GARDEN_EXTRA_WAIT_S) next();
-                break;
-            case WAIT_FLOWER_WEST:
-            case WAIT_FLOWER_NORTH:
+            case WAIT_FLOWER_FULL:
                 if (mech.pollen().full() || mech.noNewPollenFor(MechanismConstants.COLLECT_NO_PROGRESS_S)
                         || stateTimer.seconds() >= FLOWER_WAIT_S) next();
+                break;
+            case SWEEP_GARDEN:
+                // The sweep always runs to its end: cut short when full, the robot rolls on toward
+                // the west wall. The timeout only guards a stuck path.
+                if (!follower.isBusy() || stateTimer.seconds() >= SWEEP_TIMEOUT_S) next();
+                break;
+            case WAIT_GARDEN_FULL:
+                if (mech.pollen().full() || mech.noNewPollenFor(MechanismConstants.COLLECT_NO_PROGRESS_S)
+                        || stateTimer.seconds() >= GARDEN_WAIT_S) next();
+                break;
+
+            case DRIVE_BACK:
+                // The starter's deadline group: spin up 0.5 s into the drive, end with the drive.
+                if (!spunUpOnTheWay && stateTimer.seconds() >= SPIN_UP_AFTER_S) {
+                    mech.spinUp();
+                    spunUpOnTheWay = true;
+                }
+                if (!follower.isBusy()) next();
                 break;
 
             case DONE:
@@ -203,93 +207,78 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         state = s;
         stateTimer.reset();
         switch (s) {
-            case AIM_AND_SPIN_UP:
+            case DRIVE_OUT:
                 mech.spinUp();
-                turn(AIM_FROM_START, FACING_NORTH, SOUTH_CELL_FROM_START);
+                go(Paths.line(here(), p(SCORE_SOUTH)).tangent(), DEFAULT_SPEED);
                 break;
             case SHOOT_PRELOADS:
+            case SHOOT_FLOWER:
             case SHOOT_GARDEN:
-            case SHOOT_FLOWER_WEST:
-            case SHOOT_FLOWER_NORTH:
                 mech.volley(VOLLEY);
                 break;
 
+            case TO_OTHER_SIDE:
+                go(curve(TO_OTHER_SIDE, FLOWER_NORTH_APPROACH).heading(Interpolator.piecewise()
+                        .until(0.2038, linear(1.5708, 2.3722))
+                        .until(0.8679, Interpolator.tangent)
+                        .until(1.0, linear(1.0385, 1.5708))), DEFAULT_SPEED);
+                break;
+            case COLLECT_FLOWER:
+                mech.flowerBarDown();
+                mech.collect();
+                // Heading held square to the wall: a tangent heading would turn a small sideways
+                // offset into a yaw that swings the mouth off the flower's opening.
+                go(Paths.line(here(), p(FLOWER_NORTH_PICKUP)).constant(h(FACING_NORTH)), PICKUP_SPEED);
+                break;
+            case WAIT_FLOWER_FULL:
+            case WAIT_GARDEN_FULL:
+                mech.waitingForPollen();   // at the pickup now: the no-progress clock starts here
+                break;
+            case BACK_OFF_FLOWER:
+                mech.intakeOff();
+                mech.flowerBarStow();
+                go(Paths.line(here(), p(FLOWER_NORTH_APPROACH)).constant(h(FACING_NORTH)), DEFAULT_SPEED);
+                break;
+            case TO_SCORE_NORTH:
+                go(curve(TO_SCORE_NORTH, SCORE_NORTH).heading(Interpolator.piecewise()
+                        .until(0.2041, Interpolator.tangent.reverse())
+                        .until(0.5442, linear(2.8274, 4.7124))
+                        .until(1.0, Interpolator.constant(h(FACING_SOUTH)))), DEFAULT_SPEED);
+                break;
+
             case TO_GARDEN:
-                go(tangent(Paths.curve(here(), p(TO_GARDEN_C1), p(TO_GARDEN_C2), p(ABOVE_GARDEN_LANE))), DEFAULT_SPEED);
+                go(curve(TO_GARDEN, ABOVE_GARDEN_LANE).heading(Interpolator.piecewise()
+                        .until(0.2186, linear(-1.5708, -2.0354))
+                        .until(1.0, Interpolator.tangent)), DEFAULT_SPEED);
                 break;
             case SLIDE_ONTO_LANE:
                 // A short, slow slide down onto the lane, square to the south wall: near it the 22 in
                 // robot's corners swing into the wall if it turns at all.
-                go(Paths.line(here(), p(GARDEN_LANE_START)).constant(h(FACING_WEST)), SLIDE_SPEED);
+                go(Paths.line(here(), p(GARDEN_SWEEP_START)).constant(h(FACING_WEST)), SLIDE_SPEED);
                 break;
-            case COLLECT_GARDEN:
+            case SWEEP_GARDEN:
+                mech.flowerBarDown();
                 mech.collect();
                 // West along the row, intake toward the red alliance wall, heading held square to the
                 // south wall: the pollen come in one after another.
-                go(Paths.line(here(), p(GARDEN_PICKUP)).constant(h(FACING_WEST)), GARDEN_SPEED);
+                go(Paths.line(here(), p(GARDEN_SWEEP_END)).constant(h(FACING_WEST)), PICKUP_SPEED);
                 break;
-            case WAIT_GARDEN_FULL:
-            case WAIT_FLOWER_WEST:
-            case WAIT_FLOWER_NORTH:
-                mech.waitingForPollen();   // at the pickup now: the no-progress clock starts here
-                break;
-            case BACK_OUT_OF_GARDEN:
-                mech.intakeOff();
-                // Up off the lane still facing west (square to the south wall), to where it can turn.
-                go(Paths.line(here(), p(GARDEN_TURN)).constant(h(FACING_WEST)), BACK_OUT_SPEED);
-                break;
-            case AIM_FROM_GARDEN:
-                turn(AIM_FROM_GARDEN, FACING_WEST, SOUTH_CELL_FROM_GARDEN);
-                break;
-
-            case TO_FLOWER_WEST:
-                go(tangent(Paths.curve(here(), p(TO_FLOWER_WEST_C1), p(TO_FLOWER_WEST_C2), p(FLOWER_WEST_APPROACH))), 1.0);
-                break;
-            case COLLECT_FLOWER_WEST:
-                mech.flowerBarDown();
-                mech.collect();
-                // Heading held square to the wall: a tangent heading would turn a small sideways offset
-                // into a yaw that swings the mouth off the flower's opening.
-                go(Paths.line(here(), p(FLOWER_WEST_PICKUP)).constant(h(FACING_WEST)), FLOWER_SPEED);
-                break;
-            case BACK_OFF_FLOWER_WEST:
+            case OFF_GARDEN_LANE:
                 mech.intakeOff();
                 mech.flowerBarStow();
-                go(Paths.line(here(), p(FLOWER_WEST_APPROACH)).reverseTangent(), DEFAULT_SPEED);
+                go(Paths.line(here(), p(OFF_GARDEN_LANE)).constant(h(FACING_WEST)), OFF_LANE_SPEED);
                 break;
-            case TURN_NORTH:
-                turn(TURN_NORTH, FACING_WEST, FACING_NORTH);
-                break;
-            case AROUND_WEST_TO_SCORE_NORTH:
-                // Round the WEST side of the hive frame, arriving already facing the north cell.
-                go(tangent(Paths.curve(here(), p(AROUND_WEST_C1), p(AROUND_WEST_C2), p(SCORE_NORTH))), 1.0);
-                break;
-
-            case TURN_TO_FLOWER_NORTH:
-                turn(NORTH_OF_SCORE_NORTH, FACING_NORTH_CELL, FACING_NORTH);
-                break;
-            case COLLECT_FLOWER_NORTH:
-                mech.flowerBarDown();
-                mech.collect();
-                go(Paths.line(here(), p(FLOWER_NORTH_PICKUP)).constant(h(FACING_NORTH)), FLOWER_SPEED);
-                break;
-            case BACK_OFF_FLOWER_NORTH:
-                mech.intakeOff();
-                mech.flowerBarStow();
-                go(Paths.line(here(), p(NORTH_OF_SCORE_NORTH)).reverseTangent(), DEFAULT_SPEED);
-                break;
-            case TURN_TO_SCORE_NORTH:
-                turn(SCORE_NORTH, FACING_NORTH, FACING_NORTH_CELL);
+            case DRIVE_BACK:
+                spunUpOnTheWay = false;
+                go(curve(DRIVE_BACK, SCORE_NORTH).heading(Interpolator.piecewise()
+                        .until(0.1612, linear(-3.1416, -1.7852))
+                        .until(0.707, Interpolator.tangent.reverse())
+                        .until(0.8242, linear(-2.0008, -1.5708))
+                        .until(1.0, Interpolator.constant(h(FACING_SOUTH)))), DEFAULT_SPEED);
                 break;
 
-            case TURN_TO_PARK:
-                turn(TURN_TO_PARK, FACING_NORTH_CELL, TOWARD_PARK);
-                break;
-            case PARK:
-                mech.stopAll();
-                go(tangent(Paths.line(here(), p(PARK))), 1.0);
-                break;
             case DONE:
+                mech.stopAll();
                 break;
         }
     }
@@ -307,13 +296,18 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         follower.follow(path.with(foresight.maxPathSpeed.at(f * Constants.MAX_FORWARD_IN_PER_S)));
     }
 
-    /** A turn on the spot: about an inch to a point, heading swept from one to the other. */
-    private void turn(Pose to, double fromRed, double toRed) {
-        go(Paths.line(here(), p(to)).linear(h(fromRed), h(toRed)), DEFAULT_SPEED);
+    /** A Bezier curve from where the robot is, through the RED control points, to the RED end. */
+    private Path curve(Pose[] controls, Pose end) {
+        Pose[] pts = new Pose[controls.length + 2];
+        pts[0] = here();
+        for (int i = 0; i < controls.length; i++) pts[i + 1] = p(controls[i]);
+        pts[pts.length - 1] = p(end);
+        return Paths.curve(pts);
     }
 
-    private static Path tangent(Path path) {
-        return path.tangent();
+    /** A linear heading between two RED headings, as seen by this alliance. */
+    private Interpolator linear(double fromRed, double toRed) {
+        return Interpolator.linear(h(fromRed), h(toRed));
     }
 
     private Pose here() {

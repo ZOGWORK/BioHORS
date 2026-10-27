@@ -40,9 +40,9 @@
     },
     "gardenSweepStart": {
       "xIn": -40.0,
-      "yIn": -62.85,
+      "yIn": -62.5,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepStart, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); on the lane heading west. y = -62.85: heading west, the 13.2 in mouth reaches a pollen against the south wall only with the centre between y = -63.08 (the side on the wall) and -62.6. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepStart, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); just above the lane heading west (0.35 in short: a slide ends a few tenths past its target, and the slow sweep eases down onto the lane, y = -62.85, before the first pollen). y = -62.85: heading west, the 13.2 in mouth reaches a pollen against the south wall only with the centre between y = -63.08 (the side on the wall) and -62.6. NEEDS MEASUREMENT on the real field."
     },
     "gardenSweepEnd": {
       "xIn": -56.0,
