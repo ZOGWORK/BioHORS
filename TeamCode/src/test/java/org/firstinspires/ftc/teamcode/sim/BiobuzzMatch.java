@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.sim;
 
+import org.horizon36596.simloop.field.FieldWorld;
+import org.horizon36596.simloop.field.GamePiece;
+import org.horizon36596.simloop.field.GamePiecePhysicsConfig;
+import org.horizon36596.simloop.field.GamePieceTracker;
 import org.horizon36596.zenith.Json;
 import org.psilynx.psikit.core.Logger;
 import org.psilynx.psikit.core.wpi.math.Pose2d;
@@ -29,7 +33,12 @@ import java.util.List;
  *  - Tip: a cell tips when its pollen reaches the field file's tip table entry for the nectar in
  *    it (rules.tipTable; this project's copy says 8). The cell empties and the other comes up.
  *    The 4 s swing is not modelled: shots after the tip go straight to the new up cell.
- *  - Contact: the 18 in footprint (robot.json) against the field file's low obstacles (hive frame
+ *  - Physics mode (usePhysics): instead of the rule above, each launch is a real ball in SimLoop's
+ *    physics, fired from the CAD shooter exit at the speed the flywheel's real rpm gives
+ *    (ShotModel), into the physics hive (BiobuzzHive). A pollen scores when it first seats in one
+ *    of the hive's cells; a tip is the hive swinging from one stop to the other under the load;
+ *    the tipped cell's pollen roll out onto the floor. The staged nectar is not modelled there.
+ *  - Contact: the footprint (robot.json) against the field file's low obstacles (hive frame
  *    bars and legs, flower feet) and the walls.
  *
  * For AdvantageScope (2026-2027 Field, 2D or 3D Field tab) it logs the robot's true pose as
@@ -81,6 +90,15 @@ public final class BiobuzzMatch {
     static final double CELL_AIM_Z_IN = 59.5;     // SPEC: middle of the up-cell opening (field file)
     private final List<double[]> flights = new ArrayList<>(); // {t0, x0, y0, x1, y1, z1, cell(-1 = loose)}
     private final List<double[]> spilled = new ArrayList<>(); // {x, y}
+
+    // ---- physics mode ----
+    static final double POLLEN_RADIUS_IN = 1.4;   // SPEC (field file)
+    static final double MISS_AFTER_S = 2.5;       // a shot not seated this long after launch has missed
+    private GamePieceTracker world;               // null: the rule-based launch above
+    private final List<double[]> shots = new ArrayList<>(); // {id, launch time, state: 0 flying, 1 scored, 2 missed}
+    private int stop;                             // -1 south cell up, +1 north up
+    private double swingStart = Double.NaN;
+    private double prevX = Double.NaN, prevY;
 
     public BiobuzzMatch(BioHorsSim sim, Json field, Json robot, boolean red, int preload) {
         this.sim = sim;
@@ -141,6 +159,19 @@ public final class BiobuzzMatch {
         }
     }
 
+    /**
+     * Launches become real balls in SimLoop's physics (see the class comment). Call before the
+     * first step.
+     */
+    public BiobuzzMatch usePhysics() {
+        GamePiecePhysicsConfig physics = GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).build();
+        world = new GamePieceTracker(4, FieldWorld.builder().perimeter(72, 72).physics(physics)
+                .kinematicBody(BiobuzzHive.body(red)).build());
+        world.setBodyMotion(BiobuzzHive.bodyName(red), BiobuzzHive.angleWithUp(upIsNorth), 0.0);
+        stop = upIsNorth ? 1 : -1;
+        return this;
+    }
+
     /** One tick of the world, after the robot code and the plants. */
     public void step(double dt) {
         time += dt;
@@ -148,6 +179,9 @@ public final class BiobuzzMatch {
         double y = sim.drivePlant.getY();
         double h = sim.drivePlant.getHeading();
         double fwdX = Math.cos(h), fwdY = Math.sin(h);
+        double vx = Double.isNaN(prevX) ? 0 : (x - prevX) / dt, vy = Double.isNaN(prevX) ? 0 : (y - prevY) / dt;
+        prevX = x;
+        prevY = y;
         boolean intakeIn = sim.intakeLeft.getPower() > 0.1 && sim.intakeRight.getPower() > 0.1;
 
         // Driving vs strafing, from the plant's robot-frame velocities.
@@ -195,7 +229,12 @@ public final class BiobuzzMatch {
                 launchTimer -= LAUNCH_S_PER_PIECE;
                 held--;
                 launched++;
-                if (launchIsLegal(x, y, h)) {
+                if (world != null) {
+                    double[] l = ShotModel.pollenLaunch(x, y, h, sim.pollenShooterRpm(), vx, vy);
+                    int id = world.addHeldPiece("pollen", POLLEN_RADIUS_IN);
+                    world.launch(id, "shot", l[0], l[1], l[2], l[3], l[4], l[5]);
+                    shots.add(new double[] {id, time, 0});
+                } else if (launchIsLegal(x, y, h)) {
                     int up = upIsNorth ? 1 : 0;
                     double cellY = (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0;
                     flights.add(new double[] {time, x, y, hiveX, cellY, CELL_AIM_Z_IN, up});
@@ -221,6 +260,8 @@ public final class BiobuzzMatch {
             launchTimer = 0;
         }
 
+        if (world != null) stepPhysics(dt);
+
         checkContacts(x, y, h, intakeIn);
 
         logField(x, y, h);
@@ -236,6 +277,52 @@ public final class BiobuzzMatch {
         Logger.recordOutput("Shooter/pollenRpm", sim.pollenShooterRpm());
         Logger.recordOutput("Gate/pollen", sim.pollenGatePlant.getPosition());
         Logger.recordOutput("Intake/power", sim.intakeLeft.getPower());
+    }
+
+    private void stepPhysics(double dt) {
+        world.advance(dt);
+        String hive = BiobuzzHive.bodyName(red);
+        for (double[] s : shots) {
+            if (s[2] != 0) continue;
+            GamePiece p = world.getPiece((int) s[0]);
+            String cell = p.getSeatedCellName();
+            if (cell != null && cell.startsWith(hive)) {
+                s[2] = 1;
+                scored++;
+            } else if (time - s[1] > MISS_AFTER_S) {
+                s[2] = 2;
+                missed++;
+                missLog.add(String.format(java.util.Locale.ROOT, "t=%.2f launched, not seated; at (%.1f, %.1f, %.1f)",
+                        s[1], p.getFieldXInches(), p.getFieldYInches(), p.getFieldZInches()));
+            }
+        }
+        // A tip: the hive leaves its stop and reaches the other one.
+        double a = world.getBodyAngleRad(hive), tilt = BiobuzzHive.TILT_RAD, eps = Math.toRadians(1.0);
+        if (Math.abs(a - stop * tilt) > Math.toRadians(2.0)) {
+            if (Double.isNaN(swingStart)) swingStart = time;
+        } else {
+            swingStart = Double.NaN;
+        }
+        if (Math.abs(a + stop * tilt) < eps) {
+            tips++;
+            tipTimes.add(Double.isNaN(swingStart) ? time : swingStart);
+            stop = -stop;
+            upIsNorth = stop > 0;
+            swingStart = Double.NaN;
+        }
+        Logger.recordOutput("Match/hiveAngleDeg", Math.toDegrees(a));
+        Logger.recordOutput("Field/Hive", Pose3d.struct, AdvantageScopeFrame.hive(hiveX, BiobuzzHive.AXLE_Z_IN, a));
+    }
+
+    /** Every ball launched in physics mode, in flight, seated or on the floor (empty otherwise). */
+    public List<GamePiece> shotPieces() {
+        List<GamePiece> out = new ArrayList<>();
+        if (world != null) for (double[] s : shots) out.add(world.getPiece((int) s[0]));
+        return out;
+    }
+
+    public boolean physics() {
+        return world != null;
     }
 
     private final List<String> missLog = new ArrayList<>();
@@ -274,6 +361,13 @@ public final class BiobuzzMatch {
             for (int i = 0; i < f.count; i++) pieces.add(AdvantageScopeFrame.piece(f.x, f.y, 1.6 + 2.9 * i));
         }
         for (int i = 0; i < held; i++) pieces.add(AdvantageScopeFrame.piece(x, y, 8.0 + 3.0 * i));
+        if (world != null) {
+            for (GamePiece p : shotPieces()) {
+                pieces.add(AdvantageScopeFrame.piece(p.getFieldXInches(), p.getFieldYInches(), p.getFieldZInches()));
+            }
+            Logger.recordOutput("Field/Pollen", pieces.toArray(new Pose3d[0]));
+            return;
+        }
         int[] arriving = new int[2];
         for (int i = flights.size() - 1; i >= 0; i--) {
             double[] f = flights.get(i);
