@@ -122,6 +122,50 @@ class ZenithAutoMatchTest {
         assertEquals(blue.planned, blue.recorded, "BLUE steps that ran");
     }
 
+    // ------------------------------------------------------------------ physics
+
+    /**
+     * WHAT-IF shot for the physics run: a steep, grippy exit (70 deg, 0.8 of the rim speed). Not
+     * measured. It is the kind of shot under which the team's 1600 rpm test target reaches the cell
+     * (ShotSweepTest prints the table). The CAD-read 44 deg cannot score from the auto's spots at any
+     * rpm. Film one real shot and put the measured angle and speed in ShotModel.
+     */
+    static final double WHAT_IF_PITCH_DEG = 70.0;
+    static final double WHAT_IF_GRIP = 0.8;
+
+    @Test
+    void theAutoWithRealBallsInPhysics() throws IOException {
+        double savedPitch = ShotModel.POLLEN_PITCH_DEG, savedGrip = ShotModel.GRIP_EFFICIENCY;
+        ShotModel.POLLEN_PITCH_DEG = WHAT_IF_PITCH_DEG;
+        ShotModel.GRIP_EFFICIENCY = WHAT_IF_GRIP;
+        try {
+            String auto = System.getProperty("zenith.auto", AUTO_NAME);
+            Result a = runMatch(auto, "RED", "physics1", true);
+            Result b = runMatch(auto, "RED", "physics", true);
+            System.out.print("PHYSICS (what-if shot " + WHAT_IF_PITCH_DEG + " deg, grip " + WHAT_IF_GRIP + ")"
+                    + b.report);
+
+            // Every pollen the robot held left it, and each launch is accounted for: seated or missed.
+            assertEquals(EXPECTED_SCORED, b.match.launched(), "pollen launched\n" + b.report);
+            assertEquals(b.match.launched(), b.match.scored() + b.match.missed(),
+                    "a launch neither seated nor missed\n" + b.report);
+            for (org.horizon36596.simloop.field.GamePiece p : b.match.shotPieces()) {
+                assertTrue(Math.abs(p.getFieldXInches()) <= 72 && Math.abs(p.getFieldYInches()) <= 72,
+                        "a ball left the field: " + p);
+            }
+            // The hive and the balls are in the log for AdvantageScope's 3D field.
+            java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(b.rlog);
+            for (String k : new String[] {"Field/Hive", "Field/Pollen", "Match/hiveAngleDeg"}) {
+                assertTrue(keys.stream().anyMatch(x -> x.endsWith(k)), "RLOG has no " + k);
+            }
+            List<RlogDecodedCompare.Mismatch> diff = RlogDecodedCompare.compare(a.rlog, b.rlog);
+            assertTrue(diff.isEmpty(), "two physics runs logged differently: " + RlogDecodedCompare.summarise(diff));
+        } finally {
+            ShotModel.POLLEN_PITCH_DEG = savedPitch;
+            ShotModel.GRIP_EFFICIENCY = savedGrip;
+        }
+    }
+
     // ------------------------------------------------------------------ one match
 
     static final class Result {
@@ -136,6 +180,10 @@ class ZenithAutoMatchTest {
     }
 
     private Result runMatch(String auto, String alliance, String suffix) throws IOException {
+        return runMatch(auto, alliance, suffix, false);
+    }
+
+    private Result runMatch(String auto, String alliance, String suffix, boolean physics) throws IOException {
         Json robotJson = readJson(new File(assets, "robot.json"));
         Json fieldJson = readJson(new File(assets, "biobuzz.field.json"));
         Json autoJson = readJson(new File(assets, auto + ".auto.json"));
@@ -146,6 +194,7 @@ class ZenithAutoMatchTest {
         BioHorsSim sim = new BioHorsSim();
         boolean red = "RED".equals(alliance);
         BiobuzzMatch match = new BiobuzzMatch(sim, fieldJson, robotJson, red, preload);
+        if (physics) match.usePhysics();
         double sx = spec.startPose.getX(), sy = spec.startPose.getY(), sh = spec.startPose.getHeading();
         if (spec.mirrorsInto(alliance)) {
             sx = -sx;

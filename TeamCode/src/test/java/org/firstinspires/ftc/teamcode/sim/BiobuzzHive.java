@@ -1,0 +1,80 @@
+package org.firstinspires.ftc.teamcode.sim;
+
+import org.horizon36596.simloop.field.BodyCell;
+import org.horizon36596.simloop.field.ConvexShape;
+import org.horizon36596.simloop.field.HingeDynamics;
+import org.horizon36596.simloop.field.KinematicBody;
+
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * A BIOBUZZ hive as a SimLoop physics body: a bar on an axle along field X, a closed cell at each
+ * end (open only at its OUTER face, where a launch enters), resting on a 30 deg stop with one
+ * cell up. Its own weight holds it on the stop (centre of mass above the axle); pollen sitting in
+ * the up cell's far end push it over. When it tips, the old up cell swings down, slopes outward,
+ * and its pollen rolls out of the open end onto the floor: the spill.
+ *
+ * Local frame (before the tilt): x along the axle, y along the bar (cells at -y and +y), z up.
+ * The body angle turns about +X; at +30 deg the +y (north) cell is up, at -30 deg the south one.
+ *
+ * Geometry: SPEC where the field file / manual gives it, else APPROX fitted to it:
+ *   - pivot x = +/-12.75 (SPEC, field file); the cells' outer face 18.528 in from the pivot along y
+ *     (SPEC, FIRST CAD via Zenith's ledger); the bar is 20 in wide in x (SPEC, the pivot-bar box).
+ *   - axle height and cell height APPROX: chosen so the up cell's opening spans about 53.5 to 65.6 in
+ *     (manual Fig 9-10) at the 30 deg stop.
+ *   - hold (mass, centre of mass, inertia, damping) CALIBRATED in BiobuzzHiveTest so that 8 pollen
+ *     in the up cell tip it and 7 do not (the team's rule), and the swing takes a few seconds.
+ */
+public final class BiobuzzHive {
+
+    public static final double TILT_RAD = Math.toRadians(30.0);   // SPEC (manual: the bar rests at 30 deg)
+    public static final double AXLE_Z_IN = 44.2;                   // APPROX (fits the 53.5..65.6 in opening)
+    public static final double HALF_WIDTH_X_IN = 10.0;             // SPEC (20 in pivot bar)
+    public static final double OUTER_FACE_Y_IN = 18.528;           // SPEC
+    public static final double INNER_WALL_Y_IN = 2.0;              // APPROX: the axle housing
+    public static final double CELL_HEIGHT_IN = 14.0;              // APPROX (fits the opening)
+    public static final double WALL_IN = 0.75;                     // APPROX: wall thickness
+
+    // Hold: CALIBRATED in BiobuzzHiveTest (8 pollen tip, 7 do not). Mass in pollen units.
+    public static double HIVE_MASS = 20.0;          // CALIBRATED
+    public static double COM_HEIGHT_IN = 2.4;       // CALIBRATED: mid-band of 2.25..2.5 in, where the 8th pollen tips it
+    public static double INERTIA = 8000.0;          // CALIBRATED: the swing at the tip load takes about 4 s (DSim, APPROX)
+    public static double DAMPING_PER_S = 0.6;       // CALIBRATED
+
+    private BiobuzzHive() {
+    }
+
+    public static String bodyName(boolean red) {
+        return red ? "hiveRed" : "hiveBlue";
+    }
+
+    public static String cellName(boolean red, boolean north) {
+        return bodyName(red) + (north ? "North" : "South");
+    }
+
+    /** The hive body, its up cell set by the angle the tracker is given (setBodyMotion). */
+    public static KinematicBody body(boolean red) {
+        double px = red ? -12.75 : 12.75;
+        String n = bodyName(red);
+        double w = HALF_WIDTH_X_IN, o = OUTER_FACE_Y_IN, i = INNER_WALL_Y_IN, h = CELL_HEIGHT_IN, t = WALL_IN;
+        List<ConvexShape> shapes = Arrays.asList(
+                ConvexShape.box(n + "Floor", -w, w, -o, o, -t, 0),
+                ConvexShape.box(n + "Roof", -w, w, -o, o, h, h + t),
+                ConvexShape.box(n + "Hub", -w, w, -i, i, 0, h),
+                ConvexShape.box(n + "SideWest", -w - t, -w, -o, o, -t, h + t),
+                ConvexShape.box(n + "SideEast", w, w + t, -o, o, -t, h + t));
+        List<BodyCell> cells = Arrays.asList(
+                new BodyCell(cellName(red, true), -w, w, i, o, 0, h, 1.0),
+                new BodyCell(cellName(red, false), -w, w, -o, -i, 0, h, 1.0));
+        KinematicBody body = new KinematicBody(n, new double[] {px, 0.0, AXLE_Z_IN}, new double[] {1.0, 0.0, 0.0},
+                shapes, cells, 0.15, 0.6);
+        return body.withHinge(new HingeDynamics(HIVE_MASS, new double[] {0.0, 0.0, COM_HEIGHT_IN}, INERTIA,
+                DAMPING_PER_S, -TILT_RAD, TILT_RAD, 0.0));
+    }
+
+    /** Body angle that puts the given cell up. */
+    public static double angleWithUp(boolean north) {
+        return north ? TILT_RAD : -TILT_RAD;
+    }
+}

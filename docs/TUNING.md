@@ -177,13 +177,50 @@ across the field's middle and check it swings to the north cell.
 |---|---|---|---|
 | Drive motor / wheel | 312 rpm, 537.7 cpr, 104 mm (assumed) | `BioHorsSim` | Read the real parts |
 | Drive response | 5 /s | `BioHorsSim.DRIVE_RESPONSE_PER_S` | Fit a recorded straight-line run (SimLoop `fit` package) |
-| Track width / wheelbase | 14 / 12 in | `BioHorsSim` | Tape |
+| Track width / wheelbase | 12.96 / 10.39 in (MEASURED FROM CAD) | `BioHorsSim` | Tape |
 | Shooter spin-up | 3 /s | `BioHorsSim.SHOOTER_RESPONSE_PER_S` | Log rpm from 0 to target; fit the first-order curve |
 | Gate transit | full sweep 0.5 s | `BioHorsSim.GATE` | Film the gate |
 | Launch cadence, launch cone, flower rate | 0.30 s, 15 deg, 0.15 s | `BiobuzzMatch` | Film volleys and flower pulls |
 
 **Done when** a real run's RLOG and the sim's overlay in AdvantageScope (same pose and rpm curves
 within a few percent). SimLoop's `fit` package can compute the gap.
+
+### 9a. The shot (the most important measurement left)
+
+The sim can fly real balls (`ShotModel` -> SimLoop physics -> the physics hive `BiobuzzHive`). How
+far and how high a pollen goes depends on two numbers nobody has measured:
+
+| Item | Current | Where | How |
+|---|---|---|---|
+| Exit angle | 44 deg (the PS ramp's slope in CAD) | `ShotModel.POLLEN_PITCH_DEG` | Film one shot side-on at 1600 rpm (phone slow-mo, a tape on the floor for scale); measure the angle of the first few frames of flight |
+| Exit speed / rim speed | 0.5 (a ball rolling on a fixed hood) | `ShotModel.GRIP_EFFICIENCY` | Same video: speed over the first few frames, divided by `rpm * 2 pi / 60 * 1.42 in` |
+
+What the sim says now (`ShotSweepTest`, lowest rpm that seats a pollen in the up cell, robot on
+the hive's centre line, y = distance south of the hive axle; -1 = none up to 6000):
+
+| grip, pitch | y -35 | -40 | -45 | -50 | -55 | -60 |
+|---|---|---|---|---|---|---|
+| 0.5, 44 deg (CAD as read) | -1 | -1 | -1 | -1 | -1 | -1 |
+| 0.5, 60 deg | -1 | -1 | 3800 | 3100 | 2900 | 2900 |
+| 0.5, 70 deg | 3400 | 2700 | 2600 | 2700 | 2700 | 2800 |
+| 0.8, 60 deg | -1 | -1 | 2400 | 2000 | 1800 | 1800 |
+| 0.8, 70 deg | -1 | 1700 | 1700 | 1700 | 1700 | 1800 |
+
+Two findings:
+
+1. **At the CAD-read 44 deg nothing practical scores**: the cell opening is about 47 in above the
+   exit. If the robot really scores at 1600 rpm, the ball leaves steeper and faster than the CAD
+   reading suggests. The measurement above settles it.
+2. **The auto's score spots are too close.** `scoreSouth` and `scoreNorth` are about 27 in from
+   their cells (y = -36 above). Run with real balls, under even the generous 70 deg / 0.8 what-if,
+   the auto scores 0 (`ZenithAutoMatchTest.theAutoWithRealBallsInPhysics`). About 45-50 in from the
+   axle is where every plausible shot works and the rpm needed changes least with the angle.
+   **Once the shot is measured, move both score spots out and set the rpm from the table.**
+
+`PhysicsTipDemoTest` shows the physics working: parked 50 in out under the what-if, the real
+ShooterController and gate fire 8 real balls at 1800 rpm, all 8 seat, the hive tips at 4.1 s and 7
+spill on the south floor. Open `TeamCode/build/sim/physics-tip-demo.rlog` in AdvantageScope's 3D
+Field tab (Field/Robot, Field/Pollen as game pieces, Field/Hive as the hive bar's pose).
 
 ## 10. The tip rule
 

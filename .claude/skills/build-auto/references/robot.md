@@ -62,3 +62,10 @@ npx zenith sim two-tip --json        # same run through zenith.json's sim comman
 physics), `BiobuzzMatch` (pollen, flowers, hive cells, tips, launch legality, contact, strafing),
 `TracedZenithAuto` (the deployed auto with Zenith's trace) and `ZenithAutoMatchTest` (RED twice with
 identical logs, BLUE once, 30 s stop, AUTO-only score). RLOGs and traces go to `TeamCode/build/sim/`.
+
+The match's scoring is a RULE (from the cell's quarter, outboard, facing it within 15 deg). There is
+also a physics mode (`BiobuzzMatch.usePhysics()`): real balls from the CAD shooter exit
+(`ShotModel`) into a physics hive (`BiobuzzHive`) that tips under 8 and spills.
+`theAutoWithRealBallsInPhysics` runs the auto that way and reports (it asserts accounting, not a
+score: the shot is not measured yet). Under any plausible shot the current score spots are too close
+to the cells; see `docs/TUNING.md` 9a before re-planning where the robot scores.

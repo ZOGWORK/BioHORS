@@ -36,4 +36,12 @@ public final class AdvantageScopeFrame {
     public static Pose3d piece(double xIn, double yIn, double zIn) {
         return new Pose3d(point(xIn, yIn, zIn), new Rotation3d(0, 0, 0));
     }
+
+    /**
+     * A hive bar turned by angleRad about its axle (our +X, AdvantageScope's +Y, so a pitch there),
+     * the axle at (xIn, 0, zIn).
+     */
+    public static Pose3d hive(double xIn, double zIn, double angleRad) {
+        return new Pose3d(point(xIn, 0, zIn), new Rotation3d(0, angleRad, 0));
+    }
 }
