@@ -46,7 +46,7 @@ public final class ZenithSubsystems {
         }
     }
 
-    /** Both intake motors, plus the pollen estimate's intake side. */
+    /** Both intake motors, plus the pollen estimate's intake side (collection only, not feeding). */
     public static class Intake extends SubsystemBase {
         private final BioHorsRobot robot;
         private final PollenEstimate pollen;
@@ -60,6 +60,16 @@ public final class ZenithSubsystems {
 
         public void in() {
             runningIn = true;
+            robot.intake.intake();
+        }
+
+        /**
+         * Runs the intake inward to push pollen through the open gate into the shooter. This is
+         * not collecting, so it does not add to the pollen estimate (ScoreCommand takes the
+         * launched pollen away when the volley ends).
+         */
+        public void feed() {
+            runningIn = false;
             robot.intake.intake();
         }
 

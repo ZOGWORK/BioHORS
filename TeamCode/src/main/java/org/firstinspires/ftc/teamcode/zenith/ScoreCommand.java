@@ -52,7 +52,7 @@ public class ScoreCommand extends CommandBase {
             if (launcher.atSpeed() || timer.seconds() >= SPINUP_TIMEOUT_S) {
                 feeding = true;
                 launcher.openGate();
-                intake.in();
+                intake.feed();
                 timer.reset();
             }
             return;
