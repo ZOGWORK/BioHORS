@@ -217,6 +217,12 @@ def write_glb(path, groups):
     return tris
 
 
+# Parts are found by their CAD names: after a rename, stop before overwriting any file with an
+# empty model or leaving config.json zeroed at an axle that is no longer found.
+missing = [n for n, g in meshes.items() if not g] + ["%s axle" % n for n in ("model_0", "model_1") if n not in axles]
+if missing:
+    sys.exit("nothing found for %s; check target_of() and the shaft name against the CAD. "
+             "No file written." % ", ".join(missing))
 for name, groups in meshes.items():
     n = write_glb("%s/%s.glb" % (out_dir, name), groups)
     print(name, "triangles", n, "colours", len(groups))
