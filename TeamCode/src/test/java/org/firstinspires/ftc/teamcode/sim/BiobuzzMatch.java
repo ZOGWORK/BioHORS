@@ -44,7 +44,9 @@ import java.util.List;
  * For AdvantageScope (2026-2027 Field, 2D or 3D Field tab) it logs the robot's true pose as
  * Field/Robot and every pollen as Field/Pollen: the garden line, the flower columns, the ones
  * aboard, each launch in flight (a 0.45 s arc), the ones in the hive cells, and a tipped cell's
- * spill on the floor (drawn only; the spill is not modelled as collectable).
+ * spill on the floor (drawn only; the spill is not modelled as collectable). With the custom robot
+ * model (advantagescope/Robot_BioHORS) it also logs Field/RobotComponents: the pollen and nectar
+ * flywheels, spinning at their true rpm.
  */
 public final class BiobuzzMatch {
 
@@ -55,6 +57,13 @@ public final class BiobuzzMatch {
     static final double OPENING_REACH_IN = 2.0;     // PLACEHOLDER: mouth to retrieval opening
     static final double FACING_CONE_DEG = 25.0;     // PLACEHOLDER
     static final double CONTACT_TOLERANCE_IN = 0.25;
+    // MEASURED FROM CAD: each flywheel's 8 mm shaft centre, in the robot frame (docs/ROBOT_CAD.md).
+    // advantagescope/Robot_BioHORS/config.json zeroes the components at these same points.
+    static final double POLLEN_AXLE_FORWARD_IN = -5.3945, POLLEN_AXLE_UP_IN = 11.613;
+    static final double NECTAR_AXLE_FORWARD_IN = -5.6115, NECTAR_AXLE_UP_IN = 11.5365;
+    // APPROX: the ball rides under the wheel toward the front, so the wheel's underside moves
+    // forward: positive rpm turns it negatively about the robot's left (+y) axis. Drawing only.
+    static final double FLYWHEEL_SPIN_SIGN = -1.0;
     static final double GATE_OPEN_THRESHOLD = (0.485 + 0.67) / 2.0; // halfway between MechanismConstants' positions
 
     private final BioHorsSim sim;
@@ -99,6 +108,7 @@ public final class BiobuzzMatch {
     private int stop;                             // -1 south cell up, +1 north up
     private double swingStart = Double.NaN;
     private double prevX = Double.NaN, prevY;
+    private double pollenSpinRad, nectarSpinRad;
 
     public BiobuzzMatch(BioHorsSim sim, Json field, Json robot, boolean red, int preload) {
         this.sim = sim;
@@ -262,6 +272,9 @@ public final class BiobuzzMatch {
 
         if (world != null) stepPhysics(dt);
 
+        pollenSpinRad = (pollenSpinRad + sim.pollenShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
+        nectarSpinRad = (nectarSpinRad + sim.nectarShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
+
         checkContacts(x, y, h, intakeIn);
 
         logField(x, y, h);
@@ -355,6 +368,12 @@ public final class BiobuzzMatch {
 
     private void logField(double x, double y, double h) {
         Logger.recordOutput("Field/Robot", Pose2d.struct, AdvantageScopeFrame.pose2d(x, y, h));
+        // Order matches the model's components: model_0 pollen, model_1 nectar.
+        Logger.recordOutput("Field/RobotComponents", new Pose3d[] {
+                AdvantageScopeFrame.robotFlywheel(POLLEN_AXLE_FORWARD_IN, POLLEN_AXLE_UP_IN,
+                        FLYWHEEL_SPIN_SIGN * pollenSpinRad),
+                AdvantageScopeFrame.robotFlywheel(NECTAR_AXLE_FORWARD_IN, NECTAR_AXLE_UP_IN,
+                        FLYWHEEL_SPIN_SIGN * nectarSpinRad)});
         List<Pose3d> pieces = new ArrayList<>();
         for (double[] p : loosePollen) pieces.add(AdvantageScopeFrame.piece(p[0], p[1], p[2]));
         for (Flower f : flowers) {

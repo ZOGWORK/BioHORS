@@ -1,0 +1,18 @@
+{
+  "name": "BioHORS",
+  "isFTC": true,
+  "sourceUrl": "https://github.com/ZOGWORK/BioHORS/tree/main/advantagescope",
+  "rotations": [],
+  "position": [0, 0, 0],
+  "cameras": [],
+  "components": [
+    {
+      "zeroedRotations": [],
+      "zeroedPosition": [0.13702, 0, -0.29497]
+    },
+    {
+      "zeroedRotations": [],
+      "zeroedPosition": [0.142532, 0, -0.293027]
+    }
+  ]
+}

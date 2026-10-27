@@ -232,3 +232,44 @@ season package's table (from DSim, the manual has none) is `[8, 7, 6, 3, 1, 0]`,
 nectar in the up cell, which would let the 3 staged nectar tip the first cell with 3 pollen.
 **Confirm on a real field** which is right; if it is the DSim table, the first volley tips the hive
 and the auto plan changes.
+
+## 11. Seeing the real robot in AdvantageScope
+
+`advantagescope/Robot_BioHORS/` is an AdvantageScope custom robot built from the team's Onshape
+STEP (`33950 Robot.step`): the chassis as `model.glb`, and the pollen and nectar flywheels (Rhino
+wheel, steel flywheel, hub and shaft) as `model_0.glb` and `model_1.glb`, so they can spin.
+
+**Install it once (AdvantageScope 26):**
+1. In AdvantageScope, **Help > Show Assets Folder**.
+2. Copy the whole `advantagescope/Robot_BioHORS` folder into it (the folder, not just its files).
+3. Restart AdvantageScope. "BioHORS" now appears in the 3D Field tab's robot model list.
+
+**View a sim run:**
+1. Run the tests (`.\gradlew.bat :TeamCode:testDebugUnitTest`), then open
+   `TeamCode/build/sim/physics-tip-demo.rlog` (or any match RLOG under `TeamCode/build/sim/`).
+2. Open a 3D Field tab and pick the 2026-2027 field.
+3. Drag `RealOutputs/Field/Robot` in as a **Robot**, and choose **BioHORS** as its model.
+4. Drag `RealOutputs/Field/RobotComponents` onto that robot as **Components**: the flywheels spin at
+   the shooters' true rpm. Without it they are drawn still, in place.
+5. Add `RealOutputs/Field/Pollen` as game pieces and `RealOutputs/Field/Hive` as before.
+
+The model's origin is the drive centre on the floor, the same point `Field/Robot` logs
+(`docs/ROBOT_CAD.md` has the CAD-to-robot transform). Screws, nuts and other parts under 0.45 in
+are left out, the two pollen the CAD shows held are left out (the sim draws the real ones), and the
+mesh is clustered to a 3 mm grid (1.5 mm for the flywheels), so it stays about 4 MB.
+The flywheel spin direction is an APPROX (the ball rides under the wheel toward the front); it is
+drawing only and changes no physics.
+
+**Rebuild it after a CAD change** (Python with `cadquery-ocp` and `numpy`; loading the STEP takes
+a minute or two):
+
+```
+python advantagescope/tools/step_to_glb.py "<path>/33950 Robot.step" advantagescope/Robot_BioHORS
+python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model.glb 3
+python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_0.glb 1.5
+python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_1.glb 1.5
+```
+
+`step_to_glb.py` prints each flywheel's axle in the robot frame. If a shooter moved, put those
+numbers in `config.json` (`zeroedPosition` is minus the axle, in metres) and in `BiobuzzMatch`'s
+`*_AXLE_*_IN` constants; `AdvantageScopeFrameTest` fails until the two agree.
