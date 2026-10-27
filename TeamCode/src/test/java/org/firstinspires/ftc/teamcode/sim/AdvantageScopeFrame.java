@@ -13,10 +13,13 @@ import org.psilynx.psikit.core.wpi.math.Translation3d;
  * Ours (Zenith's field file, the autos, aim): origin at the field centre, inches, +X toward the
  * audience's right (BLUE side), +Y away from the audience, heading CCW from +X.
  *
- * AdvantageScope's FTC default, "Center/Rotated": origin at the field centre, metres, +X to the
- * right as seen from the RED alliance wall (RED's wall is our west wall, x = -72, where its
- * loading zone is), so their +X is our -Y and their +Y is our +X: a +90 deg rotation, applied to
- * positions AND headings (a robot facing our +X faces their +Y, heading +90 deg).
+ * AdvantageScope's 2026-2027 field model uses the same axes, in metres: no rotation. Checked
+ * against the model itself (autoAssets/Field3d_20262027FTCFieldV1, AdvantageScopeFrameTest): its
+ * staged pollen lie where the field file puts them with x = x and y = y (the red garden at
+ * X -1.76..-1.54, Y -1.76; the flowers at (-1.73, -0.59), (-0.59, 1.73), (1.73, 0.59),
+ * (0.59, -1.73)), its driver stations are at X = +/-2.5 (the alliance walls are our x = +/-72),
+ * and its red hive's raised cell is the south one, as the field file says. An earlier version
+ * rotated by 90 deg and drew everything a quarter turn off.
  */
 public final class AdvantageScopeFrame {
 
@@ -26,11 +29,11 @@ public final class AdvantageScopeFrame {
     }
 
     public static Pose2d pose2d(double xIn, double yIn, double headingRad) {
-        return new Pose2d(-yIn * M_PER_IN, xIn * M_PER_IN, new Rotation2d(headingRad + Math.PI / 2.0));
+        return new Pose2d(xIn * M_PER_IN, yIn * M_PER_IN, new Rotation2d(headingRad));
     }
 
     public static Translation3d point(double xIn, double yIn, double zIn) {
-        return new Translation3d(-yIn * M_PER_IN, xIn * M_PER_IN, zIn * M_PER_IN);
+        return new Translation3d(xIn * M_PER_IN, yIn * M_PER_IN, zIn * M_PER_IN);
     }
 
     public static Pose3d piece(double xIn, double yIn, double zIn) {
@@ -38,11 +41,11 @@ public final class AdvantageScopeFrame {
     }
 
     /**
-     * A hive bar turned by angleRad about its axle (our +X, AdvantageScope's +Y, so a pitch there),
-     * the axle at (xIn, 0, zIn).
+     * A hive bar turned by angleRad about its axle (our +X, AdvantageScope's +X too: a roll), the
+     * axle at (xIn, 0, zIn).
      */
     public static Pose3d hive(double xIn, double zIn, double angleRad) {
-        return new Pose3d(point(xIn, 0, zIn), new Rotation3d(0, angleRad, 0));
+        return new Pose3d(point(xIn, 0, zIn), new Rotation3d(angleRad, 0, 0));
     }
 
     /**

@@ -33,13 +33,42 @@ class AdvantageScopeFrameTest {
     }
 
     @Test
-    void theRedStartFacingTheHiveIsDrawnFacingAwayFromTheRedWall() {
-        // RED start (-13, -63) facing +Y (north, toward the hive). AdvantageScope Center/Rotated:
-        // their +X is our -Y, so our +Y (north) is their -X: heading 180 deg.
-        Pose2d p = AdvantageScopeFrame.pose2d(-13, -63, Math.PI / 2);
-        assertEquals(63 * 0.0254, p.getX(), 1e-9);
-        assertEquals(-13 * 0.0254, p.getY(), 1e-9);
-        assertEquals(Math.PI, Math.abs(p.getRotation().getRadians()), 1e-9);
+    void theRedStartIsDrawnOnTheSouthWallFacingTheHive() {
+        // RED start (-15, -64.2) facing +Y (north, toward the hive): the same axes in AdvantageScope.
+        Pose2d p = AdvantageScopeFrame.pose2d(-15, -64.2, Math.PI / 2);
+        assertEquals(-15 * 0.0254, p.getX(), 1e-9);
+        assertEquals(-64.2 * 0.0254, p.getY(), 1e-9);
+        assertEquals(Math.PI / 2, p.getRotation().getRadians(), 1e-9);
+    }
+
+    /**
+     * Our field file and AdvantageScope's field model agree where things are: each garden pollen and
+     * flower of the field file, converted, lands on one of the model's staged pollen (within 2 in).
+     * Read from the model's own GLB when AdvantageScope is installed here; skipped otherwise.
+     */
+    @Test
+    void ourFieldLinesUpWithAdvantageScopesFieldModel() throws IOException {
+        File glb = new File(System.getenv().getOrDefault("APPDATA", ""),
+                "AdvantageScope/autoAssets/Field3d_20262027FTCFieldV1/model.glb");
+        org.junit.jupiter.api.Assumptions.assumeTrue(glb.isFile(), "AdvantageScope's 2026-2027 field is not installed");
+        java.util.List<double[]> staged = StagedPollen.read(glb);
+        Json field;
+        try (InputStream in = new FileInputStream(new File(projectRoot(), "autos/field/biobuzz.field.json"))) {
+            field = Json.parse(in, "biobuzz.field.json");
+        }
+        int checked = 0;
+        for (Json e : field.get("elements").items()) {
+            String kind = e.optText("kind", "");
+            boolean flower = kind.equals("container") && "flower".equals(e.optText("container", ""));
+            boolean garden = kind.equals("pollen") && e.str("id").startsWith("garden");
+            if (!flower && !garden) continue;
+            Pose2d p = AdvantageScopeFrame.pose2d(e.num("xIn"), e.num("yIn"), 0);
+            double best = Double.MAX_VALUE;
+            for (double[] s : staged) best = Math.min(best, Math.hypot(s[0] - p.getX(), s[1] - p.getY()));
+            assertTrue(best < 2 * 0.0254, e.str("id") + " is " + best / 0.0254 + " in from the model's nearest pollen");
+            checked++;
+        }
+        assertTrue(checked >= 12, "checked " + checked);
     }
 
     /**
