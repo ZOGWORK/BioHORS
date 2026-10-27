@@ -67,6 +67,11 @@ first.
      until the step overshoots more than 3 % or rings, then backs off 20 %.
    - **Hold check:** spin-up time from rest, steady error band, and recovery after a 0.15 s power
      cut (a simulated pollen passing through).
+   - **Together check:** with both tuned, it spins **both shooters at once** at their own targets
+     (the teleop's dpad down runs them together, and they share one battery), settles 3 s, and
+     measures each one's error over 2 s plus the battery voltage. **Pass:** each within the same
+     2 % band. The report shows each shooter's band alone vs together and the battery voltage
+     alone vs together.
 3. Copy the printed lines (also in the robot log, tag `ShooterTuner`) into each shooter's
    "tuned values" block in `subsystems/MechanismConstants.java`.
 4. **Done when** the hold check shows spin-up well under a second, steady within about 2 %, and quick
@@ -81,6 +86,23 @@ first.
 | Nectar `targetRpm` | 2000 (PLACEHOLDER, must differ) | Field test, nectar into the flower |
 | `ticksPerRev` | 28 (SPEC, 1:1) | Section 0 gear ratio (the tuner works in encoder ticks/s, so it does not need it) |
 | `rpmTolerance` | 75 rpm | Shot-to-shot spread vs rpm |
+
+**If the together check fails, do not retune the PID blindly.** The two loops are independent;
+the shared battery is the only coupling, so it is almost certainly voltage. Check in this order:
+
+1. **Voltage compensation.** `ShooterController` scales the feedforward and `kS` by
+   `ffReferenceVoltage / measured voltage` (unit-tested in `ShooterControllerVoltageTest`). Check the
+   voltage sensor reads the real battery (the tuner prints the voltage it saw).
+2. **Voltage range.** If the together run was on a low battery (the report says), re-run on a fresh
+   one and compare. The values must hold across the voltages a match actually sees (about 12.8 V
+   fresh down to about 11.5 V).
+3. Only if it still fails with compensation working: re-run the tuner, and write down what changed
+   between the separate and together runs.
+
+In the sim (`ShooterTunerSimTest`), with a battery that sags under both shooters and drains from
+12.9 V to about 11.6 V, both shooters hold within 0.7 % together. The sim's coupling is mild: at the
+P the tuner picks, P alone absorbs a 10 % voltage drop, so the sim cannot show compensation is
+*needed*; the real robot is the test of that.
 
 The tuner does not pick target RPM, does not guarantee scoring, and does not touch the
 drivetrain (Pedro's follower is a separate loop, section 2).

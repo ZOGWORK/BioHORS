@@ -153,6 +153,53 @@ public final class BioHorsSim {
                 drivePlant.getHeading());
         pollenGatePlant.update(dt);
         nectarGatePlant.update(dt);
+        simTimeS += dt;
+        if (batterySag) applyBatterySag();
+    }
+
+    // ----- Battery sag (off unless a test turns it on) -----
+    /** Resting battery voltage when sag is on. PLACEHOLDER. */
+    static final double BATTERY_REST_V = 12.6;
+    /** Volts lost per unit of shooter power drawn (both shooters add). PLACEHOLDER: ~0.9 V with both at full. */
+    static final double BATTERY_SAG_V_PER_POWER = 0.45;
+    private boolean batterySag = false;
+    private double restStartV = BATTERY_REST_V;
+    private double drainVPerS = 0.0;
+    private double simTimeS = 0.0;
+
+    /**
+     * Turns on a battery that sags with the shooters' combined power, and flywheels that slow in
+     * proportion to the voltage, as a real DC motor does (speed ~ power x V / 12). Used to show
+     * that voltage-compensated feedforward holds both shooters on target at once.
+     */
+    public void enableShooterBatterySag() {
+        batterySag = true;
+    }
+
+    /**
+     * As {@link #enableShooterBatterySag()}, with a battery that also drains over the run: its
+     * resting voltage starts at {@code startV} and falls by {@code drainVPerS} each second, as a
+     * match battery does (about 12.8 V fresh to about 11.5 V tired). PLACEHOLDER numbers.
+     */
+    public void enableShooterBatterySag(double startV, double drainVPerS) {
+        batterySag = true;
+        restStartV = startV;
+        this.drainVPerS = drainVPerS;
+    }
+
+    /** Applies the sag for this tick. Call from step(), before the devices next update. */
+    private void applyBatterySag() {
+        double pP = Math.abs(pollenShooter.getPower());
+        double pN = Math.abs(nectarShooter.getPower());
+        double rest = restStartV - drainVPerS * simTimeS;
+        double v = rest - BATTERY_SAG_V_PER_POWER * (pP + pN);
+        battery.setVoltage(v);
+        // The fake motor's steady speed is (power + external torque fraction) x free speed, capped
+        // at free speed (measured: a positive fraction ASSISTS). A real motor at voltage v runs at
+        // power x v / 12, so the fraction is power x (v / 12 - 1): negative, a load, below 12 V.
+        // Limit: the fake cannot exceed its 12 V free speed, so above 12 V full power reads low.
+        pollenShooter.setExternalTorqueFraction(pollenShooter.getPower() * (v / 12.0 - 1.0));
+        nectarShooter.setExternalTorqueFraction(nectarShooter.getPower() * (v / 12.0 - 1.0));
     }
 
     /** Pollen shooter's true flywheel speed, rpm. */
