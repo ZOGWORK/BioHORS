@@ -96,7 +96,8 @@ fresh-context reviewer approves, confirming the new tests pin the new design's c
       the edit).
 
    Fail any: discard the edit and restore the last-best code. Last-best stands.
-4. Accepted: it becomes last-best. When the best improves past a threshold, or a new working capability
+4. Accepted: it becomes last-best. **Commit it** (one commit per accepted edit), so last-best is
+   always a revision you can check out. When the best improves past a threshold, or a new working capability
    lands, write a **milestone** (format below). Milestones are where gaming becomes visible and where
    rollback points live.
 
@@ -113,10 +114,12 @@ objective:   <metric>  <before> -> <after>  (<scenario, seeds>)
 why:         <the reason it is better>
 envelope:    <every term HOLDS; list them>
 review:      <who reviewed, findings>
-rollback:    last-best before this = MILESTONE <n-1> (commit <ref>)
+rollback:    last-best before this = commit <ref> (the last accepted edit before it; MILESTONE <n-1> is
+             at or before that commit)
 ```
 
-Commit at each milestone, so every one is a working version to roll back to.
+Every accepted edit already has its own commit; a milestone names the commit it reports on. Rolling
+back to a milestone's `rollback` commit loses nothing that was accepted before it.
 
 ## Worked example: "fastest reliable auto"
 
