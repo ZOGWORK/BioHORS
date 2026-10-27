@@ -464,6 +464,8 @@ class MainHorsTeleOpSimTest {
     }
 
     static void logTruth(BioHorsSim sim) {
+        Logger.recordOutput("Field/Robot", org.psilynx.psikit.core.wpi.math.Pose2d.struct,
+                AdvantageScopeFrame.pose2d(sim.drivePlant.getX(), sim.drivePlant.getY(), sim.drivePlant.getHeading()));
         Logger.recordOutput("Truth/xIn", sim.drivePlant.getX());
         Logger.recordOutput("Truth/yIn", sim.drivePlant.getY());
         Logger.recordOutput("Truth/headingRad", sim.drivePlant.getHeading());

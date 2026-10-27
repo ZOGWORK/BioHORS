@@ -20,6 +20,7 @@ The MainHORS teleop with odometry aim, and a Zenith-planned 2-tip pollen auto, b
 | MainHORS TeleOp | `teamcode/teleop/MainHorsTeleOp.java` | The teleop: MainHORS controls plus odometry aim (see below) |
 | Two tip | `teamcode/zenith/generated/TwoTipAuto.java` (generated) | The 2-tip pollen auto, played from `autos/two-tip.auto.json` by Zenith (see below) |
 | Choose Alliance | `teamcode/opmodes/ChooseAlliance.java` | Run before the auto: dpad left = RED, dpad right = BLUE |
+| Shooter Tuner | `teamcode/tuning/ShooterTuner.java` | Measures each shooter's feedforward (power sweep) and P (search), prints PIDF to paste into `MechanismConstants`. Robot on blocks, no pollen |
 | Tuning (Quickstart) | `teamcode/pedro/Tuning.java` + `procedures/` | PedroPathing tuners, including the Pinpoint Tuner |
 
 ## Hardware map (must match the Robot Controller config exactly)
@@ -106,9 +107,19 @@ Every sim number is a placeholder until measured (`docs/TUNING.md`), so the sim 
 logic and wiring, not the real robot's timing.
 
 RLOGs and Zenith traces land in `TeamCode/build/sim/` (gitignored; re-run the tests to regenerate).
-Open them in [AdvantageScope](https://docs.advantagescope.org/): `two-tip-red.rlog` (plot
-`Truth/xIn` vs `Truth/yIn` on the 2D field, `Match/scored`, `Match/tips`, `Shooter/pollenRpm`) and
-`teleop-aim.rlog` (`Truth/headingRad`).
+
+**Watch a run on the 3D field.** Open `TeamCode/build/sim/two-tip-red.rlog` (or `two-tip-blue.rlog`,
+`teleop-aim.rlog`) in [AdvantageScope](https://docs.advantagescope.org/), open a **3D Field** tab
+(or 2D Field) and pick **2026-2027 Field**. From `RealOutputs/Field`, drag:
+
+- `Robot` onto the field: the robot's true pose (choose a robot model, e.g. FTC drive base);
+- `RobotBelief` and set it to **Ghost**: where the robot thinks it is (match runs);
+- `Pollen` and set it to **Game Piece → Pollen**: the garden line, the flower columns, the 4
+  aboard, each launch flying into the hive, the pollen in the cells, and each tip's spill.
+
+Press play. Poses are logged in AdvantageScope's FTC "Center/Rotated" frame (metres), converted
+from the field frame the code uses by `sim/AdvantageScopeFrame`. `Match/scored`, `Match/tips`,
+`Shooter/pollenRpm` plot on a Line Graph.
 
 ## Nothing is tuned yet
 

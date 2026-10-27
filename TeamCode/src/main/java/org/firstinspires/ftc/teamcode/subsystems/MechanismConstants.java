@@ -51,13 +51,15 @@ public final class MechanismConstants {
     static {
         POLLEN_SHOOTER.label = "Pollen";
         applySharedPlaceholders(POLLEN_SHOOTER);
-        POLLEN_SHOOTER.targetRpm = 2000.0; // PLACEHOLDER
+        POLLEN_SHOOTER.targetRpm = 2000.0; // PLACEHOLDER: a field test, not the tuner, finds this
+        // ---- Pollen tuned values: paste the "Pollen" lines the Shooter Tuner OpMode prints here ----
 
         NECTAR_SHOOTER.label = "Nectar";
         applySharedPlaceholders(NECTAR_SHOOTER);
         // PLACEHOLDER. Nectar runs at a different speed from pollen; the real
         // number is unknown, so it starts at the same placeholder.
         NECTAR_SHOOTER.targetRpm = 2000.0;
+        // ---- Nectar tuned values: paste the "Nectar" lines the Shooter Tuner OpMode prints here ----
     }
 
     /**
@@ -72,6 +74,7 @@ public final class MechanismConstants {
         c.kI = 0.0005;                 // PLACEHOLDER
         c.kD = 0.0;                    // PLACEHOLDER
         c.kF = 1.0;                    // PLACEHOLDER
+        c.kS = 0.0;                    // PLACEHOLDER: static friction off until tuned
         c.integralLimit = 50.0;        // PLACEHOLDER
         c.derivativeAlpha = 0.9;       // PLACEHOLDER
         c.rpmFilterAlpha = 0.72;       // PLACEHOLDER

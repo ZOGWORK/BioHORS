@@ -94,6 +94,10 @@ public final class TracedZenithAuto extends AutoFromFile {
         if (!started) return;
         Pose2d belief = currentPose();
         trace.pose(belief.getX(), belief.getY(), belief.getHeading());
+        // The robot's own belief, for AdvantageScope beside Field/Robot (the truth).
+        org.psilynx.psikit.core.Logger.recordOutput("Field/RobotBelief",
+                org.psilynx.psikit.core.wpi.math.Pose2d.struct,
+                AdvantageScopeFrame.pose2d(belief.getX(), belief.getY(), belief.getHeading()));
         trace.truthPose(plant.getX(), plant.getY(), plant.getHeading());
     }
 }
