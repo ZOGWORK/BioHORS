@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -125,6 +126,33 @@ class MainHorsTeleOpSimTest {
         assertTrue(Math.abs(wrap(sim.drivePlant.getHeading() - south)) > Math.toRadians(8.0),
                 "and visibly not the south one");
         assertTrue(lastTelemetry(result).contains("NORTH"), "telemetry names the north cell");
+    }
+
+    @Test
+    void pressingAOnTheCentreLineDoesNotChangeTheTarget() {
+        // y = 1 is inside the 2 in hysteresis band, where the half rule keeps whatever cell is
+        // current (SOUTH, RED's kickoff up cell). Nothing else would overwrite a toggle here.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, 1.0, 0.0);
+        final OpModePhase[] phaseNow = {OpModePhase.INIT};
+        final List<String> targetsShown = new ArrayList<>();
+        OpModeRunResult result = run(sim, 120, (phase, tick, g1, g2) -> {
+            phaseNow[0] = phase;
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.a = (tick >= 5 && tick < 9) || (tick >= 40 && tick < 44) || (tick >= 70 && tick < 74);
+            g2.a = tick >= 90 && tick < 94; // the operator's A too
+            g1.left_trigger = 1f;
+        }, null);
+
+        for (List<String> sent : result.telemetry().transmissions()) {
+            for (String line : sent) if (line.startsWith("Target")) targetsShown.add(line);
+        }
+        assertFalse(targetsShown.isEmpty(), "telemetry should show the target");
+        for (String t : targetsShown) {
+            assertTrue(t.contains("SOUTH"), "pressing A must never change the target: " + t);
+        }
+        double south = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
+        assertAngleNear(south, sim.drivePlant.getHeading(), 3.0, "still aiming at the south cell");
     }
 
     @Test
