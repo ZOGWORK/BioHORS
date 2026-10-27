@@ -81,3 +81,7 @@ lint/tmp/
 # lint/reports/
 # Zenith CLI / MCP (package.json)
 node_modules/
+
+# Python caches (advantagescope/tools)
+__pycache__/
+*.pyc
