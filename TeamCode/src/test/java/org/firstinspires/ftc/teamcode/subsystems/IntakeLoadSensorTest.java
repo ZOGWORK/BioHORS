@@ -74,4 +74,14 @@ class IntakeLoadSensorTest {
         run(sensor, l, r, 0, -1.0, 0.1);
         assertFalse(sensor.hasReading(), "after ejecting the count is unknown");
     }
+
+    @Test
+    void fullIsTheLoadedThresholdExactly() {
+        double loaded = MechanismConstants.INTAKE_LOADED_TICKS_PER_S;
+        assertEquals(MechanismConstants.HOPPER_CAPACITY, IntakeLoadSensor.countFor(loaded - 10), "just below 2100");
+        assertEquals(MechanismConstants.HOPPER_CAPACITY, IntakeLoadSensor.countFor(loaded), "at 2100");
+        assertEquals(MechanismConstants.HOPPER_CAPACITY - 1, IntakeLoadSensor.countFor(loaded + 10), "just above 2100");
+        assertEquals(MechanismConstants.HOPPER_CAPACITY - 1, IntakeLoadSensor.countFor(2150), "2150 is not full");
+        assertEquals(0, IntakeLoadSensor.countFor(MechanismConstants.INTAKE_FREE_TICKS_PER_S), "free speed is empty");
+    }
 }

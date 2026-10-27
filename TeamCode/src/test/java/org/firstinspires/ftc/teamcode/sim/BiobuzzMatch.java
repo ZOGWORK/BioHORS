@@ -66,10 +66,10 @@ public final class BiobuzzMatch {
     // APPROX: the ball rides under the wheel toward the front, so the wheel's underside moves
     // forward: positive rpm turns it negatively about the robot's left (+y) axis. Drawing only.
     static final double FLYWHEEL_SPIN_SIGN = -1.0;
-    /** Load each pollen aboard puts on both intake motors (a resisting torque fraction), so a full
-     *  robot runs at MAINHORS26's loaded threshold (MechanismConstants). SET FROM those constants. */
-    static final double INTAKE_LOAD_PER_PIECE =
-            org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.INTAKE_SLOWDOWN_PER_PIECE;
+    /** Load each pollen aboard puts on both intake motors (a resisting torque fraction).
+     *  PLACEHOLDER: 0.07, so a full robot reads clearly below MAINHORS26's 2100 ticks/s loaded
+     *  threshold (1960) as its loaded robot did, and 1-3 pollen still read as 1-3. */
+    static final double INTAKE_LOAD_PER_PIECE = 0.07;
     static final double GATE_OPEN_THRESHOLD = (0.485 + 0.67) / 2.0; // halfway between MechanismConstants' positions
 
     private final BioHorsSim sim;

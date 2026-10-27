@@ -66,7 +66,7 @@ public class IntakeLoadSensor {
         if (running.seconds() < MechanismConstants.INTAKE_SENSE_SETTLE_S) return;
         readings++;
 
-        int now = countFor(slowdown());
+        int now = countFor(filteredTicksPerS);
         if (now != candidate) {
             candidate = now;
             candidateHeld.reset();
@@ -81,9 +81,17 @@ public class IntakeLoadSensor {
         return Math.max(0, 1.0 - filteredTicksPerS / MechanismConstants.INTAKE_FREE_TICKS_PER_S);
     }
 
-    static int countFor(double slowdown) {
+    /**
+     * The count for an intake speed. FULL only at or below the loaded threshold
+     * (INTAKE_LOADED_TICKS_PER_S, MainHORS's); above it, the nearest whole number of pollen, at most
+     * one short of full.
+     */
+    static int countFor(double ticksPerS) {
+        int capacity = MechanismConstants.HOPPER_CAPACITY;
+        if (ticksPerS <= MechanismConstants.INTAKE_LOADED_TICKS_PER_S) return capacity;
+        double slowdown = Math.max(0, 1.0 - ticksPerS / MechanismConstants.INTAKE_FREE_TICKS_PER_S);
         int n = (int) Math.floor(slowdown / MechanismConstants.INTAKE_SLOWDOWN_PER_PIECE + 0.5);
-        return Math.max(0, Math.min(MechanismConstants.HOPPER_CAPACITY, n));
+        return Math.max(0, Math.min(capacity - 1, n));
     }
 
     /** The pollen count last believed, or -1 if the intake has not run long enough to tell. */
