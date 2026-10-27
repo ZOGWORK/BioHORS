@@ -39,6 +39,13 @@ android {
                 systemProperty 'zenith.auto', zenithAuto
                 outputs.upToDateWhen { false }
             }
+
+            // -Dsim.sweeps=true runs the printed physics sweeps (PocketAimTest), skipped otherwise;
+            // asking for them always re-runs, since a cached run would print nothing.
+            if (Boolean.getBoolean('sim.sweeps')) {
+                systemProperty 'sim.sweeps', 'true'
+                outputs.upToDateWhen { false }
+            }
         }
     }
 }
