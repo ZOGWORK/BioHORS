@@ -38,6 +38,8 @@ import java.util.List;
  *    (ShotModel), into the physics hive (BiobuzzHive). A pollen scores when it first seats in one
  *    of the hive's cells; a tip is the hive swinging from one stop to the other under the load;
  *    the tipped cell's pollen roll out onto the floor. The staged nectar is not modelled there.
+ *  - Intake load: each pollen aboard slows both intake motors by INTAKE_LOAD_PER_PIECE while they
+ *    run inward, which is what the robot's intake-encoder pollen count reads.
  *  - Contact: the footprint (robot.json) against the field file's low obstacles (hive frame
  *    bars and legs, flower feet) and the walls.
  *
@@ -64,6 +66,9 @@ public final class BiobuzzMatch {
     // APPROX: the ball rides under the wheel toward the front, so the wheel's underside moves
     // forward: positive rpm turns it negatively about the robot's left (+y) axis. Drawing only.
     static final double FLYWHEEL_SPIN_SIGN = -1.0;
+    /** Load each pollen aboard puts on both intake motors (a resisting torque fraction). PLACEHOLDER:
+     *  matched to MechanismConstants.INTAKE_SLOWDOWN_PER_PIECE until measured on the robot. */
+    static final double INTAKE_LOAD_PER_PIECE = 0.06;
     static final double GATE_OPEN_THRESHOLD = (0.485 + 0.67) / 2.0; // halfway between MechanismConstants' positions
 
     private final BioHorsSim sim;
@@ -280,6 +285,12 @@ public final class BiobuzzMatch {
         nectarSpinRad = (nectarSpinRad + sim.nectarShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
 
         checkContacts(x, y, h, intakeIn);
+
+        // The pollen really aboard press on the intake rollers: running inward, both motors slow
+        // (the robot's IntakeLoadSensor reads this through their encoders). Applied next tick.
+        double load = intakeIn ? -INTAKE_LOAD_PER_PIECE * held : 0.0;
+        sim.intakeLeft.setExternalTorqueFraction(load);
+        sim.intakeRight.setExternalTorqueFraction(load);
 
         logField(x, y, h);
         Logger.recordOutput("Match/held", held);

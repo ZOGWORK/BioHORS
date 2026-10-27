@@ -131,6 +131,26 @@ Teleop: **X toggles DOWN / STOWED**; while either gate is open the bar sits at S
 only while collecting from a flower, SHOOTING for every volley. **Done when** the bar seats in a
 flower's opening at DOWN, shots never touch it at SHOOTING, and the robot fits the start box at STOWED.
 
+## 4c. Pollen count from the intake encoders
+
+Both intake motors have encoders. Pollen aboard press on the rollers, so pulling in at full power
+the intake slows down; `IntakeLoadSensor` turns the slowdown into a count (0-4). The teleop shows
+"Pollen (intake sensor)" with the speed and slowdown, and rumbles when it reads full (ejecting with Y
+makes the count unknown until the intake pulls in again). Both autos stop collecting as soon as it
+reads 4 (`hopperFull`). The state machine auto also stops waiting at a pickup once, after it
+arrives, a fresh reading shows nothing new for `COLLECT_NO_PROGRESS_S` (0.5 s); the Zenith auto's
+waits still run to `hopperFull` or their timeout.
+
+`MechanismConstants`, all PLACEHOLDER (the sim's values):
+1. `INTAKE_FREE_TICKS_PER_S` (2800): run the intake in, empty, and read the speed.
+2. `INTAKE_SLOWDOWN_PER_PIECE` (0.06): put 1, 2, 3, 4 pollen in and read the slowdown each time;
+   use the average step. If one or two pollen barely slow it, the count can only tell "some" from
+   "full": then lower `HOPPER_CAPACITY` checks accordingly or add a beam break.
+3. `INTAKE_SENSE_SETTLE_S` (0.4): how long after the intake starts before its speed means anything.
+
+**Done when** the count matches what is in the robot for 0-4 pollen, ten times in a row. Set
+`INTAKE_SENSOR_ENABLED = false` to fall back to the old time estimate.
+
 ## 5. Auto timing and the pollen estimate
 
 | Item | Current | Where | How | Done when |

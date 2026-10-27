@@ -27,6 +27,10 @@ import org.firstinspires.ftc.teamcode.zenith.ScoreCommand;
  *       firing) so the shots clear it.</li>
  * </ul>
  *
+ * Pollen count: while collecting, the intake encoders' slowdown (IntakeLoadSensor) sets it, so
+ * collecting ends as soon as the robot is really full, and {@link #noNewPollenFor} says when nothing
+ * more is coming in. Without the sensor it falls back to the time estimate.
+ *
  * Timing numbers are shared with the Zenith auto, so there is one place to tune them:
  * {@link ScoreCommand#SPINUP_TIMEOUT_S}, {@link ScoreCommand#FEED_S_PER_PIECE},
  * {@link ScoreCommand#FEED_EXTRA_S} and {@link PollenEstimate#INTAKE_S_PER_PIECE} (all PLACEHOLDER).
@@ -41,6 +45,9 @@ public class AutoMechanisms {
     private final PollenEstimate pollen;
     private final ElapsedTime loopTimer = new ElapsedTime();
     private final ElapsedTime pollenTimer = new ElapsedTime();
+    private final ElapsedTime sinceNewPollen = new ElapsedTime();
+    private int lastHeld;
+    private long readingsAtWait;
 
     private IntakeState intake = IntakeState.OFF;
     private PollenState pollenShooter = PollenState.IDLE;
@@ -71,6 +78,26 @@ public class AutoMechanisms {
 
     public void collect() {
         setIntake(IntakeState.COLLECT);
+        sinceNewPollen.reset();
+        lastHeld = pollen.held();
+    }
+
+    /** The robot is at the pickup and waiting for pollen: the no-progress clock starts now. */
+    public void waitingForPollen() {
+        sinceNewPollen.reset();
+        lastHeld = pollen.held();
+        readingsAtWait = robot.intakeLoad.readings();
+    }
+
+    /**
+     * True once, since {@link #waitingForPollen()}, the intake sensor has taken a fresh settled
+     * reading and no new pollen has come in for {@code seconds}: there is nothing more to collect
+     * here, so stop waiting. Always false without the sensor (the time estimate cannot tell).
+     */
+    public boolean noNewPollenFor(double seconds) {
+        return MechanismConstants.INTAKE_SENSOR_ENABLED && intake == IntakeState.COLLECT
+                && robot.intakeLoad.hasReading() && robot.intakeLoad.readings() > readingsAtWait
+                && sinceNewPollen.seconds() >= seconds;
     }
 
     public void intakeOff() {
@@ -126,6 +153,7 @@ public class AutoMechanisms {
                     robot.pollenGate.setClosed(true);
                     setIntake(IntakeState.OFF);
                     pollen.launched(volleyCount);
+                    robot.intakeLoad.emptied();
                     volleysFired++;
                     pollenShooter = PollenState.IDLE;
                 }
@@ -139,10 +167,19 @@ public class AutoMechanisms {
         robot.nectarShooter.setShooterOn(false);
         robot.nectarGate.setClosed(true);
 
-        // The pollen estimate counts collecting only (a long loop, e.g. a pause, is not counted).
-        if (intake == IntakeState.COLLECT && dt < 0.25) pollen.intakeRan(dt);
-
         robot.updateMechanisms();
+
+        // While collecting, the count is what the intake feels (or, without the sensor, the time
+        // estimate; a long loop, e.g. a pause, is not counted).
+        if (intake == IntakeState.COLLECT) {
+            if (MechanismConstants.INTAKE_SENSOR_ENABLED) {
+                if (robot.intakeLoad.hasReading()) pollen.sensed(robot.intakeLoad.count());
+            } else if (dt < 0.25) {
+                pollen.intakeRan(dt);
+            }
+            if (pollen.held() > lastHeld) sinceNewPollen.reset();
+            lastHeld = pollen.held();
+        }
     }
 
     /** Everything off: the end of AUTO. */

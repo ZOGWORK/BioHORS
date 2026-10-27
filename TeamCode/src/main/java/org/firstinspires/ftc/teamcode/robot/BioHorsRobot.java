@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.robot;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -12,6 +13,7 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveController;
 import org.firstinspires.ftc.teamcode.subsystems.FlowerBarController;
 import org.firstinspires.ftc.teamcode.subsystems.GateController;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeController;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeLoadSensor;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
 
@@ -32,6 +34,8 @@ public class BioHorsRobot {
 
     public final DriveController drive;
     public final IntakeController intake;
+    /** Pollen count from the intake's encoders (both intake motors). */
+    public final IntakeLoadSensor intakeLoad;
     public final ShooterController pollenShooter;
     public final ShooterController nectarShooter;
     public final GateController pollenGate;
@@ -51,8 +55,8 @@ public class BioHorsRobot {
         backLeft = hardwareMap.get(DcMotor.class, "backLeft");
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
-        DcMotor intakeLeft = hardwareMap.get(DcMotor.class, "intakeLeft");
-        DcMotor intakeRight = hardwareMap.get(DcMotor.class, "intakeRight");
+        DcMotorEx intakeLeft = hardwareMap.get(DcMotorEx.class, "intakeLeft");
+        DcMotorEx intakeRight = hardwareMap.get(DcMotorEx.class, "intakeRight");
         DcMotor pollenShooterMotor = hardwareMap.get(DcMotor.class, MechanismConstants.POLLEN_SHOOTER_NAME);
         DcMotor nectarShooterMotor = hardwareMap.get(DcMotor.class, MechanismConstants.NECTAR_SHOOTER_NAME);
         Servo pollenGateServo = hardwareMap.get(Servo.class, MechanismConstants.POLLEN_GATE_NAME);
@@ -95,6 +99,7 @@ public class BioHorsRobot {
 
         drive = new DriveController(frontLeft, frontRight, backLeft, backRight);
         intake = new IntakeController(intakeLeft, intakeRight);
+        intakeLoad = new IntakeLoadSensor(intakeLeft, intakeRight);
         pollenShooter = new ShooterController(
                 MechanismConstants.POLLEN_SHOOTER, pollenShooterMotor, telemetry, batterySensor);
         nectarShooter = new ShooterController(
@@ -118,8 +123,9 @@ public class BioHorsRobot {
         }
     }
 
-    /** Run once per loop: both shooters' velocity loops. */
+    /** Run once per loop: both shooters' velocity loops, and the intake's pollen count. */
     public void updateMechanisms() {
+        intakeLoad.update(intake.getPower());
         pollenShooter.update();
         nectarShooter.update();
     }

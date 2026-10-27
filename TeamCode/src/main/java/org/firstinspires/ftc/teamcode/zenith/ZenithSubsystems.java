@@ -82,7 +82,12 @@ public final class ZenithSubsystems {
         public void periodic() {
             double dt = loop.seconds();
             loop.reset();
-            if (runningIn && dt < 0.25) pollen.intakeRan(dt);
+            if (!runningIn) return;
+            if (org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.INTAKE_SENSOR_ENABLED) {
+                if (robot.intakeLoad.hasReading()) pollen.sensed(robot.intakeLoad.count());
+            } else if (dt < 0.25) {
+                pollen.intakeRan(dt);
+            }
         }
     }
 
@@ -131,6 +136,11 @@ public final class ZenithSubsystems {
 
         public void closeGate() {
             robot.pollenGate.setClosed(true);
+        }
+
+        /** The volley emptied the robot: the intake sensor's count starts again from nothing. */
+        public void emptied() {
+            robot.intakeLoad.emptied();
         }
 
         /** Lifts the flower bar slightly while a volley runs, so the shots clear it. */

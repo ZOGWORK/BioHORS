@@ -107,6 +107,21 @@ public final class MechanismConstants {
     public static double FLOWER_BAR_STOWED = 0.15;   // PLACEHOLDER
     public static double FLOWER_BAR_DOWN = 0.80;     // PLACEHOLDER
     public static double FLOWER_BAR_SHOOTING = 0.65; // PLACEHOLDER
+    // ===== Pollen count from the intake's speed (IntakeLoadSensor) =====
+    // Both intake motors have encoders. Pollen aboard press on the rollers, so the intake slows.
+    public static final int HOPPER_CAPACITY = 4;                // SET BY HAND: confirmed by the team (G407)
+    public static boolean INTAKE_SENSOR_ENABLED = true;          // false: fall back to the time estimate
+    /** Average intake speed running inward, empty, ticks/s. PLACEHOLDER (the sim's): read it on the robot. */
+    public static double INTAKE_FREE_TICKS_PER_S = 2800.0;
+    /** Fraction of that speed lost per pollen aboard. PLACEHOLDER (SET FROM SIM): measure with 1-4 pollen. */
+    public static double INTAKE_SLOWDOWN_PER_PIECE = 0.06;
+    public static double INTAKE_SENSE_MIN_POWER = 0.5;          // SET BY HAND: read only while pulling in hard
+    public static double INTAKE_SENSE_SETTLE_S = 0.4;           // PLACEHOLDER: ignore the spin-up after starting
+    public static double INTAKE_SENSE_DEBOUNCE_S = 0.12;        // PLACEHOLDER: a new count must hold this long
+    public static double INTAKE_SENSE_FILTER_ALPHA = 0.3;       // PLACEHOLDER: speed smoothing per loop
+    /** In auto, stop waiting for more pollen once none has come in for this long. PLACEHOLDER. */
+    public static double COLLECT_NO_PROGRESS_S = 0.5;
+
     /** Time for the bar to reach SHOOTING before a volley feeds, seconds. PLACEHOLDER: film it. */
     public static double FLOWER_BAR_SETTLE_S = 0.25;
 }

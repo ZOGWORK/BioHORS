@@ -13,6 +13,7 @@ public class IntakeController {
 
     private final DcMotor intakeLeft;
     private final DcMotor intakeRight;
+    private double power;
 
     public static double INTAKE_POWER = 1.0; // PLACEHOLDER
     public static double OUTTAKE_POWER = -1.0; // PLACEHOLDER
@@ -38,7 +39,13 @@ public class IntakeController {
     }
 
     public void setPower(double power) {
+        this.power = power;
         intakeLeft.setPower(power);
         intakeRight.setPower(power);
+    }
+
+    /** The power last given to both motors (+ = pulling in). */
+    public double getPower() {
+        return power;
     }
 }
