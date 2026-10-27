@@ -53,6 +53,7 @@ public class AutoMechanisms {
     private PollenState pollenShooter = PollenState.IDLE;
     private int volleyCount;
     private int volleysFired;
+    private int volleysSkipped;
 
     public AutoMechanisms(BioHorsRobot robot, int preload) {
         this.robot = robot;
@@ -113,9 +114,17 @@ public class AutoMechanisms {
         robot.pollenShooter.setShooterOn(true);
     }
 
-    /** Starts a volley of count pollen. Ignored if one is already running. */
+    /**
+     * Starts a volley of count pollen. Ignored if one is already running. Skipped altogether when
+     * the intake sensor read the robot empty (as MAINHORS26's auto skipped a shot with no balls):
+     * feeding nothing would waste about two seconds.
+     */
     public void volley(int count) {
         if (pollenShooter != PollenState.IDLE) return;
+        if (MechanismConstants.INTAKE_SENSOR_ENABLED && robot.intakeLoad.hasReading() && pollen.held() == 0) {
+            volleysSkipped++;
+            return;
+        }
         volleyCount = count;
         robot.pollenShooter.setShooterOn(true);
         robot.pollenGate.setClosed(true);
@@ -226,5 +235,9 @@ public class AutoMechanisms {
 
     public int volleysFired() {
         return volleysFired;
+    }
+
+    public int volleysSkipped() {
+        return volleysSkipped;
     }
 }
