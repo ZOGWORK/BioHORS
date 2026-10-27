@@ -1,9 +1,17 @@
 package org.firstinspires.ftc.teamcode.sim;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.horizon36596.zenith.Json;
 import org.junit.jupiter.api.Test;
 import org.psilynx.psikit.core.wpi.math.Pose2d;
+import org.psilynx.psikit.core.wpi.math.Pose3d;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Positions and headings must turn by the same rotation, or the robot is drawn facing backward.
@@ -32,5 +40,39 @@ class AdvantageScopeFrameTest {
         assertEquals(63 * 0.0254, p.getX(), 1e-9);
         assertEquals(-13 * 0.0254, p.getY(), 1e-9);
         assertEquals(Math.PI, Math.abs(p.getRotation().getRadians()), 1e-9);
+    }
+
+    /**
+     * AdvantageScope moves each flywheel model by its config.json zeroedPosition, then by the logged
+     * Field/RobotComponents pose. With no spin the two must cancel, or the flywheel is drawn away
+     * from its shooter (and orbits instead of spinning in place).
+     */
+    @Test
+    void theFlywheelComponentsSpinWhereTheModelPutsThem() throws IOException {
+        File dir = new File(projectRoot(), "advantagescope/Robot_BioHORS");
+        for (String f : new String[] {"model.glb", "model_0.glb", "model_1.glb"}) {
+            assertTrue(new File(dir, f).isFile(), "missing " + f);
+        }
+        Json components;
+        try (InputStream in = new FileInputStream(new File(dir, "config.json"))) {
+            components = Json.parse(in, "config.json").get("components");
+        }
+        assertEquals(2, components.size(), "model_0 pollen and model_1 nectar");
+        Pose3d[] logged = {
+            AdvantageScopeFrame.robotFlywheel(BiobuzzMatch.POLLEN_AXLE_FORWARD_IN, BiobuzzMatch.POLLEN_AXLE_UP_IN, 0),
+            AdvantageScopeFrame.robotFlywheel(BiobuzzMatch.NECTAR_AXLE_FORWARD_IN, BiobuzzMatch.NECTAR_AXLE_UP_IN, 0)};
+        for (int i = 0; i < 2; i++) {
+            Json zero = components.at(i).get("zeroedPosition");
+            assertEquals(0.0, logged[i].getX() + zero.at(0).num(), 1e-5, "component " + i + " x");
+            assertEquals(0.0, logged[i].getY() + zero.at(1).num(), 1e-5, "component " + i + " y");
+            assertEquals(0.0, logged[i].getZ() + zero.at(2).num(), 1e-5, "component " + i + " z");
+        }
+    }
+
+    private static File projectRoot() {
+        File dir = new File(System.getProperty("user.dir")).getAbsoluteFile();
+        while (dir != null && !new File(dir, "zenith.json").isFile()) dir = dir.getParentFile();
+        if (dir == null) throw new IllegalStateException("no zenith.json above " + System.getProperty("user.dir"));
+        return dir;
     }
 }

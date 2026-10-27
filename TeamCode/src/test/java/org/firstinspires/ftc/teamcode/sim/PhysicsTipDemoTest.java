@@ -30,7 +30,8 @@ import java.util.Locale;
  * The shot is the stated WHAT-IF (ZenithAutoMatchTest.WHAT_IF_*); the rpm is the lowest that seats
  * a ball from this spot under it (ShotSweepTest), plus 100: SET FROM SIM.
  *
- * RLOG: TeamCode/build/sim/physics-tip-demo.rlog (Field/Robot, Field/Pollen, Field/Hive).
+ * RLOG: TeamCode/build/sim/physics-tip-demo.rlog (Field/Robot, Field/RobotComponents, Field/Pollen,
+ * Field/Hive).
  */
 class PhysicsTipDemoTest {
 
@@ -117,7 +118,7 @@ class PhysicsTipDemoTest {
             assertEquals(1, match.tips(), "8 pollen tip the cell once (team rule)");
             assertTrue(southFloor >= 6, "the tipped cell should spill its load on the south side, got " + southFloor);
             java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(rlog);
-            for (String k : new String[] {"Field/Robot", "Field/Pollen", "Field/Hive"}) {
+            for (String k : new String[] {"Field/Robot", "Field/RobotComponents", "Field/Pollen", "Field/Hive"}) {
                 assertTrue(keys.stream().anyMatch(x -> x.endsWith(k)), "RLOG has no " + k);
             }
         } finally {

@@ -44,4 +44,13 @@ public final class AdvantageScopeFrame {
     public static Pose3d hive(double xIn, double zIn, double angleRad) {
         return new Pose3d(point(xIn, 0, zIn), new Rotation3d(0, angleRad, 0));
     }
+
+    /**
+     * A flywheel component of the custom robot model (advantagescope/Robot_BioHORS), relative to the
+     * robot: its axle at (forwardIn, 0, upIn) in the robot frame (x forward, y left, z up, origin the
+     * drive centre on the floor), turned spinRad about the robot's +y (left) axis.
+     */
+    public static Pose3d robotFlywheel(double forwardIn, double upIn, double spinRad) {
+        return new Pose3d(new Translation3d(forwardIn * M_PER_IN, 0, upIn * M_PER_IN), new Rotation3d(0, spinRad, 0));
+    }
 }
