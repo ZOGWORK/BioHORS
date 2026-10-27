@@ -220,6 +220,17 @@ Two findings:
    axle is where every plausible shot works and the rpm needed changes least with the angle.
    **Once the shot is measured, move both score spots out and set the rpm from the table.**
 
+**Where in the cell to aim a rapid volley** (`PocketAimTest`): aim at the cell's middle. Volleys of 8
+were fired at the middle, a side wall, and the front-lip and deep corners, from the centre line and
+from an angle. They used perfect shots, then scatter (up to 3 deg / 3 %) plus an 8 % flywheel dip per
+shot, with hive walls from very dead (restitution 0.02) to lively (0.5). The middle seated as many or
+more every time. Wall aims lost 0.5-1 of 8, and the front-lip corners 2-3. The up cell slopes down
+to its inner wall, so every ball that gets in rolls to the same place, and aiming off-centre only
+adds the chance of clipping the lip or a side wall. The rpm window matters far more: about 200 rpm
+wide, and too fast overshoots the cell. **Worth checking on the real robot:** the sim's cell is a
+plain box, so a real cell with a funnel or lip inside could change this. The full sweeps run with
+`-Dsim.sweeps=true`.
+
 `PhysicsTipDemoTest` shows the physics working: parked 50 in out under the what-if, the real
 ShooterController and gate fire 8 real balls at 1800 rpm, all 8 seat, the hive starts to tip at 5.1 s
 (3.7 s swing) and 7 spill on the south floor. Open `TeamCode/build/sim/physics-tip-demo.rlog` in AdvantageScope's 3D

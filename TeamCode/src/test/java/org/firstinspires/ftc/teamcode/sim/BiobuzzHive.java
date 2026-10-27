@@ -39,6 +39,10 @@ public final class BiobuzzHive {
     public static final double CELL_HEIGHT_IN = 14.0;              // APPROX: (65.6 - 53.5) / cos 30
     public static final double WALL_IN = 0.75;                     // APPROX: wall thickness
 
+    // Ball-on-hive contact: APPROX (SimLoop's example values), not measured for pollen on a real hive.
+    public static double RESTITUTION = 0.15;
+    public static double FRICTION = 0.6;
+
     // Hold: CALIBRATED in BiobuzzHiveTest (8 pollen tip, 7 do not). Mass in pollen units.
     public static double HIVE_MASS = 20.0;          // CALIBRATED
     public static double COM_HEIGHT_IN = 7.2;       // CALIBRATED: mid-band of 6.8..7.6 in, where the 8th pollen tips it
@@ -71,7 +75,7 @@ public final class BiobuzzHive {
                 new BodyCell(cellName(red, true), -w, w, i, o, 0, h, 1.0),
                 new BodyCell(cellName(red, false), -w, w, -o, -i, 0, h, 1.0));
         KinematicBody body = new KinematicBody(n, new double[] {px, 0.0, AXLE_Z_IN}, new double[] {1.0, 0.0, 0.0},
-                shapes, cells, 0.15, 0.6);
+                shapes, cells, RESTITUTION, FRICTION);
         return body.withHinge(new HingeDynamics(HIVE_MASS, new double[] {0.0, 0.0, COM_HEIGHT_IN}, INERTIA,
                 DAMPING_PER_S, -TILT_RAD, TILT_RAD, 0.0));
     }
