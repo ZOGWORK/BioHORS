@@ -218,10 +218,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
 
             case TO_OTHER_SIDE:
-                go(curve(TO_OTHER_SIDE, FLOWER_NORTH_APPROACH).heading(Interpolator.piecewise()
-                        .until(0.2038, linear(1.5708, 2.3722))
-                        .until(0.8679, Interpolator.tangent)
-                        .until(1.0, linear(1.0385, 1.5708))), DEFAULT_SPEED);
+                go(curve(TO_OTHER_SIDE, FLOWER_NORTH_APPROACH).heading(pieces(TO_OTHER_SIDE_HEADING)), DEFAULT_SPEED);
                 break;
             case COLLECT_FLOWER:
                 mech.flowerBarDown();
@@ -240,16 +237,11 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 go(Paths.line(here(), p(FLOWER_NORTH_APPROACH)).constant(h(FACING_NORTH)), DEFAULT_SPEED);
                 break;
             case TO_SCORE_NORTH:
-                go(curve(TO_SCORE_NORTH, SCORE_NORTH).heading(Interpolator.piecewise()
-                        .until(0.2041, Interpolator.tangent.reverse())
-                        .until(0.5442, linear(2.8274, 4.7124))
-                        .until(1.0, Interpolator.constant(h(FACING_SOUTH)))), DEFAULT_SPEED);
+                go(curve(TO_SCORE_NORTH, SCORE_NORTH).heading(pieces(TO_SCORE_NORTH_HEADING)), DEFAULT_SPEED);
                 break;
 
             case TO_GARDEN:
-                go(curve(TO_GARDEN, ABOVE_GARDEN_LANE).heading(Interpolator.piecewise()
-                        .until(0.2186, linear(-1.5708, -2.0354))
-                        .until(1.0, Interpolator.tangent)), DEFAULT_SPEED);
+                go(curve(TO_GARDEN, ABOVE_GARDEN_LANE).heading(pieces(TO_GARDEN_HEADING)), DEFAULT_SPEED);
                 break;
             case SLIDE_ONTO_LANE:
                 // A short, slow slide down onto the lane, square to the south wall: near it the 22 in
@@ -270,11 +262,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
             case DRIVE_BACK:
                 spunUpOnTheWay = false;
-                go(curve(DRIVE_BACK, SCORE_NORTH).heading(Interpolator.piecewise()
-                        .until(0.1612, linear(-3.1416, -1.7852))
-                        .until(0.707, Interpolator.tangent.reverse())
-                        .until(0.8242, linear(-2.0008, -1.5708))
-                        .until(1.0, Interpolator.constant(h(FACING_SOUTH)))), DEFAULT_SPEED);
+                go(curve(DRIVE_BACK, SCORE_NORTH).heading(pieces(DRIVE_BACK_HEADING)), DEFAULT_SPEED);
                 break;
 
             case DONE:
@@ -305,9 +293,30 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         return Paths.curve(pts);
     }
 
-    /** A linear heading between two RED headings, as seen by this alliance. */
-    private Interpolator linear(double fromRed, double toRed) {
-        return Interpolator.linear(h(fromRed), h(toRed));
+    /** A path's heading built from AutoPoses' pieces (RED headings, as seen by this alliance). */
+    private Interpolator pieces(HeadingPiece[] pieces) {
+        com.pedropathing.paths.interpolator.PiecewiseInterpolator out = Interpolator.piecewise();
+        for (HeadingPiece piece : pieces) {
+            Interpolator i;
+            switch (piece.mode) {
+                case "linear":
+                    i = Interpolator.linear(h(piece.from), h(piece.to));
+                    break;
+                case "tangent":
+                    i = Interpolator.tangent;
+                    break;
+                case "tangentReversed":
+                    i = Interpolator.tangent.reverse();
+                    break;
+                case "constant":
+                    i = Interpolator.constant(h(piece.from));
+                    break;
+                default:
+                    throw new IllegalArgumentException("unknown heading mode " + piece.mode);
+            }
+            out.until(piece.endT, i);
+        }
+        return out;
     }
 
     private Pose here() {

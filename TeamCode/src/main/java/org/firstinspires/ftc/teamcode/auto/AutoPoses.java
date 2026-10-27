@@ -39,6 +39,50 @@ public final class AutoPoses {
     public static final Pose[] DRIVE_BACK = {
             new Pose(-50.0, -40.0), new Pose(-58.0, 62.0), new Pose(-13.0, 56.0)};
 
+    // ---- headings along the curves, piece by piece (radians, RED), as in the draft ----
+    public static final HeadingPiece[] TO_OTHER_SIDE_HEADING = {
+            HeadingPiece.linear(0.2038, 1.5708, 2.3722), HeadingPiece.tangent(0.8679),
+            HeadingPiece.linear(1.0, 1.0385, 1.5708)};
+    public static final HeadingPiece[] TO_SCORE_NORTH_HEADING = {
+            HeadingPiece.tangentReversed(0.2041), HeadingPiece.linear(0.5442, 2.8274, 4.7124),
+            HeadingPiece.constant(1.0, -1.5708)};
+    public static final HeadingPiece[] TO_GARDEN_HEADING = {
+            HeadingPiece.linear(0.2186, -1.5708, -2.0354), HeadingPiece.tangent(1.0)};
+    public static final HeadingPiece[] DRIVE_BACK_HEADING = {
+            HeadingPiece.linear(0.1612, -3.1416, -1.7852), HeadingPiece.tangentReversed(0.707),
+            HeadingPiece.linear(0.8242, -2.0008, -1.5708), HeadingPiece.constant(1.0, -1.5708)};
+
+    /** One piece of a path's heading, up to {@code endT} of the path: Zenith's piecewise modes. */
+    public static final class HeadingPiece {
+        public final double endT;
+        public final String mode;     // "linear", "tangent", "tangentReversed" or "constant"
+        public final double from;     // linear: start heading; constant: the heading
+        public final double to;       // linear: end heading
+
+        private HeadingPiece(double endT, String mode, double from, double to) {
+            this.endT = endT;
+            this.mode = mode;
+            this.from = from;
+            this.to = to;
+        }
+
+        public static HeadingPiece linear(double endT, double from, double to) {
+            return new HeadingPiece(endT, "linear", from, to);
+        }
+
+        public static HeadingPiece tangent(double endT) {
+            return new HeadingPiece(endT, "tangent", Double.NaN, Double.NaN);
+        }
+
+        public static HeadingPiece tangentReversed(double endT) {
+            return new HeadingPiece(endT, "tangentReversed", Double.NaN, Double.NaN);
+        }
+
+        public static HeadingPiece constant(double endT, double heading) {
+            return new HeadingPiece(endT, "constant", heading, Double.NaN);
+        }
+    }
+
     // ---- headings (radians, RED) ----
     public static final double FACING_NORTH = Math.PI / 2;
     public static final double FACING_SOUTH = -Math.PI / 2;

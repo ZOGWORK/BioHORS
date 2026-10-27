@@ -69,31 +69,35 @@ class AutoPosesTest {
     }
 
     /**
-     * The piecewise headings TwoTipStateMachineAuto writes out by hand: each range's end t and
-     * linear from/to, exactly as in the draft (the numbers also set which way the robot turns).
-     * {endT, fromRad, toRad} for linear ranges, {endT} for the others.
+     * The piecewise headings the state machine builds its paths from (AutoPoses.*_HEADING): every
+     * piece's end t, mode and headings exactly as in the draft (the numbers also set which way the
+     * robot turns).
      */
     @Test
     void piecewiseHeadingsMatchTheZenithDraft() throws IOException {
-        Map<String, double[][]> expected = new LinkedHashMap<>();
-        expected.put("toOtherSide", new double[][] {{0.2038, 1.5708, 2.3722}, {0.8679}, {1.0, 1.0385, 1.5708}});
-        expected.put("toScoreNorth", new double[][] {{0.2041}, {0.5442, 2.8274, 4.7124}, {1.0}});
-        expected.put("toGarden", new double[][] {{0.2186, -1.5708, -2.0354}, {1.0}});
-        expected.put("driveBack", new double[][] {{0.1612, -3.1416, -1.7852}, {0.707}, {0.8242, -2.0008, -1.5708}, {1.0}});
+        Map<String, AutoPoses.HeadingPiece[]> expected = new LinkedHashMap<>();
+        expected.put("toOtherSide", AutoPoses.TO_OTHER_SIDE_HEADING);
+        expected.put("toScoreNorth", AutoPoses.TO_SCORE_NORTH_HEADING);
+        expected.put("toGarden", AutoPoses.TO_GARDEN_HEADING);
+        expected.put("driveBack", AutoPoses.DRIVE_BACK_HEADING);
         Map<String, Json> steps = steps();
-        for (Map.Entry<String, double[][]> e : expected.entrySet()) {
+        for (Map.Entry<String, AutoPoses.HeadingPiece[]> e : expected.entrySet()) {
             Json h = steps.get(e.getKey()).get("heading");
             assertEquals("piecewise", h.str("mode"), e.getKey());
             Json ranges = h.get("ranges");
             assertEquals(e.getValue().length, ranges.size(), e.getKey() + " ranges");
             for (int i = 0; i < ranges.size(); i++) {
-                double[] want = e.getValue()[i];
+                AutoPoses.HeadingPiece want = e.getValue()[i];
                 Json r = ranges.at(i);
-                assertEquals(want[0], r.num("endT"), 1e-4, e.getKey() + " range " + i + " endT");
-                if (want.length == 3) {
-                    assertEquals("linear", r.get("heading").str("mode"), e.getKey() + " range " + i);
-                    assertEquals(want[1], r.get("heading").num("fromRad"), 1e-4, e.getKey() + " range " + i + " from");
-                    assertEquals(want[2], r.get("heading").num("toRad"), 1e-4, e.getKey() + " range " + i + " to");
+                Json rh = r.get("heading");
+                String at = e.getKey() + " range " + i;
+                assertEquals(want.endT, r.num("endT"), 1e-4, at + " endT");
+                assertEquals(want.mode, rh.str("mode"), at + " mode");
+                if (want.mode.equals("linear")) {
+                    assertEquals(want.from, rh.num("fromRad"), 1e-4, at + " fromRad");
+                    assertEquals(want.to, rh.num("toRad"), 1e-4, at + " toRad");
+                } else if (want.mode.equals("constant")) {
+                    assertEquals(want.from, rh.num("headingRad"), 1e-4, at + " headingRad");
                 }
             }
         }
