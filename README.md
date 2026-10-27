@@ -59,9 +59,12 @@ spec sheet), `PLACEHOLDER` (made up so the code runs), or
 1. **Shooters** (`subsystems/MechanismConstants.java`): each shooter has
    its own target RPM, PIDF, tolerance, and feedforward. Gains are
    placeholders. `ticksPerRev` = 28 and feedforward max = 2800 ticks/sec
-   are the goBILDA 6000 RPM motor spec and only hold if the flywheel is
-   direct-driven (1:1). Shooter motor directions and which motor is
-   pollen still need verifying on the robot.
+   are the goBILDA 6000 RPM motor spec. `ticksPerRev` counts per flywheel
+   revolution, so 28 only holds if the flywheel is direct-driven (1:1);
+   with a belt/gear ratio, multiply it by the ratio. The 2800 ticks/sec is
+   the motor encoder's free speed and does not change with the ratio.
+   Shooter motor directions and which motor is pollen still need
+   verifying on the robot.
 2. **Gates** (`subsystems/MechanismConstants.java`): open/closed position
    per gate. Both start at the old shared placeholders (0.67 / 0.485).
 3. **Pinpoint** (`pedro/Constants.java`): pod offsets and directions. Run

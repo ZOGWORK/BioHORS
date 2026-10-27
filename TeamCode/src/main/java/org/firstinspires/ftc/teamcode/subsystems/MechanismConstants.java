@@ -34,9 +34,11 @@ public final class MechanismConstants {
 
     // ===== goBILDA 5000-series 6000 RPM motor (1:1) =====
     // SPEC: 28 encoder counts per motor-shaft revolution; 6000 RPM free speed
-    // at 12 V => 6000 * 28 / 60 = 2800 ticks/sec. These hold for the FLYWHEEL
-    // only if it is direct-driven (1:1). If there is a belt/gear ratio,
-    // multiply ticksPerRev by it. NEEDS MEASUREMENT: confirm the ratio.
+    // at 12 V => 6000 * 28 / 60 = 2800 motor-encoder ticks/sec.
+    // ticksPerRev is per FLYWHEEL revolution, so 28 holds only if the flywheel
+    // is direct-driven (1:1); with a belt/gear ratio, multiply ticksPerRev by
+    // it. The 2800 ticks/sec feedforward max is the motor's own free speed and
+    // does NOT change with an external ratio. NEEDS MEASUREMENT: confirm the ratio.
     private static final double GOBILDA_6000_TICKS_PER_REV = 28.0;           // SPEC
     private static final double GOBILDA_6000_FREE_SPEED_TICKS_PER_SEC = 2800.0; // SPEC (no load, 12 V)
 
@@ -63,7 +65,7 @@ public final class MechanismConstants {
      * Same motor model, so the spec values match; every gain is a placeholder.
      */
     private static void applySharedPlaceholders(ShooterController.Config c) {
-        c.ticksPerRev = GOBILDA_6000_TICKS_PER_REV;                       // SPEC (assumes 1:1)
+        c.ticksPerRev = GOBILDA_6000_TICKS_PER_REV;                       // SPEC (assumes 1:1 flywheel)
         c.ffReferenceVoltage = 12.0;                                       // SPEC (rated voltage)
         c.ffReferenceMaxTicksPerSec = GOBILDA_6000_FREE_SPEED_TICKS_PER_SEC; // SPEC; NEEDS MEASUREMENT under load
         c.kP = 0.001;                  // PLACEHOLDER

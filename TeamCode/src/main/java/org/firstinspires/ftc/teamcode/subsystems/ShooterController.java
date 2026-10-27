@@ -41,7 +41,11 @@ public class ShooterController {
         public double targetRpm;
         public double rpmTolerance;
 
-        /** Feedforward reference: flywheel ticks/sec at full power at the reference voltage. */
+        /**
+         * Feedforward reference: motor-encoder ticks/sec at full power at the
+         * reference voltage. The encoder is on the motor, so this does not
+         * change with an external gear ratio (only ticksPerRev does).
+         */
         public double ffReferenceVoltage;
         public double ffReferenceMaxTicksPerSec;
     }
