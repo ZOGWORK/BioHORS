@@ -267,7 +267,9 @@ wheel, steel flywheel, hub and shaft) as `model_0.glb` and `model_1.glb`, so the
 The model's origin is the drive centre on the floor, the same point `Field/Robot` logs
 (`docs/ROBOT_CAD.md` has the CAD-to-robot transform). Screws, nuts and other parts under 0.45 in
 are left out, the two pollen the CAD shows held are left out (the sim draws the real ones), and the
-mesh is clustered to a 3 mm grid (1.5 mm for the flywheels), so it stays about 4 MB.
+mesh is clustered to a 3 mm grid (1.5 mm for the flywheels), so it stays about 5 MB. Every mesh
+carries vertex normals: AdvantageScope draws a model without them as nothing at all (the robot row
+shows "BioHORS" but the field is empty), so both tools below write them.
 The flywheel spin direction is an APPROX (the ball rides under the wheel toward the front); it is
 drawing only and changes no physics.
 

@@ -5,7 +5,8 @@ Usage: python decimate_glb.py <model.glb> [cell_mm]
 Every vertex is snapped to a cubic grid of cell_mm; the vertices in one cell merge into their
 mean, triangles that collapse are dropped, and duplicates are removed. Detail finer than a cell
 (threads, fillets, tread texture) disappears, which is invisible at field scale. Reads only the
-simple layout step_to_glb.py writes (one mesh, POSITION + uint32 indices per primitive).
+simple layout step_to_glb.py writes (one mesh, POSITION + uint32 indices per primitive), and writes
+it back with a NORMAL per vertex.
 """
 import json
 import struct
@@ -24,6 +25,18 @@ js_len, _ = struct.unpack_from("<II", data, 12)
 gltf = json.loads(data[20:20 + js_len])
 bin_off = 20 + js_len + 8
 binary = data[bin_off:]
+
+
+def vertex_normals(pos, idx):
+    """Area-weighted vertex normals. AdvantageScope draws a mesh without NORMAL as nothing at all."""
+    tri = np.asarray(idx, dtype=np.int64).reshape(-1, 3)
+    p = np.asarray(pos, dtype=np.float64)
+    face = np.cross(p[tri[:, 1]] - p[tri[:, 0]], p[tri[:, 2]] - p[tri[:, 0]])
+    n = np.zeros_like(p)
+    for k in range(3):
+        np.add.at(n, tri[:, k], face)
+    length = np.linalg.norm(n, axis=1, keepdims=True)
+    return np.where(length > 1e-12, n / np.maximum(length, 1e-12), [0.0, 0.0, 1.0]).astype(np.float32)
 
 
 def read(acc_index, dtype, width):
@@ -72,12 +85,14 @@ for material, pos, idx in groups:
     if len(idx) == 0:
         continue
     pv = add_view(pos.tobytes(), 34962)
+    nv = add_view(vertex_normals(pos, idx).tobytes(), 34962)
     iv = add_view(idx.tobytes(), 34963)
     accessors.append({"bufferView": pv, "componentType": 5126, "count": len(pos), "type": "VEC3",
                       "min": pos.min(axis=0).tolist(), "max": pos.max(axis=0).tolist()})
+    accessors.append({"bufferView": nv, "componentType": 5126, "count": len(pos), "type": "VEC3"})
     accessors.append({"bufferView": iv, "componentType": 5125, "count": len(idx), "type": "SCALAR"})
-    prims.append({"attributes": {"POSITION": len(accessors) - 2}, "indices": len(accessors) - 1,
-                  "material": material})
+    prims.append({"attributes": {"POSITION": len(accessors) - 3, "NORMAL": len(accessors) - 2},
+                  "indices": len(accessors) - 1, "material": material})
 gltf["meshes"][0]["primitives"] = prims
 gltf["accessors"], gltf["bufferViews"] = accessors, views
 gltf["buffers"] = [{"byteLength": offset}]
