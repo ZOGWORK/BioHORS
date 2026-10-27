@@ -43,9 +43,9 @@ void theSlideReachesScoringHeightAndHoldsIt() throws IOException {
 
     RunResult run = RunResult.fromRlog("SlideReachesScore", rlogPath, 150);
 
-    assertEquals(24.0, run.finalValue("RealOutputs/Slide/heightInches"), 0.5,
+    assertEquals(ExampleSlide.Level.SCORE.heightInches(), run.finalValue("RealOutputs/Slide/heightInches"), 0.5,
             "the slide should finish within tolerance of the scoring height");
-    assertTrue(run.maxValue("RealOutputs/Slide/heightInches") <= 26.0,
+    assertTrue(run.maxValue("RealOutputs/Slide/heightInches") <= ExampleSlide.Level.SCORE.heightInches() + 2.0,
             "the slide overshot scoring height by more than two inches");
 }
 ```

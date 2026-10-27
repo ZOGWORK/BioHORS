@@ -28,7 +28,7 @@ a guess.
 | "wrote no bytes", "queue overflowed", "stopped making progress" | The RLOG writer, not your robot | These come from `ScenarioRunner` and are about logging. See the troubleshooting page. |
 | "ran N ticks" mismatch | The scenario ended early or the tick count disagrees | Read the message; it states both numbers. |
 | `cannot find symbol: class DcMotorEx` pointing at SimLoop's jar | Build wiring | The SDK is an `api` dependency; the project's own SDK version is what resolves. |
-| `Failed to load JUnit Platform` before any test runs | Missing vintage engine | JUnit 5 without the vintage engine silently stops collecting JUnit 4 tests. |
+| `Failed to load JUnit Platform` before any test runs | Missing `junit-platform-launcher` | Gradle 9 stopped adding the launcher; `simloop.gradle` declares it. (A missing vintage engine is a different failure: JUnit 4 tests silently stop being collected, with no error.) |
 
 The full list, with the reasoning behind each:
 <https://libraries.horizon36596.org/simloop/troubleshooting/>.

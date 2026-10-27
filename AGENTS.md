@@ -173,7 +173,7 @@ ScenarioRunner.run("MyScenario", ExampleRobotSim.ROBOT_CONFIG, timer, 150, 0.02,
         });
 
 RunResult run = RunResult.fromRlog("MyScenario", rlogPath, 150);
-assertEquals(24.0, run.finalValue("RealOutputs/Slide/heightInches"), 0.5);
+assertEquals(ExampleSlide.Level.SCORE.heightInches(), run.finalValue("RealOutputs/Slide/heightInches"), 0.5);
 ```
 
 Logs go under `build/`, which is gitignored — that is where a run belongs. Open one in AdvantageScope by
