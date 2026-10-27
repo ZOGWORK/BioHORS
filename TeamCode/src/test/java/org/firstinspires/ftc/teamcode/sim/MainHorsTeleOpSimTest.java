@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -110,20 +111,90 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
-    void pressingASwitchesTheGoalToTheNorthCell() {
+    void inTheNorthHalfItAimsAtTheNorthCellAndAIsUnmapped() {
         BioHorsSim sim = new BioHorsSim();
-        startAt(sim, "RED", -40.0, -40.0, 0.0);
-        run(sim, 160, (phase, tick, g1, g2) -> {
+        startAt(sim, "RED", -40.0, 40.0, 0.0);
+        OpModeRunResult result = run(sim, 150, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
-            g1.a = tick >= 2 && tick < 6;        // one press
-            g1.left_trigger = tick >= 10 ? 1f : 0f;
+            g1.a = tick >= 2 && tick < 6; // A no longer does anything
+            g1.left_trigger = 1f;
         }, null);
 
         double north = Math.atan2(CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
         double south = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
-        assertAngleNear(north, sim.drivePlant.getHeading(), 3.0, "after A the robot should face the north cell");
+        assertAngleNear(north, sim.drivePlant.getHeading(), 3.0, "north of the centre line it should face the north cell");
         assertTrue(Math.abs(wrap(sim.drivePlant.getHeading() - south)) > Math.toRadians(8.0),
                 "and visibly not the south one");
+        assertTrue(lastTelemetry(result).contains("NORTH"), "telemetry names the north cell");
+    }
+
+    @Test
+    void pressingAOnTheCentreLineDoesNotChangeTheTarget() {
+        // y = 1 is inside the 2 in hysteresis band, where the half rule keeps whatever cell is
+        // current (SOUTH, RED's kickoff up cell). Nothing else would overwrite a toggle here.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, 1.0, 0.0);
+        final OpModePhase[] phaseNow = {OpModePhase.INIT};
+        final List<String> targetsShown = new ArrayList<>();
+        OpModeRunResult result = run(sim, 120, (phase, tick, g1, g2) -> {
+            phaseNow[0] = phase;
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.a = (tick >= 5 && tick < 9) || (tick >= 40 && tick < 44) || (tick >= 70 && tick < 74);
+            g2.a = tick >= 90 && tick < 94; // the operator's A too
+            g1.left_trigger = 1f;
+        }, null);
+
+        for (List<String> sent : result.telemetry().transmissions()) {
+            for (String line : sent) if (line.startsWith("Target")) targetsShown.add(line);
+        }
+        assertFalse(targetsShown.isEmpty(), "telemetry should show the target");
+        for (String t : targetsShown) {
+            assertTrue(t.contains("SOUTH"), "pressing A must never change the target: " + t);
+        }
+        double south = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
+        assertAngleNear(south, sim.drivePlant.getHeading(), 3.0, "still aiming at the south cell");
+    }
+
+    @Test
+    void crossingTheCentreLineWhileAimingSwitchesTheTarget() {
+        BioHorsSim sim = new BioHorsSim();
+        // South half, facing the south cell; then drive straight north past y = 0 while aiming.
+        startAt(sim, "RED", -45.0, -20.0, Math.atan2(-CELL_Y + 20.0, RED_HIVE_X + 45.0));
+        final OpModePhase[] phaseNow = {OpModePhase.INIT};
+        final int[] tickNow = {0};
+        final double[] headingWhileSouth = {Double.NaN};
+        OpModeRunResult result = OpModeRunner.forTeamClass(TELEOP, sim.hardwareMap)
+                .teamPackages("org.firstinspires.ftc.teamcode.", SimClockLoader.PEDRO_PATHING)
+                .keepBlackboard(true)
+                .initLoopTicks(INIT_LOOP_TICKS)
+                .activeTicks(250)
+                .gamepads((phase, tick, g1, g2) -> {
+                    phaseNow[0] = phase;
+                    tickNow[0] = tick;
+                    if (phase != OpModePhase.ACTIVE) return;
+                    g1.left_trigger = 1f;
+                    // Robot-frame stick that drives field-north whatever the heading: the test
+                    // reads the true heading, as a driver would steer by eye.
+                    double h = sim.drivePlant.getHeading();
+                    double drive = tick >= 30 && tick < 110 ? 0.5 : 0.0;
+                    g1.left_stick_y = (float) (-drive * Math.sin(h));   // forward component of +y
+                    g1.left_stick_x = (float) (-drive * Math.cos(h));   // right component of +y
+                })
+                .eachTick(dt -> {
+                    sim.step(dt);
+                    if (phaseNow[0] == OpModePhase.ACTIVE && tickNow[0] == 29) {
+                        headingWhileSouth[0] = sim.drivePlant.getHeading();
+                    }
+                })
+                .run();
+
+        assertTrue(sim.drivePlant.getY() > 10.0, "the robot should have driven north of the centre line, y = "
+                + sim.drivePlant.getY());
+        double south0 = Math.atan2(-CELL_Y + 20.0, RED_HIVE_X + 45.0);
+        assertAngleNear(south0, headingWhileSouth[0], 3.0, "south of the line it holds the south cell");
+        double north = Math.atan2(CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
+        assertAngleNear(north, sim.drivePlant.getHeading(), 3.0, "after crossing it faces the north cell");
+        assertTrue(lastTelemetry(result).contains("NORTH"), "telemetry names the north cell");
     }
 
     @Test
@@ -138,6 +209,8 @@ class MainHorsTeleOpSimTest {
         final int[] tickNow = {0};
         final double[] worstErrDeg = {0.0};
         final double[] startXY = new double[2];
+        final double[] lastCellY = {-CELL_Y};
+        final int[] switchTick = {-1000};
         OpModeRunner.forTeamClass(TELEOP, sim.hardwareMap)
                 .teamPackages("org.firstinspires.ftc.teamcode.", SimClockLoader.PEDRO_PATHING)
                 .keepBlackboard(true)
@@ -158,8 +231,14 @@ class MainHorsTeleOpSimTest {
                         startXY[0] = sim.drivePlant.getX();
                         startXY[1] = sim.drivePlant.getY();
                     }
-                    if (tickNow[0] >= 90) { // after the strafe has got going
-                        double want = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
+                    // The target is the cell on the robot's half of the field; the strafe may cross
+                    // the centre line, after which the robot gets 0.5 s to swing to the other cell.
+                    double y = sim.drivePlant.getY();
+                    double cellY = y > 2.0 ? CELL_Y : y < -2.0 ? -CELL_Y : lastCellY[0];
+                    if (cellY != lastCellY[0]) switchTick[0] = tickNow[0];
+                    lastCellY[0] = cellY;
+                    if (tickNow[0] >= 90 && tickNow[0] - switchTick[0] > 25) { // strafe going, settled
+                        double want = Math.atan2(cellY - y, RED_HIVE_X - sim.drivePlant.getX());
                         double err = Math.toDegrees(Math.abs(wrap(sim.drivePlant.getHeading() - want)));
                         worstErrDeg[0] = Math.max(worstErrDeg[0], err);
                     }
