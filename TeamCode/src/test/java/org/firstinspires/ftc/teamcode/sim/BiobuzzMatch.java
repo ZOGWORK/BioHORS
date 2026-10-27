@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.sim;
 
 import org.horizon36596.zenith.Json;
 import org.psilynx.psikit.core.Logger;
+import org.psilynx.psikit.core.wpi.math.Pose2d;
+import org.psilynx.psikit.core.wpi.math.Pose3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +31,11 @@ import java.util.List;
  *    The 4 s swing is not modelled: shots after the tip go straight to the new up cell.
  *  - Contact: the 18 in footprint (robot.json) against the field file's low obstacles (hive frame
  *    bars and legs, flower feet) and the walls.
+ *
+ * For AdvantageScope (2026-2027 Field, 2D or 3D Field tab) it logs the robot's true pose as
+ * Field/Robot and every pollen as Field/Pollen: the garden line, the flower columns, the ones
+ * aboard, each launch in flight (a 0.45 s arc), the ones in the hive cells, and a tipped cell's
+ * spill on the floor (drawn only; the spill is not modelled as collectable).
  */
 public final class BiobuzzMatch {
 
@@ -66,6 +73,13 @@ public final class BiobuzzMatch {
     private double launchTimer, flowerTimer;
     private double driveIn, strafeIn;
     private double time;
+
+    // ---- drawing only (AdvantageScope) ----
+    static final double FLIGHT_S = 0.45;          // how long a drawn launch takes to arrive
+    static final double LAUNCH_HEIGHT_IN = 16.0;  // PLACEHOLDER: where the pollen leaves the robot
+    static final double CELL_AIM_Z_IN = 59.5;     // SPEC: middle of the up-cell opening (field file)
+    private final List<double[]> flights = new ArrayList<>(); // {t0, x0, y0, x1, y1, z1, cell(-1 = loose)}
+    private final List<double[]> spilled = new ArrayList<>(); // {x, y}
 
     public BiobuzzMatch(BioHorsSim sim, Json field, Json robot, boolean red, int preload) {
         this.sim = sim;
@@ -179,18 +193,22 @@ public final class BiobuzzMatch {
                 launched++;
                 if (launchIsLegal(x, y, h)) {
                     int up = upIsNorth ? 1 : 0;
+                    double cellY = (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0;
+                    flights.add(new double[] {time, x, y, hiveX, cellY, CELL_AIM_Z_IN, up});
                     cellPollen[up]++;
                     scored++;
                     int need = tipTable[Math.min(cellNectar[up], tipTable.length - 1)];
                     if (cellPollen[up] >= need) {
                         tips++;
                         tipTimes.add(time);
+                        spill(up, cellPollen[up]);
                         cellPollen[up] = 0;
                         cellNectar[up] = 0;
                         upIsNorth = !upIsNorth;
                     }
                 } else {
                     missed++;
+                    flights.add(new double[] {time, x, y, x + 40 * Math.cos(h), y + 40 * Math.sin(h), 1.4, -1});
                     missLog.add(String.format(java.util.Locale.ROOT, "t=%.2f x=%.1f y=%.1f h=%.1fdeg (%s)",
                             time, x, y, Math.toDegrees(h), missReason(x, y, h)));
                 }
@@ -201,6 +219,7 @@ public final class BiobuzzMatch {
 
         checkContacts(x, y, h, intakeIn);
 
+        logField(x, y, h);
         Logger.recordOutput("Match/held", held);
         Logger.recordOutput("Match/launched", launched);
         Logger.recordOutput("Match/scored", scored);
@@ -228,6 +247,51 @@ public final class BiobuzzMatch {
         double off = Math.toDegrees(Math.abs(Math.atan2(Math.sin(bearing - h), Math.cos(bearing - h))));
         return (ownHalf ? "" : "not own half; ") + (outboard ? "" : "not outboard of the up cell; ")
                 + String.format(java.util.Locale.ROOT, "%.1f deg off the cell", off);
+    }
+
+    /** A tipped cell's load, drawn on the floor outboard of it on its own side. */
+    private void spill(int cell, int count) {
+        double side = cell == 1 ? 1 : -1;
+        for (int i = 0; i < count; i++) {
+            double a = (i - (count - 1) / 2.0) * 0.18;
+            double r = 26 + 5 * (i % 3);
+            spilled.add(new double[] {hiveX + r * Math.sin(a), side * (r * Math.cos(a))});
+        }
+    }
+
+    private void logField(double x, double y, double h) {
+        Logger.recordOutput("Field/Robot", Pose2d.struct, AdvantageScopeFrame.pose2d(x, y, h));
+        List<Pose3d> pieces = new ArrayList<>();
+        for (double[] p : loosePollen) pieces.add(AdvantageScopeFrame.piece(p[0], p[1], p[2]));
+        for (Flower f : flowers) {
+            for (int i = 0; i < f.count; i++) pieces.add(AdvantageScopeFrame.piece(f.x, f.y, 1.6 + 2.9 * i));
+        }
+        for (int i = 0; i < held; i++) pieces.add(AdvantageScopeFrame.piece(x, y, 8.0 + 3.0 * i));
+        int[] arriving = new int[2];
+        for (int i = flights.size() - 1; i >= 0; i--) {
+            double[] f = flights.get(i);
+            double u = (time - f[0]) / FLIGHT_S;
+            if (u >= 1) {
+                if (f[6] < 0) spilled.add(new double[] {f[3], f[4]});
+                flights.remove(i);
+                continue;
+            }
+            if (f[6] >= 0) arriving[(int) f[6]]++;
+            double px = f[1] + u * (f[3] - f[1]);
+            double py = f[2] + u * (f[4] - f[2]);
+            double pz = LAUNCH_HEIGHT_IN + u * (f[5] - LAUNCH_HEIGHT_IN) + 4 * 14.0 * u * (1 - u);
+            pieces.add(AdvantageScopeFrame.piece(px, py, pz));
+        }
+        for (int c = 0; c < 2; c++) {
+            double cy = (c == 1 ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0;
+            int shown = Math.max(0, cellPollen[c] - arriving[c]);
+            for (int i = 0; i < shown; i++) {
+                pieces.add(AdvantageScopeFrame.piece(hiveX + ((i % 2) * 3.0 - 1.5), cy + ((i / 2 % 2) * 3.0 - 1.5),
+                        CELL_AIM_Z_IN - 4 + 3.0 * (i / 4)));
+            }
+        }
+        for (double[] p : spilled) pieces.add(AdvantageScopeFrame.piece(p[0], p[1], 1.4));
+        Logger.recordOutput("Field/Pollen", pieces.toArray(new Pose3d[0]));
     }
 
     private boolean launchIsLegal(double x, double y, double h) {

@@ -90,6 +90,27 @@ class ZenithAutoMatchTest {
         assertTrue(red2.maxBeliefErrorIn < 2.0, String.format(Locale.ROOT,
                 "belief vs truth up to %.2f in\n%s", red2.maxBeliefErrorIn, red2.report));
 
+        // ---- AdvantageScope: the robot, its belief and every pollen are in the log as poses ----
+        java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(red2.rlog);
+        for (String k : new String[] {"Field/Robot", "Field/RobotBelief", "Field/Pollen"}) {
+            assertTrue(keys.stream().anyMatch(x -> x.endsWith(k)), "RLOG has no " + k + "; keys: " + keys);
+        }
+        System.out.println("AdvantageScope keys: " + keys.stream().filter(x -> x.contains("Field/")).sorted()
+                .collect(java.util.stream.Collectors.toList()));
+        java.util.List<java.util.Map<String, String>> frames = RlogDecodedCompare.decode(red2.rlog);
+        for (int i : new int[] {30, 700, frames.size() - 1}) {
+            java.util.Map<String, String> f = frames.get(Math.min(i, frames.size() - 1));
+            for (java.util.Map.Entry<String, String> e : f.entrySet()) {
+                if (e.getKey().contains("Field/Robot")) {
+                    System.out.println("frame " + i + " " + e.getKey() + " = " + e.getValue());
+                }
+                if (e.getKey().endsWith("Field/Pollen")) {
+                    String v = e.getValue();
+                    System.out.println("frame " + i + " " + e.getKey() + " = " + v.substring(0, Math.min(240, v.length())));
+                }
+            }
+        }
+
         // ---- deterministic: two RED runs decode to the same log ----
         List<RlogDecodedCompare.Mismatch> diff = RlogDecodedCompare.compare(red1.rlog, red2.rlog);
         assertTrue(diff.isEmpty(), "two identical RED runs logged differently: " + RlogDecodedCompare.summarise(diff));
