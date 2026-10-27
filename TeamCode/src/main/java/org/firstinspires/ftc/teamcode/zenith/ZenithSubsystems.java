@@ -1,0 +1,114 @@
+package org.firstinspires.ftc.teamcode.zenith;
+
+import com.pedropathing.algorithm.ForesightConfig;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.paths.Path;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.seattlesolvers.solverslib.command.SubsystemBase;
+
+import org.firstinspires.ftc.teamcode.pedro.Constants;
+import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
+
+/**
+ * The SolversLib subsystems the Zenith auto's commands require. Each wraps one part of
+ * {@link BioHorsRobot}; the names match the "requires" lists in autos/robot.json
+ * (drive, intake, launcher).
+ */
+public final class ZenithSubsystems {
+
+    private ZenithSubsystems() {
+    }
+
+    /** The drive, as the Pedro follower drives it. Every Zenith path step requires it. */
+    public static class Drive extends SubsystemBase {
+        private final Follower follower;
+        private final ForesightConfig config;
+
+        public Drive(Follower follower, ForesightConfig config) {
+            this.follower = follower;
+            this.config = config;
+        }
+
+        public Follower follower() {
+            return follower;
+        }
+
+        /** The follower updates once per loop, here: the SolversLib scheduler calls periodic every loop. */
+        @Override
+        public void periodic() {
+            follower.update();
+        }
+
+        /** Caps a path at a fraction of the robot's top forward speed while it is followed. */
+        public Path atSpeed(Path path, double speedFraction) {
+            double f = Math.max(0.05, Math.min(1.0, speedFraction));
+            return path.with(config.maxPathSpeed.at(f * Constants.MAX_FORWARD_IN_PER_S));
+        }
+    }
+
+    /** Both intake motors, plus the pollen estimate's intake side. */
+    public static class Intake extends SubsystemBase {
+        private final BioHorsRobot robot;
+        private final PollenEstimate pollen;
+        private final ElapsedTime loop = new ElapsedTime();
+        private boolean runningIn = false;
+
+        public Intake(BioHorsRobot robot, PollenEstimate pollen) {
+            this.robot = robot;
+            this.pollen = pollen;
+        }
+
+        public void in() {
+            runningIn = true;
+            robot.intake.intake();
+        }
+
+        public void stop() {
+            runningIn = false;
+            robot.intake.stop();
+        }
+
+        @Override
+        public void periodic() {
+            double dt = loop.seconds();
+            loop.reset();
+            if (runningIn && dt < 0.25) pollen.intakeRan(dt);
+        }
+    }
+
+    /** The pollen shooter and the pollen gate (gateRight). Auto is pollen only. */
+    public static class Launcher extends SubsystemBase {
+        private final BioHorsRobot robot;
+
+        public Launcher(BioHorsRobot robot) {
+            this.robot = robot;
+            robot.pollenGate.setClosed(true);
+        }
+
+        public void spinUp() {
+            robot.pollenShooter.setShooterOn(true);
+        }
+
+        public void stop() {
+            robot.pollenShooter.setShooterOn(false);
+        }
+
+        public boolean atSpeed() {
+            return robot.pollenShooter.isShooterOn() && robot.pollenShooter.isAtTarget();
+        }
+
+        public void openGate() {
+            robot.pollenGate.setClosed(false);
+        }
+
+        public void closeGate() {
+            robot.pollenGate.setClosed(true);
+        }
+
+        /** Both shooters' velocity loops run every loop (the nectar one stays off in auto). */
+        @Override
+        public void periodic() {
+            robot.updateMechanisms();
+        }
+    }
+}

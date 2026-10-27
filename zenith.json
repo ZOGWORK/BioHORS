@@ -1,0 +1,23 @@
+{
+  "$schema": "https://libraries.horizon36596.org/zenith/schema/v1/link.json",
+  "formatVersion": 1,
+  "autosDir": "autos",
+  "robot": "autos/robot.json",
+  "field": "autos/field/biobuzz.field.json",
+  "waypoints": "autos/waypoints.json",
+  "deploy": {
+    "kind": "androidAssets",
+    "dir": "TeamCode/src/main/assets/autos",
+    "commandLibrary": "solverslib",
+    "robotClass": "org.firstinspires.ftc.teamcode.zenith.BioHorsZenithRobot",
+    "preselectTeleOp": "MainHORS TeleOp"
+  },
+  "codegen": {
+    "package": "org.firstinspires.ftc.teamcode.zenith",
+    "dir": "TeamCode/src/main/java"
+  },
+  "sim": {
+    "command": "./gradlew :TeamCode:testDebugUnitTest --tests \"*ZenithAutoMatchTest*\" -Dzenith.auto={auto}",
+    "trace": "TeamCode/build/sim/{auto}.trace.json"
+  }
+}

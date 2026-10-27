@@ -1,0 +1,9 @@
+{
+  "name": "biohors-zenith-tools",
+  "private": true,
+  "description": "Pins the Zenith CLI and MCP server used to edit, check and deploy autos/ (npx zenith ...).",
+  "devDependencies": {
+    "@horizon36596/zenith-cli": "0.1.2",
+    "@horizon36596/zenith-mcp": "0.1.2"
+  }
+}

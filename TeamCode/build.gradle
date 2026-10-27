@@ -22,6 +22,19 @@ android {
     packagingOptions {
         jniLibs.useLegacyPackaging true
     }
+
+    testOptions {
+        unitTests.all {
+            // Zenith's sim (zenith.json sim.command) names the auto with -Dzenith.auto=<auto>.
+            // Gradle does not pass its own -D options into the test JVM, so this does, and a
+            // named run always re-runs: the auto files it reads are not task inputs.
+            def zenithAuto = System.getProperty('zenith.auto')
+            if (zenithAuto) {
+                systemProperty 'zenith.auto', zenithAuto
+                outputs.upToDateWhen { false }
+            }
+        }
+    }
 }
 
 dependencies {

@@ -1,0 +1,401 @@
+package org.firstinspires.ftc.teamcode.sim;
+
+import org.horizon36596.zenith.Json;
+import org.psilynx.psikit.core.Logger;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * The BIOBUZZ field around the simulated robot during AUTO: where the pollen is, what the robot
+ * really holds, what its launches really do, and the hive cells and tips. Built from the project's
+ * own field file (autos/field/biobuzz.field.json), so a corrected measurement there moves it.
+ *
+ * It reads only the simulated WORLD (BioHorsSim: the plant's true pose, the motors' real power, the
+ * gate servo's real position), never what the robot code believes.
+ *
+ * Model, stated plainly (every number labelled; none measured on a robot):
+ *  - Intake: a pollen is taken in when it overlaps the intake mouth (robot.json mouths[0]) while
+ *    the intake motors run inward and the robot holds fewer than 4.
+ *  - Flower: a running intake whose mouth is at a flower's retrieval opening (the face of the
+ *    flower's foot toward the field), facing it, pulls one pollen from the bottom every
+ *    FLOWER_S_PER_PIECE.
+ *  - Launch: with the pollen gate really open, the intake feeding and the pollen flywheel at
+ *    least LAUNCH_MIN_RPM, one pollen leaves every LAUNCH_S_PER_PIECE.
+ *  - A launch scores in the alliance's up cell only from that cell's floor quarter, outboard of
+ *    its outer face, facing the cell within LAUNCH_CONE_DEG. Otherwise it lands loose.
+ *  - Tip: a cell tips when its pollen reaches the field file's tip table entry for the nectar in
+ *    it (rules.tipTable; this project's copy says 8). The cell empties and the other comes up.
+ *    The 4 s swing is not modelled: shots after the tip go straight to the new up cell.
+ *  - Contact: the 18 in footprint (robot.json) against the field file's low obstacles (hive frame
+ *    bars and legs, flower feet) and the walls.
+ */
+public final class BiobuzzMatch {
+
+    static final double FLOWER_S_PER_PIECE = 0.15;  // APPROX (DSim, per Zenith's BIOBUZZ ledger)
+    static final double LAUNCH_S_PER_PIECE = 0.30;  // PLACEHOLDER: real launch cadence NEEDS MEASUREMENT
+    static final double LAUNCH_MIN_RPM = 1800.0;    // PLACEHOLDER: 90 % of the 2000 rpm target
+    static final double LAUNCH_CONE_DEG = 15.0;     // PLACEHOLDER: how far off the cell a launch still goes in
+    static final double OPENING_REACH_IN = 2.0;     // PLACEHOLDER: mouth to retrieval opening
+    static final double FACING_CONE_DEG = 25.0;     // PLACEHOLDER
+    static final double CONTACT_TOLERANCE_IN = 0.25;
+    static final double GATE_OPEN_THRESHOLD = (0.485 + 0.67) / 2.0; // halfway between MechanismConstants' positions
+
+    private final BioHorsSim sim;
+    private final boolean red;
+    private final double robotLength, robotWidth, robotHeight;
+    private final double mouthOffsetX, mouthOffsetY, mouthHalfWidth, mouthHalfDepth;
+    private final int[] tipTable;
+
+    private final List<double[]> loosePollen = new ArrayList<>();   // {x, y, r}
+    private final List<Flower> flowers = new ArrayList<>();
+    private final List<double[]> boxes = new ArrayList<>();         // {minX, maxX, minY, maxY}
+    private final List<String> boxNames = new ArrayList<>();
+    private final List<double[]> struts = new ArrayList<>();        // {x0,y0,z0,x1,y1,z1,r}
+    private final List<String> strutNames = new ArrayList<>();
+
+    private final double hiveX;
+    private boolean upIsNorth;
+    private final int[] cellPollen = new int[2];   // [south, north]
+    private final int[] cellNectar = new int[2];
+
+    private int held;
+    private int launched, scored, missed, collected, tips;
+    private final List<Double> tipTimes = new ArrayList<>();
+    private final List<String> contacts = new ArrayList<>();
+    private double launchTimer, flowerTimer;
+    private double driveIn, strafeIn;
+    private double time;
+
+    public BiobuzzMatch(BioHorsSim sim, Json field, Json robot, boolean red, int preload) {
+        this.sim = sim;
+        this.red = red;
+        this.held = preload;
+        Json fp = robot.get("footprint").get("startIn");
+        robotLength = fp.num("lengthIn");
+        robotWidth = fp.num("widthIn");
+        robotHeight = robot.get("heightIn").num("value");
+        Json mouth = robot.get("mouths").at(0);
+        mouthOffsetX = mouth.get("offsetIn").num("xIn");
+        mouthOffsetY = mouth.get("offsetIn").num("yIn");
+        mouthHalfWidth = mouth.num("widthIn") / 2.0;
+        mouthHalfDepth = mouth.num("depthIn") / 2.0;
+
+        Json table = field.get("rules").get("tipTable");
+        tipTable = new int[table.size()];
+        for (int i = 0; i < tipTable.length; i++) tipTable[i] = table.at(i).integer();
+
+        String own = red ? "Red" : "Blue";
+        double pivotX = 0;
+        for (Json e : field.get("elements").items()) {
+            String id = e.str("id");
+            String kind = e.optText("kind", "");
+            if (kind.equals("pollen") && id.startsWith("garden" + own)) {
+                loosePollen.add(new double[] {e.num("xIn"), e.num("yIn"), e.num("radiusIn")});
+            } else if (kind.equals("container") && "flower".equals(e.optText("container", ""))) {
+                flowers.add(new Flower(id, e.num("xIn"), e.num("yIn"), e.get("holds").size()));
+            } else if (id.equals("hive" + own)) {
+                pivotX = e.get("pivotIn").num("xIn");
+                upIsNorth = "NORTH".equals(e.str("upSide"));
+                int nectar = e.get("holds").size();
+                cellNectar[upIsNorth ? 1 : 0] = nectar; // the staged nectar sits in the up cell
+            }
+        }
+        hiveX = pivotX;
+
+        for (Json o : field.get("obstacles").items()) {
+            String id = o.str("id");
+            if ("box".equals(o.str("kind")) && o.num("minZIn") < robotHeight) {
+                boxes.add(new double[] {o.num("minXIn"), o.num("maxXIn"), o.num("minYIn"), o.num("maxYIn")});
+                boxNames.add(id);
+            } else if ("strut".equals(o.str("kind"))) {
+                Json a = o.get("fromIn");
+                Json b = o.get("toIn");
+                struts.add(new double[] {a.num("xIn"), a.num("yIn"), a.num("zIn"), b.num("xIn"), b.num("yIn"),
+                        b.num("zIn"), o.num("radiusIn")});
+                strutNames.add(id);
+            }
+        }
+        for (Flower f : flowers) {
+            for (int i = 0; i < boxNames.size(); i++) {
+                if (boxNames.get(i).equals(f.id + "Foot")) f.setFoot(boxes.get(i));
+            }
+        }
+    }
+
+    /** One tick of the world, after the robot code and the plants. */
+    public void step(double dt) {
+        time += dt;
+        double x = sim.drivePlant.getX();
+        double y = sim.drivePlant.getY();
+        double h = sim.drivePlant.getHeading();
+        double fwdX = Math.cos(h), fwdY = Math.sin(h);
+        boolean intakeIn = sim.intakeLeft.getPower() > 0.1 && sim.intakeRight.getPower() > 0.1;
+
+        // Driving vs strafing, from the plant's robot-frame velocities.
+        driveIn += Math.hypot(sim.drivePlant.getForwardVelocity(), sim.drivePlant.getLateralVelocity()) * dt;
+        strafeIn += Math.abs(sim.drivePlant.getLateralVelocity()) * dt;
+
+        // ---- intake: garden pollen under the mouth ----
+        if (intakeIn) {
+            for (int i = loosePollen.size() - 1; i >= 0 && held < 4; i--) {
+                if (mouthTouches(loosePollen.get(i), x, y, h)) {
+                    loosePollen.remove(i);
+                    held++;
+                    collected++;
+                }
+            }
+        }
+
+        // ---- intake: flower retrieval opening ----
+        Flower at = null;
+        if (intakeIn && held < 4) {
+            double mx = x + fwdX * (mouthOffsetX + mouthHalfDepth) - fwdY * mouthOffsetY;
+            double my = y + fwdY * (mouthOffsetX + mouthHalfDepth) + fwdX * mouthOffsetY;
+            for (Flower f : flowers) {
+                if (f.count > 0 && f.reachable(mx, my, fwdX, fwdY)) at = f;
+            }
+        }
+        if (at != null) {
+            flowerTimer += dt;
+            while (flowerTimer >= FLOWER_S_PER_PIECE && at.count > 0 && held < 4) {
+                flowerTimer -= FLOWER_S_PER_PIECE;
+                at.count--;
+                held++;
+                collected++;
+            }
+        } else {
+            flowerTimer = 0;
+        }
+
+        // ---- launches ----
+        boolean gateOpen = sim.pollenGatePlant.getPosition() >= GATE_OPEN_THRESHOLD;
+        boolean feeding = gateOpen && intakeIn && sim.pollenShooterRpm() >= LAUNCH_MIN_RPM && held > 0;
+        if (feeding) {
+            launchTimer += dt;
+            while (launchTimer >= LAUNCH_S_PER_PIECE && held > 0) {
+                launchTimer -= LAUNCH_S_PER_PIECE;
+                held--;
+                launched++;
+                if (launchIsLegal(x, y, h)) {
+                    int up = upIsNorth ? 1 : 0;
+                    cellPollen[up]++;
+                    scored++;
+                    int need = tipTable[Math.min(cellNectar[up], tipTable.length - 1)];
+                    if (cellPollen[up] >= need) {
+                        tips++;
+                        tipTimes.add(time);
+                        cellPollen[up] = 0;
+                        cellNectar[up] = 0;
+                        upIsNorth = !upIsNorth;
+                    }
+                } else {
+                    missed++;
+                    missLog.add(String.format(java.util.Locale.ROOT, "t=%.2f x=%.1f y=%.1f h=%.1fdeg (%s)",
+                            time, x, y, Math.toDegrees(h), missReason(x, y, h)));
+                }
+            }
+        } else {
+            launchTimer = 0;
+        }
+
+        checkContacts(x, y, h, intakeIn);
+
+        Logger.recordOutput("Match/held", held);
+        Logger.recordOutput("Match/launched", launched);
+        Logger.recordOutput("Match/scored", scored);
+        Logger.recordOutput("Match/missed", missed);
+        Logger.recordOutput("Match/tips", tips);
+        Logger.recordOutput("Match/upCellNorth", upIsNorth);
+        Logger.recordOutput("Truth/xIn", x);
+        Logger.recordOutput("Truth/yIn", y);
+        Logger.recordOutput("Truth/headingRad", h);
+        Logger.recordOutput("Shooter/pollenRpm", sim.pollenShooterRpm());
+        Logger.recordOutput("Gate/pollen", sim.pollenGatePlant.getPosition());
+        Logger.recordOutput("Intake/power", sim.intakeLeft.getPower());
+    }
+
+    private final List<String> missLog = new ArrayList<>();
+
+    public List<String> missLog() { return missLog; }
+
+    private String missReason(double x, double y, double h) {
+        boolean ownHalf = red ? x < 0 : x > 0;
+        double face = FieldFace.OUTER_FACE_IN;
+        boolean outboard = upIsNorth ? y > face : y < -face;
+        double cellY = (upIsNorth ? 1 : -1) * face / 2.0;
+        double bearing = Math.atan2(cellY - y, hiveX - x);
+        double off = Math.toDegrees(Math.abs(Math.atan2(Math.sin(bearing - h), Math.cos(bearing - h))));
+        return (ownHalf ? "" : "not own half; ") + (outboard ? "" : "not outboard of the up cell; ")
+                + String.format(java.util.Locale.ROOT, "%.1f deg off the cell", off);
+    }
+
+    private boolean launchIsLegal(double x, double y, double h) {
+        boolean ownHalf = red ? x < 0 : x > 0;
+        double face = FieldFace.OUTER_FACE_IN;
+        boolean outboard = upIsNorth ? y > face : y < -face;
+        double cellY = (upIsNorth ? 1 : -1) * face / 2.0;
+        double bearing = Math.atan2(cellY - y, hiveX - x);
+        double off = Math.abs(Math.atan2(Math.sin(bearing - h), Math.cos(bearing - h)));
+        return ownHalf && outboard && Math.toDegrees(off) <= LAUNCH_CONE_DEG;
+    }
+
+    private boolean mouthTouches(double[] p, double x, double y, double h) {
+        double dx = p[0] - x, dy = p[1] - y;
+        double fwd = dx * Math.cos(h) + dy * Math.sin(h);
+        double left = -dx * Math.sin(h) + dy * Math.cos(h);
+        return Math.abs(fwd - mouthOffsetX) <= mouthHalfDepth + p[2]
+                && Math.abs(left - mouthOffsetY) <= mouthHalfWidth + p[2];
+    }
+
+    // ------------------------------------------------------------------ contact
+
+    private void checkContacts(double x, double y, double h, boolean intakeIn) {
+        double[][] c = corners(x, y, h);
+        for (double[] p : c) {
+            if (Math.abs(p[0]) > 72.0 + CONTACT_TOLERANCE_IN || Math.abs(p[1]) > 72.0 + CONTACT_TOLERANCE_IN) {
+                note("wall");
+                break;
+            }
+        }
+        for (int i = 0; i < boxes.size(); i++) {
+            double[] b = boxes.get(i);
+            if (obbHitsBox(x, y, h, b)) {
+                String name = boxNames.get(i);
+                boolean intended = intakeIn && name.startsWith("flower") && name.endsWith("Foot");
+                note(intended ? name + " (intended: collecting)" : name);
+            }
+        }
+        for (int i = 0; i < struts.size(); i++) {
+            double[] s = struts.get(i);
+            for (int k = 0; k <= 8; k++) {
+                double t = k / 8.0;
+                double z = s[2] + t * (s[5] - s[2]);
+                if (z > robotHeight) continue;
+                double px = s[0] + t * (s[3] - s[0]);
+                double py = s[1] + t * (s[4] - s[1]);
+                if (pointInFootprint(px, py, x, y, h, s[6] - CONTACT_TOLERANCE_IN)) {
+                    note(strutNames.get(i));
+                    break;
+                }
+            }
+        }
+    }
+
+    private void note(String what) {
+        String entry = String.format(java.util.Locale.ROOT, "%s @%.2fs (x=%.1f y=%.1f h=%.0fdeg)", what, time,
+                sim.drivePlant.getX(), sim.drivePlant.getY(), Math.toDegrees(sim.drivePlant.getHeading()));
+        // One entry per obstacle per contiguous contact.
+        if (contacts.isEmpty() || !contacts.get(contacts.size() - 1).startsWith(what + " @")
+                || time - lastContactTime > 0.1) {
+            contacts.add(entry);
+        }
+        lastContactTime = time;
+    }
+
+    private double lastContactTime = -1;
+
+    private double[][] corners(double x, double y, double h) {
+        double hl = robotLength / 2, hw = robotWidth / 2;
+        double c = Math.cos(h), s = Math.sin(h);
+        double[][] out = new double[4][];
+        int i = 0;
+        for (int sx = -1; sx <= 1; sx += 2) {
+            for (int sy = -1; sy <= 1; sy += 2) {
+                double fx = sx * hl, fy = sy * hw;
+                out[i++] = new double[] {x + fx * c - fy * s, y + fx * s + fy * c};
+            }
+        }
+        return out;
+    }
+
+    private boolean pointInFootprint(double px, double py, double x, double y, double h, double grow) {
+        double dx = px - x, dy = py - y;
+        double fwd = dx * Math.cos(h) + dy * Math.sin(h);
+        double left = -dx * Math.sin(h) + dy * Math.cos(h);
+        return Math.abs(fwd) <= robotLength / 2 + grow && Math.abs(left) <= robotWidth / 2 + grow;
+    }
+
+    /** Separating-axis test between the robot's footprint and an axis-aligned box, with tolerance. */
+    private boolean obbHitsBox(double x, double y, double h, double[] b) {
+        double tol = CONTACT_TOLERANCE_IN;
+        double[][] rc = corners(x, y, h);
+        double[][] bc = {{b[0], b[2]}, {b[1], b[2]}, {b[0], b[3]}, {b[1], b[3]}};
+        double[][] axes = {{1, 0}, {0, 1}, {Math.cos(h), Math.sin(h)}, {-Math.sin(h), Math.cos(h)}};
+        for (double[] a : axes) {
+            double rMin = Double.MAX_VALUE, rMax = -Double.MAX_VALUE, bMin = Double.MAX_VALUE, bMax = -Double.MAX_VALUE;
+            for (double[] p : rc) {
+                double d = p[0] * a[0] + p[1] * a[1];
+                rMin = Math.min(rMin, d);
+                rMax = Math.max(rMax, d);
+            }
+            for (double[] p : bc) {
+                double d = p[0] * a[0] + p[1] * a[1];
+                bMin = Math.min(bMin, d);
+                bMax = Math.max(bMax, d);
+            }
+            if (rMax < bMin + tol || bMax < rMin + tol) return false;
+        }
+        return true;
+    }
+
+    // ------------------------------------------------------------------ results
+
+    public int held() { return held; }
+    public int launched() { return launched; }
+    public int scored() { return scored; }
+    public int missed() { return missed; }
+    public int collected() { return collected; }
+    public int tips() { return tips; }
+    public List<Double> tipTimes() { return tipTimes; }
+    public List<String> contacts() { return contacts; }
+    public double strafeFraction() { return driveIn <= 1e-9 ? 0 : strafeIn / driveIn; }
+    public double drivenIn() { return driveIn; }
+
+    /** Contacts other than the intended kind (pressing the intake to a flower to collect). */
+    public List<String> unintendedContacts() {
+        List<String> out = new ArrayList<>();
+        for (String c : contacts) if (!c.contains("(intended")) out.add(c);
+        return out;
+    }
+
+    /** The cell geometry Zenith's BIOBUZZ ledger uses (SPEC: FIRST field CAD). */
+    static final class FieldFace {
+        static final double OUTER_FACE_IN = 18.528;
+    }
+
+    /** A flower: its pollen column and the face of its foot the intake pulls from. */
+    private final class Flower {
+        final String id;
+        final double x, y;
+        int count;
+        double openX, openY, inX, inY; // opening point and its inward-to-the-field normal
+
+        Flower(String id, double x, double y, int count) {
+            this.id = id;
+            this.x = x;
+            this.y = y;
+            this.count = count;
+        }
+
+        void setFoot(double[] b) {
+            // The retrieval opening is on the field side: the foot face farthest from the wall.
+            if (Math.abs(x) > Math.abs(y)) {
+                inX = -Math.signum(x);
+                inY = 0;
+                openX = x < 0 ? b[1] : b[0];
+                openY = y;
+            } else {
+                inX = 0;
+                inY = -Math.signum(y);
+                openX = x;
+                openY = y < 0 ? b[3] : b[2];
+            }
+        }
+
+        boolean reachable(double mx, double my, double fwdX, double fwdY) {
+            boolean facing = -(fwdX * inX + fwdY * inY) >= Math.cos(Math.toRadians(FACING_CONE_DEG));
+            return facing && Math.hypot(mx - openX, my - openY) <= OPENING_REACH_IN;
+        }
+    }
+}

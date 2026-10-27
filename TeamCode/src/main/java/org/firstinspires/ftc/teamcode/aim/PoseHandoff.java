@@ -16,6 +16,12 @@ public final class PoseHandoff {
     private static final String KEY_ALLIANCE = "biohors.alliance";
     private static final String KEY_POSE = "biohors.pose";
 
+    /** Stores only the alliance (the Choose Alliance OpMode). Clears any old pose. */
+    public static void saveAlliance(Alliance alliance) {
+        OpMode.blackboard.put(KEY_ALLIANCE, alliance.name());
+        OpMode.blackboard.remove(KEY_POSE);
+    }
+
     public static void save(Alliance alliance, double x, double y, double heading) {
         OpMode.blackboard.put(KEY_ALLIANCE, alliance.name());
         OpMode.blackboard.put(KEY_POSE, new double[] {x, y, heading});
