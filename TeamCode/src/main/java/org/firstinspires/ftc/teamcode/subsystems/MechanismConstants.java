@@ -18,8 +18,8 @@ public final class MechanismConstants {
     }
 
     // ===== Hardware map names (must match the Robot Controller config) =====
-    // Which shooter motor is which is NEEDS MEASUREMENT: confirm on the robot
-    // that shooterRight is the pollen shooter (same side as its gate).
+    // CONFIRMED by the team (Oct 27): one motor per shooter. Top-down with the intake at the
+    // front (up), the NECTAR shooter is on the LEFT and the POLLEN shooter on the RIGHT.
     public static final String POLLEN_SHOOTER_NAME = "shooterRight";
     public static final String NECTAR_SHOOTER_NAME = "shooterLeft";
     public static final String POLLEN_GATE_NAME = "gateRight"; // confirmed Oct 27: right gate feeds pollen
@@ -38,7 +38,7 @@ public final class MechanismConstants {
     // ticksPerRev is per FLYWHEEL revolution, so 28 holds only if the flywheel
     // is direct-driven (1:1); with a belt/gear ratio, multiply ticksPerRev by
     // it. The 2800 ticks/sec feedforward max is the motor's own free speed and
-    // does NOT change with an external ratio. NEEDS MEASUREMENT: confirm the ratio.
+    // does NOT change with an external ratio. CONFIRMED by the team (Oct 27): the flywheels are 1:1.
     private static final double GOBILDA_6000_TICKS_PER_REV = 28.0;           // SPEC
     private static final double GOBILDA_6000_FREE_SPEED_TICKS_PER_SEC = 2800.0; // SPEC (no load, 12 V)
 
@@ -51,14 +51,16 @@ public final class MechanismConstants {
     static {
         POLLEN_SHOOTER.label = "Pollen";
         applySharedPlaceholders(POLLEN_SHOOTER);
-        POLLEN_SHOOTER.targetRpm = 2000.0; // PLACEHOLDER: a field test, not the tuner, finds this
+        // SET BY HAND: the team's test target (Oct 27). The RPM that scores is a field test (the
+        // Shooter Tuner only makes the shooter hold whatever this is).
+        POLLEN_SHOOTER.targetRpm = 1600.0;
         // ---- Pollen tuned values: paste the "Pollen" lines the Shooter Tuner OpMode prints here ----
 
         NECTAR_SHOOTER.label = "Nectar";
         applySharedPlaceholders(NECTAR_SHOOTER);
-        // PLACEHOLDER. Nectar runs at a different speed from pollen; the real
-        // number is unknown, so it starts at the same placeholder.
-        NECTAR_SHOOTER.targetRpm = 2000.0;
+        // SET BY HAND: the team's test target (Oct 27), the same start as pollen. Nectar is
+        // expected to settle at its own speed after a field test; trim it with X / A.
+        NECTAR_SHOOTER.targetRpm = 1600.0;
         // ---- Nectar tuned values: paste the "Nectar" lines the Shooter Tuner OpMode prints here ----
     }
 
@@ -67,7 +69,7 @@ public final class MechanismConstants {
      * Same motor model, so the spec values match; every gain is a placeholder.
      */
     private static void applySharedPlaceholders(ShooterController.Config c) {
-        c.ticksPerRev = GOBILDA_6000_TICKS_PER_REV;                       // SPEC (assumes 1:1 flywheel)
+        c.ticksPerRev = GOBILDA_6000_TICKS_PER_REV;                       // SPEC; 1:1 confirmed
         c.ffReferenceVoltage = 12.0;                                       // SPEC (rated voltage)
         c.ffReferenceMaxTicksPerSec = GOBILDA_6000_FREE_SPEED_TICKS_PER_SEC; // SPEC; NEEDS MEASUREMENT under load
         c.kP = 0.001;                  // PLACEHOLDER
@@ -81,6 +83,10 @@ public final class MechanismConstants {
         c.powerSmoothingAlpha = 0.5;   // PLACEHOLDER
         c.rpmTolerance = 75.0;         // PLACEHOLDER
     }
+
+    // ===== Teleop trim: each shooter its own step (rpm per press) =====
+    public static double POLLEN_TRIM_STEP_RPM = 50.0; // SET BY HAND
+    public static double NECTAR_TRIM_STEP_RPM = 50.0; // SET BY HAND
 
     // ===== Gate servo positions (per gate) =====
     // PLACEHOLDER: both gates start at the old shared values. Move each gate
