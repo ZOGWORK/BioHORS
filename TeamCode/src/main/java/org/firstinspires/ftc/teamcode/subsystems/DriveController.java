@@ -18,11 +18,11 @@ public class DriveController {
     private final DcMotor backRight;
 
     // ===== Drive shaping config (starting points, tune to this robot) =====
-    public static double STICK_DEADBAND = 0.05;
-    public static double TRANSLATION_EXPO = 1.6; // 1.0 = linear, >1 more precision near center
-    public static double YAW_EXPO = 1.8;
-    public static double MAX_TRANSLATION = 1.0;
-    public static double MAX_YAW = 0.85; // slight cap helps prevent spinouts
+    public static double STICK_DEADBAND = 0.05; // PLACEHOLDER
+    public static double TRANSLATION_EXPO = 1.6; // PLACEHOLDER; 1.0 = linear, >1 more precision near center
+    public static double YAW_EXPO = 1.8; // PLACEHOLDER
+    public static double MAX_TRANSLATION = 1.0; // PLACEHOLDER
+    public static double MAX_YAW = 0.85; // PLACEHOLDER; slight cap helps prevent spinouts
 
     public DriveController(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight) {
         this.frontLeft = frontLeft;

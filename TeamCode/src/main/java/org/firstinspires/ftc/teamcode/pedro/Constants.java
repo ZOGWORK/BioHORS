@@ -43,13 +43,13 @@ public class Constants {
         // TODO: confirm pod type -- 4-bar pods here; swingarm pods use
         // GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD.
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        // TODO: MEASURE THESE with the Pinpoint Tuner (inches). Placeholders.
-        c.xPodOffset.set(0.0);
-        c.yPodOffset.set(0.0);
+        // TODO: MEASURE THESE with the Pinpoint Tuner (inches).
+        c.xPodOffset.set(0.0); // PLACEHOLDER
+        c.yPodOffset.set(0.0); // PLACEHOLDER
         // TODO: VERIFY with the Pinpoint Tuner -- flip to REVERSED if the
         // pose drives backwards on either axis.
-        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
-        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD); // PLACEHOLDER
+        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD); // PLACEHOLDER
         c.globalDistanceUnit.set(DistanceUnit.INCH);
         c.offsetUnits.set(DistanceUnit.INCH);
     });
