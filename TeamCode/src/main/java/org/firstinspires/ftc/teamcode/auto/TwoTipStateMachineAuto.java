@@ -22,9 +22,9 @@ import static org.firstinspires.ftc.teamcode.auto.AutoPoses.*;
  * {@link AutoPoses}. 16 pollen, two tips, then park:
  *
  * <pre>
- *  start -> drive to the south score spot (spinning up) -> volley 4 (preload)
- *        -> garden: 4 pollen -> back -> volley 4: south cell tips (tip 1)
- *        -> flower0 (west wall): 4 -> round the hive's west side -> volley 4 into the north cell
+ *  start: aim, spin up, volley 4 (preload) from where the robot starts
+ *        -> one curve to the garden: 4 pollen -> back out, volley 4 from there: south cell tips (tip 1)
+ *        -> one curve to flower0 (west wall): 4 -> round the hive's west side -> volley 4 into the north cell
  *        -> flower1 (north wall): 4 -> volley 4: north cell tips (tip 2) -> park
  * </pre>
  *
@@ -56,22 +56,17 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     public static final int VOLLEY = 4;
 
     public enum State {
-        DRIVE_OUT,              // to the south score spot, spinning up on the way
-        FACE_SOUTH_CELL,
+        AIM_AND_SPIN_UP,        // a 2 deg turn to face the south cell from the start; the flywheel spins up
         SHOOT_PRELOADS,
-        TURN_TO_GARDEN,
-        TO_GARDEN,
+        TO_GARDEN,              // one curve, nose-first, ending heading west above the garden
         TURN_SOUTH_AT_GARDEN,
         SIDE_TO_GARDEN,
         COLLECT_GARDEN,         // nose in slowly, intake on; ends at the line or when full
         WAIT_GARDEN_FULL,
         BACK_OUT_OF_GARDEN,
-        TURN_TO_SCORE_SOUTH,
-        TO_SCORE_SOUTH,
-        FACE_SOUTH_CELL_AGAIN,
+        AIM_FROM_GARDEN,
         SHOOT_GARDEN,           // the south cell reaches 8: tip 1
-        TURN_TO_FLOWER_WEST,
-        TO_FLOWER_WEST,
+        TO_FLOWER_WEST,         // one curve, no turn first: it starts the way the volley left the robot facing
         COLLECT_FLOWER_WEST,
         WAIT_FLOWER_WEST,
         BACK_OFF_FLOWER_WEST,
@@ -94,7 +89,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     private ForesightConfig foresight;
     private AutoMechanisms mech;
     private Alliance alliance = Alliance.RED;
-    private State state = State.DRIVE_OUT;
+    private State state = State.AIM_AND_SPIN_UP;
     private final ElapsedTime stateTimer = new ElapsedTime();
     private final ElapsedTime matchTimer = new ElapsedTime();
 
@@ -136,7 +131,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     private void startAuto() {
         matchTimer.reset();
-        enter(State.DRIVE_OUT);
+        enter(State.AIM_AND_SPIN_UP);
     }
 
     private void loopOnce() {
@@ -199,13 +194,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         state = s;
         stateTimer.reset();
         switch (s) {
-            case DRIVE_OUT:
+            case AIM_AND_SPIN_UP:
                 mech.spinUp();
-                go(tangent(Paths.line(here(), p(SCORE_SOUTH))), DEFAULT_SPEED);
-                break;
-            case FACE_SOUTH_CELL:
-            case FACE_SOUTH_CELL_AGAIN:
-                turn(FACE_SOUTH_CELL, FACING_NORTH, FACING_SOUTH_CELL);
+                turn(AIM_FROM_START, FACING_NORTH, SOUTH_CELL_FROM_START);
                 break;
             case SHOOT_PRELOADS:
             case SHOOT_GARDEN:
@@ -214,17 +205,14 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 mech.volley(VOLLEY);
                 break;
 
-            case TURN_TO_GARDEN:
-                turn(TURN_TO_GARDEN, FACING_SOUTH_CELL, TOWARD_GARDEN);
-                break;
             case TO_GARDEN:
-                go(tangent(Paths.line(here(), p(GARDEN_LANE))), 1.0);
+                go(tangent(Paths.curve(here(), p(TO_GARDEN_C1), p(TO_GARDEN_C2), p(GARDEN_LANE))), 1.0);
                 break;
             case TURN_SOUTH_AT_GARDEN:
-                turn(TURN_SOUTH_AT_GARDEN, TOWARD_GARDEN, FACING_SOUTH);
+                turn(TURN_SOUTH_AT_GARDEN, FACING_WEST_NEGATIVE, FACING_SOUTH);
                 break;
             case SIDE_TO_GARDEN:
-                // A short sideways slide, square to the west wall: tilting the 22 in robot near the
+                // A short, slow sideways slide, square to the west wall: tilting the 22 in robot near the
                 // wall swings the flower bar's corner into it.
                 go(Paths.line(here(), p(GARDEN_APPROACH)).constant(h(FACING_SOUTH)), SLIDE_SPEED);
                 break;
@@ -234,31 +222,26 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 go(Paths.line(here(), p(GARDEN_PICKUP)).constant(h(FACING_SOUTH)), GARDEN_SPEED);
                 break;
             case WAIT_GARDEN_FULL:
+            case WAIT_FLOWER_WEST:
+            case WAIT_FLOWER_NORTH:
                 break;
             case BACK_OUT_OF_GARDEN:
                 mech.intakeOff();
                 go(Paths.line(here(), p(GARDEN_TURN)).constant(h(FACING_SOUTH)), DEFAULT_SPEED);
                 break;
-            case TURN_TO_SCORE_SOUTH:
-                turn(TURN_TO_SCORE_SOUTH, FACING_SOUTH, TOWARD_SCORE_SOUTH);
-                break;
-            case TO_SCORE_SOUTH:
-                go(tangent(Paths.curve(here(), p(TO_SCORE_SOUTH_C1), p(TO_SCORE_SOUTH_C2), p(SCORE_SOUTH))), 1.0);
+            case AIM_FROM_GARDEN:
+                turn(AIM_FROM_GARDEN, FACING_SOUTH, SOUTH_CELL_FROM_GARDEN);
                 break;
 
-            case TURN_TO_FLOWER_WEST:
-                turn(TURN_TO_FLOWER_WEST, FACING_SOUTH_CELL, TOWARD_FLOWER_WEST);
-                break;
             case TO_FLOWER_WEST:
                 go(tangent(Paths.curve(here(), p(TO_FLOWER_WEST_C1), p(TO_FLOWER_WEST_C2), p(FLOWER_WEST_APPROACH))), 1.0);
                 break;
             case COLLECT_FLOWER_WEST:
                 mech.flowerBarDown();
                 mech.collect();
-                go(tangent(Paths.line(here(), p(FLOWER_WEST_PICKUP))), FLOWER_SPEED);
-                break;
-            case WAIT_FLOWER_WEST:
-            case WAIT_FLOWER_NORTH:
+                // Heading held square to the wall: a tangent heading would turn a small sideways offset
+                // into a yaw that swings the mouth off the flower's opening.
+                go(Paths.line(here(), p(FLOWER_WEST_PICKUP)).constant(h(FACING_WEST)), FLOWER_SPEED);
                 break;
             case BACK_OFF_FLOWER_WEST:
                 mech.intakeOff();
@@ -279,7 +262,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
             case COLLECT_FLOWER_NORTH:
                 mech.flowerBarDown();
                 mech.collect();
-                go(tangent(Paths.line(here(), p(FLOWER_NORTH_PICKUP))), FLOWER_SPEED);
+                go(Paths.line(here(), p(FLOWER_NORTH_PICKUP)).constant(h(FACING_NORTH)), FLOWER_SPEED);
                 break;
             case BACK_OFF_FLOWER_NORTH:
                 mech.intakeOff();

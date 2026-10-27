@@ -30,7 +30,6 @@ class AutoPosesTest {
         Json w = read("autos/waypoints.json").get("waypoints");
         Map<String, Pose> named = new LinkedHashMap<>();
         named.put("start", AutoPoses.START);
-        named.put("scoreSouth", AutoPoses.SCORE_SOUTH);
         named.put("gardenApproach", AutoPoses.GARDEN_APPROACH);
         named.put("gardenPickup", AutoPoses.GARDEN_PICKUP);
         named.put("gardenTurn", AutoPoses.GARDEN_TURN);
@@ -50,15 +49,12 @@ class AutoPosesTest {
 
     @Test
     void pathPointsMatchTheZenithDraft() throws IOException {
+        // Each step's literal points: the Bezier control points then the end, or just the end of a line.
         Map<String, Pose[]> byStep = new LinkedHashMap<>();
-        byStep.put("faceSouthCell", new Pose[] {AutoPoses.FACE_SOUTH_CELL});
-        byStep.put("turnToGarden", new Pose[] {AutoPoses.TURN_TO_GARDEN});
-        byStep.put("toGarden", new Pose[] {AutoPoses.GARDEN_LANE});
+        byStep.put("aimAtSouthCell", new Pose[] {AutoPoses.AIM_FROM_START});
+        byStep.put("toGarden", new Pose[] {AutoPoses.TO_GARDEN_C1, AutoPoses.TO_GARDEN_C2, AutoPoses.GARDEN_LANE});
         byStep.put("turnSouthAtGarden", new Pose[] {AutoPoses.TURN_SOUTH_AT_GARDEN});
-        byStep.put("turnToScoreSouth", new Pose[] {AutoPoses.TURN_TO_SCORE_SOUTH});
-        byStep.put("toScoreSouth", new Pose[] {AutoPoses.TO_SCORE_SOUTH_C1, AutoPoses.TO_SCORE_SOUTH_C2});
-        byStep.put("faceSouthCellAgain", new Pose[] {AutoPoses.FACE_SOUTH_CELL});
-        byStep.put("turnToFlowerWest", new Pose[] {AutoPoses.TURN_TO_FLOWER_WEST});
+        byStep.put("faceSouthCellFromGarden", new Pose[] {AutoPoses.AIM_FROM_GARDEN});
         byStep.put("toFlowerWest", new Pose[] {AutoPoses.TO_FLOWER_WEST_C1, AutoPoses.TO_FLOWER_WEST_C2});
         byStep.put("turnNorth", new Pose[] {AutoPoses.TURN_NORTH});
         byStep.put("aroundWestToScoreNorth", new Pose[] {AutoPoses.AROUND_WEST_C1, AutoPoses.AROUND_WEST_C2});
@@ -72,14 +68,11 @@ class AutoPosesTest {
             Json step = steps.get(e.getKey());
             assertNotNull(step, "the draft has no step " + e.getKey());
             Json seg = step.get("segments").at(0);
-            Json[] points;
+            java.util.List<Json> list = new java.util.ArrayList<>();
             Json control = seg.opt("control");
-            if (control != null) {
-                points = new Json[control.size()];
-                for (int i = 0; i < points.length; i++) points[i] = control.at(i);
-            } else {
-                points = new Json[] {seg.get("to")};
-            }
+            if (control != null) for (int i = 0; i < control.size(); i++) list.add(control.at(i));
+            if (seg.get("to").opt("ref") == null) list.add(seg.get("to"));   // a literal end point
+            Json[] points = list.toArray(new Json[0]);
             assertEquals(e.getValue().length, points.length, e.getKey() + " point count");
             for (int i = 0; i < points.length; i++) {
                 assertEquals(points[i].num("xIn"), e.getValue()[i].x(), TOL, e.getKey() + " point " + i + " x");

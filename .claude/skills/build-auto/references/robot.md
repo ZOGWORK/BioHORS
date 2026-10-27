@@ -46,8 +46,17 @@ model. Do not plan a real-field auto around them as if they were real (see `docs
   70.67 would put them inside the wall. Which is right is a measure-on-the-field item (docs/TUNING.md 7),
   and any pose within about 1.5 in of a wall is listed there.
 - Near a wall, keep the heading square to it: tilting the 22 in body even a few degrees swings the
-  bar's corner 14.2 in x the angle toward the wall. The garden lane (x = -62.7) is reached by a short
-  sideways slide with the heading held at -90 deg for this reason.
+  bar's corner 14.2 in x the angle toward the wall. The garden lane is reached by a short, slow
+  sideways slide to x = -62.5 with the heading held at -90 deg, then a nose-in to x = -62.85, for
+  this reason. The flower run-ins hold their heading too (a tangent heading turns a small sideways
+  offset into a yaw that swings the mouth off the opening).
+- The flower bar: `flowerBarDown` before collecting from a flower, `flowerBarStow` after. `score`
+  lifts it clear of the shots by itself. The sim's flower model only pulls pollen while the bar's
+  servo is really at DOWN.
+- There is a hand-written twin of this auto, `auto/TwoTipStateMachineAuto` (Pedro paths and a
+  state machine, no Zenith runtime). Its points are copied from this draft and `AutoPosesTest`
+  fails if they drift: after changing the draft, copy the numbers into `auto/AutoPoses.java` and
+  run `StateMachineAutoMatchTest` too.
 - Tip rule: **8 pollen per tip** (team rule; `autos/field/biobuzz.field.json` rules.tipTable = [8],
   which deliberately differs from the season package's DSim table).
 
