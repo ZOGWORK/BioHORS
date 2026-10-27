@@ -12,7 +12,7 @@
     "startIn": {
       "lengthIn": 22.0,
       "widthIn": 17.84,
-      "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): 22.0 in from the flower bar tip (14.2 in ahead of the drive centre) to the back (7.8 in behind), 17.84 in wide. NEEDS CONFIRMATION: if the flower mech folds in for the start, the start box is the 17.44 in frame instead"
+      "provenance": "MEASURED FROM CAD (33950 Robot.step): the 22.0 in box with the flower bar out. The team says the bar is STOWED at the start (Oct 27), making the robot its 17.4 in frame (9.6 in ahead of the drive centre, 7.8 in behind); Zenith has one centre of rotation (-3.2 in, set for the 22 in box), so a 17.4 in start box would be placed 2.3 in off the wall. The 22 in box puts the back on the wall exactly as the stowed robot does."
     },
     "expandedIn": {
       "lengthIn": 22.0,
@@ -141,6 +141,24 @@
       "ledger": {
         "launches": "count"
       }
+    },
+    {
+      "name": "flowerBarDown",
+      "summary": "Puts the flower bar down (out and low) to collect from a flower. The robot is at its longest.",
+      "estimateS": "0",
+      "requires": [
+        "flowerBar"
+      ],
+      "stationary": false
+    },
+    {
+      "name": "flowerBarStow",
+      "summary": "Folds the flower bar up. The robot is at its shortest.",
+      "estimateS": "0",
+      "requires": [
+        "flowerBar"
+      ],
+      "stationary": false
     }
   ],
   "conditions": [

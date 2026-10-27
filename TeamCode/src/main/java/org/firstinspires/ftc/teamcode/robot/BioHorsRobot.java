@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.DriveController;
+import org.firstinspires.ftc.teamcode.subsystems.FlowerBarController;
 import org.firstinspires.ftc.teamcode.subsystems.GateController;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeController;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
@@ -35,6 +36,7 @@ public class BioHorsRobot {
     public final ShooterController nectarShooter;
     public final GateController pollenGate;
     public final GateController nectarGate;
+    public final FlowerBarController flowerBar;
 
     /** The Pinpoint, for its device status. Null if the config has none. */
     public final GoBildaPinpointDriver pinpoint;
@@ -55,6 +57,8 @@ public class BioHorsRobot {
         DcMotor nectarShooterMotor = hardwareMap.get(DcMotor.class, MechanismConstants.NECTAR_SHOOTER_NAME);
         Servo pollenGateServo = hardwareMap.get(Servo.class, MechanismConstants.POLLEN_GATE_NAME);
         Servo nectarGateServo = hardwareMap.get(Servo.class, MechanismConstants.NECTAR_GATE_NAME);
+        Servo flowerLeftServo = hardwareMap.get(Servo.class, MechanismConstants.FLOWER_BAR_LEFT_NAME);
+        Servo flowerRightServo = hardwareMap.get(Servo.class, MechanismConstants.FLOWER_BAR_RIGHT_NAME);
 
         GoBildaPinpointDriver pp = null;
         try {
@@ -99,6 +103,9 @@ public class BioHorsRobot {
                 MechanismConstants.POLLEN_GATE_OPEN, MechanismConstants.POLLEN_GATE_CLOSED);
         nectarGate = new GateController("Nectar", nectarGateServo,
                 MechanismConstants.NECTAR_GATE_OPEN, MechanismConstants.NECTAR_GATE_CLOSED);
+        flowerBar = new FlowerBarController(flowerLeftServo, flowerRightServo,
+                MechanismConstants.FLOWER_BAR_STOWED, MechanismConstants.FLOWER_BAR_DOWN,
+                MechanismConstants.FLOWER_BAR_SHOOTING);
     }
 
     /** True when the Pinpoint reports READY. False if it is missing, calibrating or faulted. */

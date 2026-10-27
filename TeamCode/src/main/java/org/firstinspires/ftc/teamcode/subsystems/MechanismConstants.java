@@ -24,6 +24,10 @@ public final class MechanismConstants {
     public static final String NECTAR_SHOOTER_NAME = "shooterLeft";
     public static final String POLLEN_GATE_NAME = "gateRight"; // confirmed Oct 27: right gate feeds pollen
     public static final String NECTAR_GATE_NAME = "gateLeft";  // confirmed Oct 27: left gate feeds nectar
+    // The flower bar's two servos (mounted facing away from each other; the right one is reversed
+    // in FlowerBarController). NEEDS CONFIRMATION: add them to the Robot Controller config by these names.
+    public static final String FLOWER_BAR_LEFT_NAME = "flowerLeft";
+    public static final String FLOWER_BAR_RIGHT_NAME = "flowerRight";
 
     // ===== Shooter directions =====
     // Both shooters physically spin the SAME way (team spec). The motor
@@ -95,4 +99,14 @@ public final class MechanismConstants {
     public static double POLLEN_GATE_CLOSED = 0.485; // PLACEHOLDER
     public static double NECTAR_GATE_OPEN = 0.67;    // PLACEHOLDER
     public static double NECTAR_GATE_CLOSED = 0.485; // PLACEHOLDER
+
+    // ===== Flower bar servo positions (both servos get the same number) =====
+    // PLACEHOLDER: arbitrary until set on the robot. STOWED folds the bar up (the robot at its
+    // shortest, as it starts the match); DOWN puts it out and low for a flower's opening;
+    // SHOOTING is DOWN raised slightly, so shots clear it.
+    public static double FLOWER_BAR_STOWED = 0.15;   // PLACEHOLDER
+    public static double FLOWER_BAR_DOWN = 0.80;     // PLACEHOLDER
+    public static double FLOWER_BAR_SHOOTING = 0.65; // PLACEHOLDER
+    /** Time for the bar to reach SHOOTING before a volley feeds, seconds. PLACEHOLDER: film it. */
+    public static double FLOWER_BAR_SETTLE_S = 0.25;
 }

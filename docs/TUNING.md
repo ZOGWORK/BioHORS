@@ -82,7 +82,7 @@ first.
 | `ffReferenceMaxTicksPerSec`, `kS`, `kF = 1` | 2800 (SPEC no-load), 0, 1.0 | Shooter Tuner |
 | `kP` | 0.001 (PLACEHOLDER) | Shooter Tuner |
 | `kI`, `kD` | 0.0005, 0 (PLACEHOLDER) | Shooter Tuner sets both to 0 (flywheels do not need them) |
-| Pollen `targetRpm` | **1600** (the team's test value) | **Field test**, not the tuner: shoot from `scoreSouth` / `scoreNorth`, trim with dpad left/right in the teleop until pollen lands 10 of 10 |
+| Pollen `targetRpm` | **1600** (the team's test value) | **Field test**, not the tuner: shoot from the auto's volley spots (the start, `gardenTurn`, `scoreNorth`), trim with dpad left/right in the teleop until pollen lands 10 of 10 |
 | Nectar `targetRpm` | **1600** (the team's test value; trim with X / A) | Field test, nectar into the flower |
 | `ticksPerRev` | 28 (SPEC, 1:1) | Section 0 gear ratio (the tuner works in encoder ticks/s, so it does not need it) |
 | `rpmTolerance` | 75 rpm | Shot-to-shot spread vs rpm |
@@ -114,6 +114,23 @@ drivetrain (Pedro's follower is a separate loop, section 2).
 the servo position that just opens / fully closes it. **Done when** each gate opens without
 binding and closes without letting a pollen past.
 
+## 4b. Flower bar
+
+Two servos, `flowerLeft` and `flowerRight` (**add them to the Robot Controller config by these
+names**), mounted facing away from each other: `FlowerBarController` sets the right one to REVERSE,
+so one position number moves both the same way. If the bar twists instead of lifting, the other
+servo is the reversed one: swap which gets REVERSE.
+
+`MechanismConstants`: `FLOWER_BAR_STOWED` 0.15, `FLOWER_BAR_DOWN` 0.80, `FLOWER_BAR_SHOOTING` 0.65,
+all PLACEHOLDER (arbitrary). Set them from the Driver Station:
+- STOWED: folded up, the robot at its shortest (it starts the match like this).
+- DOWN: out and low, the bar seated in a flower's retrieval opening.
+- SHOOTING: DOWN raised just enough that launched pollen clear it.
+
+Teleop: **X toggles DOWN / STOWED**; while either gate is open the bar sits at SHOOTING. Auto: DOWN
+only while collecting from a flower, SHOOTING for every volley. **Done when** the bar seats in a
+flower's opening at DOWN, shots never touch it at SHOOTING, and the robot fits the start box at STOWED.
+
 ## 5. Auto timing and the pollen estimate
 
 | Item | Current | Where | How | Done when |
@@ -130,9 +147,10 @@ binding and closes without letting a pollen past.
 footprint 22.0 x 17.84 in (flower bar tip 14.2 in ahead of the drive centre, back 7.8 in behind),
 height 14.9 in, centre of rotation 3.2 in behind the box's middle, intake mouth 13.2 in wide /
 4.6 in deep / 11.9 in forward. Check each with a tape on the real robot (CAD can be out of date) and
-re-run `npx zenith validate autos/two-tip.auto.json --json`. **Open question:** does the flower mech
-fold in for the start? If so the start box is the 17.44 in frame and `startIn` should say so.
-**Done when** the tape agrees with the CAD and the auto still validates with 0 errors.
+re-run `npx zenith validate autos/two-tip.auto.json --json`. The flower bar is STOWED at the start
+(team, Oct 27), so the robot starts as its 17.4 in frame; `startIn` stays the 22 in box only because
+Zenith has one centre of rotation, and that box puts the back on the wall exactly where the stowed
+robot's is. **Done when** the tape agrees with the CAD and the auto still validates with 0 errors.
 
 ## 7. Waypoints (measure once on a real field)
 
@@ -141,10 +159,9 @@ Pinpoint pose (after setting the start pose), and replace the number and its pro
 
 | Waypoint | Current (x, y, heading) | What it is |
 |---|---|---|
-| `start` | (-15, -64.2, 90 deg) | The fixed start at the hive that is up at kickoff: back on the south wall |
-| `scoreSouth` | (-15, -36, 85 deg) | Volleys 1-2, facing the south cell |
-| `gardenApproach` / `Pickup` | (-62.7, -45) / (-62.7, -57.4), -90 deg | Garden line, nose-first south. x = -62.7 is the narrow fit: the 13.2 in mouth just reaches the west-most pollen while the 17.84 in body stays 0.38 in off the field file's west wall (-72). **Check on the field**: FIRST's CAD puts the walls at +/-70.67, 1.3 in inside the field file's, and the field file's garden pollen (x -70.6, radius 1.4) touch its -72 wall, so at least the pollen and walls move together; measure the lane from the real wall and the real pollen |
-| `gardenTurn` | (-50, -44, -90 deg) | Room to turn after the garden |
+| `start` | (-15, -64.2, 90 deg) | The fixed start at the hive that is up at kickoff: back on the south wall. Volley 1 (the preloads) is shot from here, 55 in from the south cell, after a 2 deg turn |
+| `gardenApproach` / `Pickup` | (-62.5, -45) / (-62.85, -57.0), -90 deg | Garden line, nose-first south. The robot slides slowly to x = -62.5, then noses in to x = -62.85: the 13.2 in mouth reaches the west-most pollen with 0.25 in to spare, the 17.84 in body stays 0.23 in off the field file's west wall (-72), and the bar stops 0.8 in short of the south wall (a follower overshoots by a few tenths). **Check on the field**: FIRST's CAD puts the walls at +/-70.67, 1.3 in inside the field file's, and the field file's garden pollen (x -70.6, radius 1.4) touch its -72 wall, so at least the pollen and walls move together; measure the lane from the real wall and the real pollen |
+| `gardenTurn` | (-50, -44, -90 deg) | Room to turn after the garden. Volley 2 (the garden load, tip 1) is shot from here, 51 in from the south cell |
 | `flowerWestApproach` / `Pickup` | (-44, -24) / (-52.4, -24), 180 deg | flower0 (near the garden): the flower bar stops 0.5 in short of the foot |
 | `scoreNorth` | (-24, 44, -72 deg) | Volleys 3-4, north cell, facing it |
 | `flowerNorthPickup` | (-24, 52.4, 90 deg) | flower1 (near the tipped hive): the bar stops 0.5 in short of the foot |
@@ -214,11 +231,11 @@ Two findings:
    exit, and at 44 deg a ball only gets in from y = -70, behind the south wall's reach. If the robot
    really scores at 1600 rpm, the ball leaves steeper and faster than the CAD
    reading suggests. The measurement above settles it.
-2. **The auto's score spots are too close.** `scoreSouth` and `scoreNorth` are about 27 in from
-   their cells (y = -36 above). Run with real balls, under even the generous 70 deg / 0.8 what-if,
-   the auto scores 0 (`ZenithAutoMatchTest.theAutoWithRealBallsInPhysics`). About 45-50 in from the
-   axle is where every plausible shot works and the rpm needed changes least with the angle.
-   **Once the shot is measured, move both score spots out and set the rpm from the table.**
+2. **Where the auto shoots from.** The optimized route shoots volleys 1 and 2 from the start
+   (55 in from the south cell) and from `gardenTurn` (51 in), in the 45-50 in band where every
+   plausible shot works. Volleys 3 and 4 still go from `scoreNorth`, 36.5 in from the north cell,
+   which is short for a shallow shot. **Once the shot is measured, rerun `ShotSweepTest` and move
+   `scoreNorth` out if the table says so.**
 
 **Where in the cell to aim a rapid volley** (`PocketAimTest`): aim at the cell's middle. Volleys of 8
 were fired at the middle, a side wall, and the front-lip and deep corners, from the centre line and

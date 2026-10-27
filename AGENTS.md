@@ -219,6 +219,9 @@ the wrong reason costs the team more than a plain stop does.
   - Intake: `intakeLeft`, `intakeRight`
   - Shooters: `shooterRight` = pollen, `shooterLeft` = nectar (pollen side assumed, not yet confirmed)
   - Gates: `gateRight` = pollen, `gateLeft` = nectar (confirmed)
+  - Flower bar: `flowerLeft`, `flowerRight` (two servos facing away from each other; the right one
+    is REVERSE in `FlowerBarController`). In total: 4 servos, 2 intake motors, 2 shooter motors with
+    a velocity controller each, 4 drive motors.
   - Odometry: `pinpoint`
 - **Subsystems:**
   - `DriveController`: mecanum mixing from stick inputs; inputs and outputs are unitless powers in [-1, 1].
@@ -248,6 +251,10 @@ the wrong reason costs the team more than a plain stop does.
   keep last-best). User-started only, with `/run-loop`. For an auto objective, the envelope must include
   `ZenithAutoMatchTest`'s checks (16 scored, 2 tips, no contact, strafing under 20 %, both alliances) and
   no edit may change a PLACEHOLDER shot or sim constant to score higher.
+- **Hand-written auto:** `auto/TwoTipStateMachineAuto` runs the same route as the Zenith auto with
+  Pedro paths and an explicit state machine (`auto/AutoMechanisms` has one state machine per
+  mechanism). Its points live in `auto/AutoPoses`, copied from the Zenith draft; `AutoPosesTest`
+  keeps them equal and `StateMachineAutoMatchTest` runs it as a match.
 - **Sim tests live in:** `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/sim/` (`MainHorsTeleOpSimTest`, `ZenithAutoMatchTest`).
   Run OpModes with `OpModeRunner.forTeamClass(...)` and `.teamPackages("org.firstinspires.ftc.teamcode.",
   SimClockLoader.PEDRO_PATHING)` so the code's timers read sim time; pass data in through `OpMode.blackboard`.

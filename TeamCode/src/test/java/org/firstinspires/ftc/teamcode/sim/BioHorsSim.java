@@ -110,6 +110,8 @@ public final class BioHorsSim {
             new FakeMotor(SHOOTER_MAX_TICKS_PER_S, SHOOTER_RESPONSE_PER_S, SHOOTER_TICKS_PER_REV);
     public final FakeServo pollenGate = new FakeServo();
     public final FakeServo nectarGate = new FakeServo();
+    public final FakeServo flowerLeft = new FakeServo();
+    public final FakeServo flowerRight = new FakeServo();
     public final FakeVoltageSensor battery = new FakeVoltageSensor(12.0);
 
     /** Chassis physics. Its pose is the robot's true field pose. */
@@ -117,6 +119,9 @@ public final class BioHorsSim {
     /** What the gates are really doing (the robot cannot see this). */
     public final PositionalServoPlant pollenGatePlant;
     public final PositionalServoPlant nectarGatePlant;
+    /** The flower bar's two servos (the same transit model as a gate: PLACEHOLDER). */
+    public final PositionalServoPlant flowerLeftPlant;
+    public final PositionalServoPlant flowerRightPlant;
 
     public BioHorsSim() {
         for (int i = 0; i < 4; i++) {
@@ -133,11 +138,15 @@ public final class BioHorsSim {
         hardwareMap.register("shooterLeft", nectarShooter);
         hardwareMap.register("gateRight", pollenGate);       // pollen gate
         hardwareMap.register("gateLeft", nectarGate);
+        hardwareMap.register("flowerLeft", flowerLeft);     // flower bar (MechanismConstants)
+        hardwareMap.register("flowerRight", flowerRight);
         hardwareMap.register("battery", battery);
 
         drivePlant = new MecanumDrivePlant(driveMotors, DRIVETRAIN);
         pollenGatePlant = new PositionalServoPlant(pollenGate, GATE);
         nectarGatePlant = new PositionalServoPlant(nectarGate, GATE);
+        flowerLeftPlant = new PositionalServoPlant(flowerLeft, GATE);
+        flowerRightPlant = new PositionalServoPlant(flowerRight, GATE);
     }
 
     /** Puts the chassis at a field pose without driving there; the Pinpoint does not count it as motion. */
@@ -153,6 +162,8 @@ public final class BioHorsSim {
                 drivePlant.getHeading());
         pollenGatePlant.update(dt);
         nectarGatePlant.update(dt);
+        flowerLeftPlant.update(dt);
+        flowerRightPlant.update(dt);
         simTimeS += dt;
         if (batterySag) applyBatterySag();
     }
