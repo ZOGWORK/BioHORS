@@ -91,6 +91,9 @@ public class MainHorsTeleOp extends LinearOpMode {
                 targetCell = FieldTargets.upCellAtKickoff(alliance);
                 if (!poseFromAuto) localizer.setPose(defaultStartPose(alliance));
             }
+            // Track the mechanism buttons during INIT too, so a button still held at PLAY (the
+            // dpad from picking the alliance, say) is not read as a fresh press on the first loop.
+            seedEdgeDetectors();
             localizer.update();
             telemetry.addData("Alliance", "%s  (dpad left = RED, dpad right = BLUE)", alliance);
             telemetry.addData("Start pose", poseFromAuto ? "from auto" : "default (unmeasured)");
@@ -229,6 +232,15 @@ public class MainHorsTeleOp extends LinearOpMode {
         }
 
         robot.stop();
+    }
+
+    /** Sets every edge detector to the buttons' current state. */
+    private void seedEdgeDetectors() {
+        dpadDownLast = gamepad1.dpad_down || gamepad2.dpad_down;
+        dpadLeftLast = gamepad1.dpad_left || gamepad2.dpad_left;
+        dpadRightLast = gamepad1.dpad_right || gamepad2.dpad_right;
+        bLast = gamepad1.b || gamepad2.b;
+        aLast = gamepad1.a || gamepad2.a;
     }
 
     /** The default start pose for an alliance: the RED value, point-mirrored for BLUE. */

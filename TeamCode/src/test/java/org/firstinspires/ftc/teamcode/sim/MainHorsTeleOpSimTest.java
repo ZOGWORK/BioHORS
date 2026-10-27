@@ -229,6 +229,20 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
+    void aDpadHeldFromAlliancePickThroughPlayDoesNotTrimTheShooter() {
+        BioHorsSim sim = new BioHorsSim();
+        sim.placeAt(13.0, 63.0, -Math.PI / 2.0);
+        OpModeRunResult result = run(sim, 40, (phase, tick, g1, g2) -> {
+            // Pick BLUE in INIT and keep holding dpad right for a while after PLAY.
+            g1.dpad_right = phase == OpModePhase.INIT_LOOP || (phase == OpModePhase.ACTIVE && tick < 10);
+        }, null);
+        String shown = lastTelemetry(result);
+        assertTrue(shown.contains("BLUE"), "dpad right in INIT picks BLUE: " + shown);
+        assertTrue(shown.contains("target=2000"), "holding it through PLAY must not trim pollen: " + shown);
+        assertFalse(shown.contains("target=2050"), "no +50 trim: " + shown);
+    }
+
+    @Test
     void shootersStartOffAndGatesStartClosed() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
