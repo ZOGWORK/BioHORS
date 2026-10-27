@@ -46,7 +46,11 @@ public class Constants {
         // GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD.
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         // TODO: MEASURE THESE with the Pinpoint Tuner (inches).
-        c.xPodOffset.set(0.0); // PLACEHOLDER
+        // MEASURED FROM CAD (33950 Robot.step): the X (forward) pod sits 2.84 in to the right of
+        // the drive centre (5.1 in behind it). goBILDA's convention is left-positive, so -2.84.
+        // VERIFY sign and value with the Pinpoint Tuner.
+        c.xPodOffset.set(-2.84);
+        // NEEDS MEASUREMENT: the Y (strafe) pod is not in the CAD.
         c.yPodOffset.set(0.0); // PLACEHOLDER
         // TODO: VERIFY with the Pinpoint Tuner -- flip to REVERSED if the
         // pose drives backwards on either axis.

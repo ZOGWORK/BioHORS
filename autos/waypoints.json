@@ -3,70 +3,64 @@
   "formatVersion": 1,
   "waypoints": {
     "start": {
-      "xIn": -13,
-      "yIn": -63,
+      "xIn": -15.0,
+      "yIn": -64.2,
       "headingRad": 1.5708,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); the fixed start the team uses at the hive that is up at kickoff (RED's south cell): back against the south wall in RED's half, 4 in west of the centre line, facing the hive. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the fixed start at the hive that is up at kickoff (RED's south cell): back touching the south wall, in RED's half, facing the hive. NEEDS MEASUREMENT on the real field."
     },
     "scoreSouth": {
-      "xIn": -13,
-      "yIn": -36,
-      "headingRad": 1.5708,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); south of the RED hive on x = -13, in the south cell's quarter and outboard of its outer face (y < -18.5) with margin, facing the cell. NEEDS MEASUREMENT on the real field."
+      "xIn": -15.0,
+      "yIn": -36.0,
+      "headingRad": 1.4868,
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); south of the RED hive, in the south cell's quarter and outboard of its outer face, facing the south cell's centre; the bar tip stays clear of the hive frame's west foot bar. NEEDS MEASUREMENT on the real field."
     },
-    "gardenSweepStart": {
-      "xIn": -44,
-      "yIn": -61.5,
-      "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); east of the RED garden line (x = -44, room to straighten before the sweep), intake facing west along the south wall, frame 1.5 in off it, before the first pollen at x = -62.2 (field file). NEEDS MEASUREMENT on the real field. y = -61.5: the field file's wall is at -72 but FIRST's CAD wall is at -70.67 (Zenith BIOBUZZ ledger), where an 18 in robot's centre can be no closer than -61.67; NEEDS MEASUREMENT whether the intake still reaches the garden line from there on a real field."
+    "gardenApproach": {
+      "xIn": -62.7,
+      "yIn": -45.0,
+      "headingRad": -1.5708,
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); north of the RED garden line, nose (intake) south toward it; x = -62.7 keeps the 17.84 in body (0.38 in clear) inside the west wall while the centred 13.2 in mouth spans all four pollen. NEEDS MEASUREMENT on the real field."
     },
-    "gardenSweepEnd": {
-      "xIn": -61.5,
-      "yIn": -61.5,
-      "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); west end of the RED garden line: frame 1.5 in off the west wall and 1.5 in off the south wall (room for a few degrees of heading error), the intake over the last pollen at x = -70.6 (field file). NEEDS MEASUREMENT on the real field. y = -61.5: the field file's wall is at -72 but FIRST's CAD wall is at -70.67 (Zenith BIOBUZZ ledger), where an 18 in robot's centre can be no closer than -61.67; NEEDS MEASUREMENT whether the intake still reaches the garden line from there on a real field."
+    "gardenPickup": {
+      "xIn": -62.7,
+      "yIn": -57.4,
+      "headingRad": -1.5708,
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar 0.4 in from the south wall, the mouth over the garden line (y = -70.6). NEEDS MEASUREMENT on the real field."
+    },
+    "gardenTurn": {
+      "xIn": -50.0,
+      "yIn": -44.0,
+      "headingRad": -1.5708,
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); where the robot backs out to from the garden: a 16.8 in turning circle clears both walls. NEEDS MEASUREMENT on the real field."
     },
     "flowerWestApproach": {
-      "xIn": -46,
-      "yIn": -24,
+      "xIn": -44.0,
+      "yIn": -24.0,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); east of flower0 on the west wall (the flower near the garden), intake facing it, on its centre line y = -24 (field file). NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); east of flower0 on its centre line, intake facing it; the turning circle clears the hive frame's west foot bar. NEEDS MEASUREMENT on the real field."
     },
     "flowerWestPickup": {
-      "xIn": -57.6,
-      "yIn": -24,
+      "xIn": -52.4,
+      "yIn": -24.0,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); intake against flower0's retrieval opening: front edge 0.5 in short of the flower foot at x = -67.1 (field file) for an 18 in robot. NEEDS MEASUREMENT on the real field."
-    },
-    "westOfHive": {
-      "xIn": -42,
-      "yIn": 0,
-      "headingRad": 1.5708,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); west of the RED hive frame, so an 18 in robot clears the west foot bar (x -24.76..-22.54, |y| < 19.48) and legs. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar tip 0.5 in short of flower0's foot face (x = -67.1, field file), the side plates straddling the 6 in foot. The bar is built to slide INTO the retrieval opening; the field file's foot is solid, so Zenith stops short. NEEDS a field test: drive in until the bar seats."
     },
     "scoreNorth": {
-      "xIn": -24,
-      "yIn": 44,
+      "xIn": -24.0,
+      "yIn": 44.0,
       "headingRad": -1.2576,
-      "provenance": "SET BY HAND: planning choice; north of the RED hive on x = -24, straight south of flower1 so collecting there is one straight line; in the north cell's quarter, outboard of its outer face (y > 18.5), facing the north cell's centre (-12.75, 9.26): heading atan2(-34.74, 11.25). NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); north of the RED hive, straight south of flower1, in the north cell's quarter and outboard of its outer face, facing the north cell's centre. NEEDS MEASUREMENT on the real field."
     },
     "flowerNorthPickup": {
-      "xIn": -24,
-      "yIn": 57.6,
+      "xIn": -24.0,
+      "yIn": 52.4,
       "headingRad": 1.5708,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); intake against flower1's retrieval opening: front edge 0.5 in short of the flower foot at y = 67.1 (field file) for an 18 in robot. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar tip 0.5 in short of flower1's foot face (y = 67.1), plates straddling it. NEEDS a field test: drive in until the bar seats."
     },
     "park": {
-      "xIn": -56,
-      "yIn": 36,
+      "xIn": -55.0,
+      "yIn": 36.0,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice for the 2-tip auto, RED side (BLUE is the point mirror); partly inside RED's loading zone (x -72..-61, y 24..48) on the north side, an open spot to finish in. NEEDS MEASUREMENT on the real field."
-    },
-    "gardenBackOut": {
-      "xIn": -44,
-      "yIn": -56,
-      "headingRad": 3.4627,
-      "provenance": "SET BY HAND: planning choice; where the robot backs out to from the garden corner: far enough off both walls (2 in from the CAD wall at -70.67) for an 18 in robot to turn on the spot. NEEDS MEASUREMENT."
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); partly inside RED's loading zone (x -72..-61, y 24..48) on the north side. NEEDS MEASUREMENT on the real field."
     }
   }
 }

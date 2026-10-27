@@ -51,6 +51,7 @@ public final class BiobuzzMatch {
     private final BioHorsSim sim;
     private final boolean red;
     private final double robotLength, robotWidth, robotHeight;
+    private final double corForward, corLeft; // where the turning centre sits in the box (robot.json)
     private final double mouthOffsetX, mouthOffsetY, mouthHalfWidth, mouthHalfDepth;
     private final int[] tipTable;
 
@@ -89,6 +90,9 @@ public final class BiobuzzMatch {
         robotLength = fp.num("lengthIn");
         robotWidth = fp.num("widthIn");
         robotHeight = robot.get("heightIn").num("value");
+        Json cor = robot.get("footprint").get("centreOfRotationIn");
+        corForward = cor.num("xIn");
+        corLeft = cor.num("yIn");
         Json mouth = robot.get("mouths").at(0);
         mouthOffsetX = mouth.get("offsetIn").num("xIn");
         mouthOffsetY = mouth.get("offsetIn").num("yIn");
@@ -365,6 +369,9 @@ public final class BiobuzzMatch {
     private double[][] corners(double x, double y, double h) {
         double hl = robotLength / 2, hw = robotWidth / 2;
         double c = Math.cos(h), s = Math.sin(h);
+        // The box centre is the pose minus the turning centre's offset inside the box (as Zenith does).
+        x -= corForward * c - corLeft * s;
+        y -= corForward * s + corLeft * c;
         double[][] out = new double[4][];
         int i = 0;
         for (int sx = -1; sx <= 1; sx += 2) {
@@ -377,6 +384,8 @@ public final class BiobuzzMatch {
     }
 
     private boolean pointInFootprint(double px, double py, double x, double y, double h, double grow) {
+        x -= corForward * Math.cos(h) - corLeft * Math.sin(h);
+        y -= corForward * Math.sin(h) + corLeft * Math.cos(h);
         double dx = px - x, dy = py - y;
         double fwd = dx * Math.cos(h) + dy * Math.sin(h);
         double left = -dx * Math.sin(h) + dy * Math.cos(h);

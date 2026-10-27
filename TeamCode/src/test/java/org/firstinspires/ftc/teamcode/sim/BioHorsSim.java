@@ -39,13 +39,13 @@ public final class BioHorsSim {
     // ----- Drive (PLACEHOLDER: motor and wheel are not confirmed; a goBILDA 312 rpm motor,
     // 537.7 counts/rev, on a 104 mm mecanum wheel is assumed) -----
     static final double DRIVE_TICKS_PER_REV = 537.7;            // PLACEHOLDER (312 rpm motor SPEC)
-    static final double WHEEL_RADIUS_IN = 104.0 / 2.0 / MM_PER_IN; // PLACEHOLDER (104 mm wheel SPEC)
+    static final double WHEEL_RADIUS_IN = 104.0 / 2.0 / MM_PER_IN; // MEASURED FROM CAD: 104 mm goBILDA mecanum
     static final double DRIVE_TICKS_PER_INCH = DRIVE_TICKS_PER_REV / (2.0 * Math.PI * WHEEL_RADIUS_IN);
     static final double DRIVE_MAX_TICKS_PER_S = 312.0 * DRIVE_TICKS_PER_REV / 60.0; // PLACEHOLDER (free speed)
     /** How fast a drive motor's speed follows its power, 1/s (0.2 s time constant). PLACEHOLDER. */
     static final double DRIVE_RESPONSE_PER_S = 5.0;
-    static final double TRACK_WIDTH_IN = 14.0;                  // PLACEHOLDER
-    static final double WHEEL_BASE_IN = 12.0;                   // PLACEHOLDER
+    static final double TRACK_WIDTH_IN = 12.96;                 // MEASURED FROM CAD (wheel centres y +/-6.48)
+    static final double WHEEL_BASE_IN = 10.39;                  // MEASURED FROM CAD (wheel centres 10.39 in apart)
 
     // ----- Shooters: goBILDA 5000-series 6000 rpm, 1:1 assumed -----
     static final double SHOOTER_MAX_TICKS_PER_S = 2800.0;       // SPEC (6000 rpm x 28 / 60)
@@ -58,7 +58,7 @@ public final class BioHorsSim {
     static final double INTAKE_RESPONSE_PER_S = 8.0;            // PLACEHOLDER
 
     // ----- Pinpoint: where the pods really sit. Must match what pedro/Constants tells it. -----
-    static final double X_POD_OFFSET_IN = 0.0;                  // PLACEHOLDER (same as Constants)
+    static final double X_POD_OFFSET_IN = -2.84;                // MEASURED FROM CAD (same as Constants)
     static final double Y_POD_OFFSET_IN = 0.0;                  // PLACEHOLDER (same as Constants)
     static final double POD_TICKS_PER_MM = 19.89436789;         // SPEC (goBILDA 4-bar pod)
 

@@ -40,7 +40,7 @@
           "heading": {
             "mode": "tangent"
           },
-          "notes": "Straight north, nose-first, to the spot south of the hive, facing its up (south) cell."
+          "notes": "Straight north, nose-first, to the spot south of the hive."
         },
         {
           "id": "spinUpFirst",
@@ -50,6 +50,27 @@
         }
       ],
       "notes": "Drive out and spin up at the same time."
+    },
+    {
+      "id": "faceSouthCell",
+      "kind": "path",
+      "segments": [
+        {
+          "kind": "line",
+          "from": "current",
+          "to": {
+            "xIn": -14.96,
+            "yIn": -35.5,
+            "provenance": "SET BY HAND: planning choice; half an inch on: a turn on the spot to face the south cell"
+          }
+        }
+      ],
+      "heading": {
+        "mode": "linear",
+        "fromRad": 1.5708,
+        "toRad": 1.4868
+      },
+      "notes": "Turns the last few degrees on the spot to face the south cell."
     },
     {
       "id": "shootPreloads",
@@ -68,40 +89,30 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": -13.08,
-            "yIn": -37.0,
+            "xIn": -15.99,
+            "yIn": -36.11,
             "provenance": "SET BY HAND: planning choice; 1 in along the next leg's start: a turn on the spot toward the garden"
           }
         }
       ],
       "heading": {
         "mode": "linear",
-        "fromRad": 1.5708,
-        "toRad": 4.6286
+        "fromRad": 1.4868,
+        "toRad": -3.0339
       },
-      "notes": "Turns on the spot to face along the leg to the garden (no strafing)."
+      "notes": "Turns on the spot to face along the leg to the garden."
     },
     {
       "id": "toGarden",
       "kind": "path",
       "segments": [
         {
-          "kind": "bezier",
+          "kind": "line",
           "from": "current",
-          "control": [
-            {
-              "xIn": -15,
-              "yIn": -54,
-              "provenance": "SET BY HAND: planning choice; leaves the score spot heading south, away from the hive"
-            },
-            {
-              "xIn": -22,
-              "yIn": -60.5,
-              "provenance": "SET BY HAND: planning choice; lines up along the south wall heading west, well before the sweep"
-            }
-          ],
           "to": {
-            "ref": "gardenSweepStart"
+            "xIn": -52,
+            "yIn": -40,
+            "provenance": "SET BY HAND: planning choice; west of the score spot, where a 16.8 in turning circle clears the west wall"
           }
         }
       ],
@@ -109,28 +120,67 @@
         "mode": "tangent"
       },
       "speedFraction": 1.0,
-      "notes": "Nose-first to the east end of the RED garden line, ending heading west so the intake leads."
+      "notes": "Nose-first west toward the garden."
+    },
+    {
+      "id": "turnSouthAtGarden",
+      "kind": "path",
+      "segments": [
+        {
+          "kind": "line",
+          "from": "current",
+          "to": {
+            "xIn": -52.0,
+            "yIn": -41.0,
+            "provenance": "SET BY HAND: planning choice; 1 in along the next leg's start: a turn on the spot to face south"
+          }
+        }
+      ],
+      "heading": {
+        "mode": "linear",
+        "fromRad": -3.0339,
+        "toRad": -1.5708
+      },
+      "notes": "Turns on the spot to face south, intake toward the garden line."
+    },
+    {
+      "id": "sideToGarden",
+      "kind": "path",
+      "segments": [
+        {
+          "kind": "line",
+          "from": "current",
+          "to": {
+            "ref": "gardenApproach"
+          }
+        }
+      ],
+      "heading": {
+        "mode": "constant",
+        "headingRad": -1.5708
+      },
+      "notes": "Slides west (still facing south) onto x = -62.7: any westward tilt of the 22 in body near the wall puts the bar's corner past it, so this short leg is driven sideways."
     },
     {
       "id": "intakeOnGarden",
       "kind": "command",
       "name": "intakeOn",
-      "notes": "Starts the intake before the sweep (no mid-path markers: Zenith's marker runner calls a Pedro method that Pedro 3.0.2 does not have)."
+      "notes": "Starts the intake before the pickup (no mid-path markers: Zenith's marker runner calls a Pedro method that Pedro 3.0.2 does not have)."
     },
     {
-      "id": "sweepGarden",
+      "id": "collectGarden",
       "kind": "parallel",
       "mode": "race",
       "steps": [
         {
-          "id": "sweep",
+          "id": "noseIntoGarden",
           "kind": "path",
           "segments": [
             {
               "kind": "line",
               "from": "current",
               "to": {
-                "ref": "gardenSweepEnd"
+                "ref": "gardenPickup"
               }
             }
           ],
@@ -142,24 +192,24 @@
             "collectFrom": "gardenRed",
             "count": 4
           },
-          "notes": "Slow, intake leading, along the garden line."
+          "notes": "Slowly nose-first into the garden line: the 13.2 in mouth spans all four pollen at once."
         },
         {
           "id": "gardenUntilFull",
           "kind": "wait",
           "until": "hopperFull",
           "timeoutS": 2.0,
-          "notes": "Ends the sweep early if the robot reports full."
+          "notes": "Ends early if the robot reports full."
         }
       ],
-      "notes": "Collects the 4 RED garden pollen at 0.35 of top speed (at most 0.4 for a sweep)."
+      "notes": "Collects the 4 RED garden pollen nose-first at 0.35 of top speed."
     },
     {
       "id": "gardenWaitFull",
       "kind": "wait",
       "until": "hopperFull",
-      "timeoutS": 0.6,
-      "notes": "Up to 0.6 s more for the last pollen."
+      "timeoutS": 0.8,
+      "notes": "Up to 0.8 s more for the last pollen."
     },
     {
       "id": "intakeOffGarden",
@@ -175,15 +225,15 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "ref": "gardenBackOut"
+            "ref": "gardenTurn"
           }
         }
       ],
       "heading": {
         "mode": "constant",
-        "headingRad": 3.1416
+        "headingRad": -1.5708
       },
-      "notes": "Backs out of the corner holding a west heading (turning next to the wall would swing a corner into it) to where there is room to turn."
+      "notes": "Backs out north-east (still facing south) to where a 16.8 in turning circle clears the walls."
     },
     {
       "id": "turnToScoreSouth",
@@ -193,16 +243,16 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": -43.16,
-            "yIn": -55.46,
+            "xIn": -49.04,
+            "yIn": -43.71,
             "provenance": "SET BY HAND: planning choice; 1 in along the next leg's start: a turn on the spot toward the score spot"
           }
         }
       ],
       "heading": {
         "mode": "linear",
-        "fromRad": 3.1416,
-        "toRad": 0.5707
+        "fromRad": -1.5708,
+        "toRad": 0.2915
       },
       "notes": "Turns on the spot to face along the leg back to the hive."
     },
@@ -216,13 +266,13 @@
           "control": [
             {
               "xIn": -30,
-              "yIn": -47,
-              "provenance": "SET BY HAND: planning choice; heads north-east, away from the walls"
+              "yIn": -38,
+              "provenance": "SET BY HAND: planning choice; heads east"
             },
             {
-              "xIn": -13,
+              "xIn": -15.0,
               "yIn": -50,
-              "provenance": "SET BY HAND: planning choice; comes up from the south on x = -13, nose to the south cell"
+              "provenance": "SET BY HAND: planning choice; comes up from the south on x = -15, nose to the hive"
             }
           ],
           "to": {
@@ -234,7 +284,28 @@
         "mode": "tangent"
       },
       "speedFraction": 1.0,
-      "notes": "Nose-first back to the spot south of the hive, arriving facing the south cell."
+      "notes": "Nose-first back to the spot south of the hive."
+    },
+    {
+      "id": "faceSouthCellAgain",
+      "kind": "path",
+      "segments": [
+        {
+          "kind": "line",
+          "from": "current",
+          "to": {
+            "xIn": -14.96,
+            "yIn": -35.5,
+            "provenance": "SET BY HAND: planning choice; half an inch on: a turn on the spot to face the south cell"
+          }
+        }
+      ],
+      "heading": {
+        "mode": "linear",
+        "fromRad": 1.5708,
+        "toRad": 1.4868
+      },
+      "notes": "Turns the last few degrees on the spot to face the south cell."
     },
     {
       "id": "scoreGarden",
@@ -243,7 +314,7 @@
       "args": {
         "count": 4
       },
-      "notes": "Volley 2: 4 garden pollen; the south cell reaches 8 and the hive TIPS (tip 1). The north cell comes up empty."
+      "notes": "Volley 2: 4 garden pollen; the south cell reaches 8 and the hive TIPS (tip 1)."
     },
     {
       "id": "turnToFlowerWest",
@@ -253,16 +324,16 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": -13.97,
-            "yIn": -36.23,
+            "xIn": -15.99,
+            "yIn": -36.12,
             "provenance": "SET BY HAND: planning choice; 1 in along the next leg's start: a turn on the spot toward flower0"
           }
         }
       ],
       "heading": {
         "mode": "linear",
-        "fromRad": 1.5708,
-        "toRad": 3.372
+        "fromRad": 1.4868,
+        "toRad": -3.0245
       },
       "notes": "Turns on the spot to face along the leg to flower0."
     },
@@ -275,12 +346,12 @@
           "from": "current",
           "control": [
             {
-              "xIn": -30,
-              "yIn": -40,
+              "xIn": -32,
+              "yIn": -38,
               "provenance": "SET BY HAND: planning choice; passes south of the hive frame's west foot bar (it ends at y = -19.5)"
             },
             {
-              "xIn": -36,
+              "xIn": -38,
               "yIn": -24,
               "provenance": "SET BY HAND: planning choice; lines up on flower0's centre line, heading west"
             }
@@ -294,7 +365,7 @@
         "mode": "tangent"
       },
       "speedFraction": 1.0,
-      "notes": "Nose-first to flower0, the flower near the garden, ending heading west."
+      "notes": "Nose-first to flower0 (the flower near the garden), ending heading west."
     },
     {
       "id": "intakeOnFlowerWest",
@@ -322,14 +393,14 @@
         "collectFrom": "flower0",
         "count": 4
       },
-      "notes": "Slowly nose-in to flower0's retrieval opening; the intake pulls its 4 pollen from the bottom."
+      "notes": "Slowly nose-in to flower0: the flower bar at its retrieval opening, the intake pulls its 4 pollen."
     },
     {
       "id": "flowerWestWaitFull",
       "kind": "wait",
       "until": "hopperFull",
       "timeoutS": 1.0,
-      "notes": "Waits for the 4th pollen (the column drops one at a time)."
+      "notes": "Waits for the 4th pollen."
     },
     {
       "id": "intakeOffFlowerWest",
@@ -362,7 +433,7 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": -46,
+            "xIn": -44,
             "yIn": -23,
             "provenance": "SET BY HAND: planning choice; 1 in north: a turn on the spot to face north"
           }
@@ -385,8 +456,8 @@
           "control": [
             {
               "xIn": -46,
-              "yIn": 20,
-              "provenance": "SET BY HAND: planning choice; straight north, west of the hive frame's west foot bar and legs"
+              "yIn": 22,
+              "provenance": "SET BY HAND: planning choice; straight north, well west of the hive frame's west foot bar and legs"
             },
             {
               "xIn": -27.08,
@@ -403,7 +474,7 @@
         "mode": "tangent"
       },
       "speedFraction": 1.0,
-      "notes": "Nose-first round the WEST side of the hive frame (not under it) to the spot north of the hive, where the up cell is after tip 1; arrives facing the north cell."
+      "notes": "Nose-first round the WEST side of the hive frame to the spot north of the hive, arriving facing the north cell (up after tip 1)."
     },
     {
       "id": "scoreFlowerWest",
@@ -422,8 +493,8 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": -24,
-            "yIn": 45,
+            "xIn": -24.0,
+            "yIn": 45.0,
             "provenance": "SET BY HAND: planning choice; 1 in north: a turn on the spot to face flower1"
           }
         }
@@ -484,8 +555,8 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": -24,
-            "yIn": 45,
+            "xIn": -24.0,
+            "yIn": 45.0,
             "provenance": "SET BY HAND: planning choice; 1 in north of the score spot, where the turn back starts"
           }
         }
@@ -532,15 +603,15 @@
           "from": "current",
           "to": {
             "xIn": -24.97,
-            "yIn": 43.76,
-            "provenance": "SET BY HAND: planning choice; 1 in along the leg to the park spot: a turn on the spot"
+            "yIn": 43.75,
+            "provenance": "SET BY HAND: planning choice; 1 in along the next leg's start: a turn on the spot toward the park spot"
           }
         }
       ],
       "heading": {
         "mode": "linear",
         "fromRad": -1.2576,
-        "toRad": -2.8972
+        "toRad": -2.889
       },
       "notes": "Turns on the spot to face along the leg to the park spot."
     },

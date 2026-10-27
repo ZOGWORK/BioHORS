@@ -10,24 +10,24 @@
   },
   "footprint": {
     "startIn": {
-      "lengthIn": 18,
-      "widthIn": 18,
-      "provenance": "NEEDS MEASUREMENT: not measured yet; assumed the 18 in BIOBUZZ starting-size limit, the largest legal footprint, so geometry checks are conservative"
+      "lengthIn": 22.0,
+      "widthIn": 17.84,
+      "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): 22.0 in from the flower bar tip (14.2 in ahead of the drive centre) to the back (7.8 in behind), 17.84 in wide. NEEDS CONFIRMATION: if the flower mech folds in for the start, the start box is the 17.44 in frame instead"
     },
     "expandedIn": {
-      "lengthIn": 18,
-      "widthIn": 18,
-      "provenance": "NEEDS MEASUREMENT: assumed nothing sticks out past the frame"
+      "lengthIn": 22.0,
+      "widthIn": 17.84,
+      "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): flower bar out: 22.0 x 17.84 in"
     },
     "centreOfRotationIn": {
-      "xIn": 0,
+      "xIn": -3.2,
       "yIn": 0,
-      "provenance": "NEEDS MEASUREMENT: assumed the middle of the frame"
+      "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): the drive centre (midway between the four wheels) sits 3.2 in behind the middle of the 22 in box, because the flower bar sticks out at the front"
     }
   },
   "heightIn": {
-    "value": 18,
-    "provenance": "NEEDS MEASUREMENT: assumed 18 in"
+    "value": 14.9,
+    "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): top of the nectar shooter motor, 14.93 in above the floor"
   },
   "kinematics": {
     "maxForwardVelInPerS": {
@@ -73,12 +73,12 @@
       "id": "front",
       "side": "FRONT",
       "offsetIn": {
-        "xIn": 7,
+        "xIn": 11.9,
         "yIn": 0
       },
-      "widthIn": 16,
-      "depthIn": 4,
-      "provenance": "PLACEHOLDER: the two intake motors run one intake across the front (intake faces up in the team's top view); width and depth not measured"
+      "widthIn": 13.2,
+      "depthIn": 4.6,
+      "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): the flower mech's opening: between the frame front (9.6 in ahead of the drive centre) and the flower bar tip (14.2 in), 13.2 in between its side plates; pollen rolls up the floor-level intake ramp to the two roller stages"
     }
   ],
   "capacity": {

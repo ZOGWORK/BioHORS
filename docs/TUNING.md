@@ -126,9 +126,13 @@ binding and closes without letting a pollen past.
 
 ## 6. Robot geometry for Zenith
 
-`autos/robot.json` (all NEEDS MEASUREMENT): footprint 18 x 18 in, height 18 in, centre of rotation
-at the frame centre, intake mouth 16 in wide / 4 in deep / 7 in forward. Measure with a tape and
-re-run `npx zenith validate autos/two-tip.auto.json --json`. **Done when** 0 errors with real numbers.
+`autos/robot.json` is MEASURED FROM CAD (`33950 Robot.step`, see [ROBOT_CAD.md](ROBOT_CAD.md)):
+footprint 22.0 x 17.84 in (flower bar tip 14.2 in ahead of the drive centre, back 7.8 in behind),
+height 14.9 in, centre of rotation 3.2 in behind the box's middle, intake mouth 13.2 in wide /
+4.6 in deep / 11.9 in forward. Check each with a tape on the real robot (CAD can be out of date) and
+re-run `npx zenith validate autos/two-tip.auto.json --json`. **Open question:** does the flower mech
+fold in for the start? If so the start box is the 17.44 in frame and `startIn` should say so.
+**Done when** the tape agrees with the CAD and the auto still validates with 0 errors.
 
 ## 7. Waypoints (measure once on a real field)
 
@@ -137,14 +141,18 @@ Pinpoint pose (after setting the start pose), and replace the number and its pro
 
 | Waypoint | Current (x, y, heading) | What it is |
 |---|---|---|
-| `start` | (-13, -63, 90 deg) | The fixed start at the hive that is up at kickoff |
-| `scoreSouth` | (-13, -36, 90 deg) | Volleys 1-2, south cell |
-| `gardenSweepStart` / `End` | (-44, -61.5) / (-61.5, -61.5), 180 deg | Garden line sweep. **Check the intake reaches the line from y = -61.5** (FIRST's CAD walls are 1.3 in inside the field file's) |
-| `gardenBackOut` | (-44, -56, 180 deg) | Room to turn after the garden |
-| `flowerWestApproach` / `Pickup` | (-46, -24) / (-57.6, -24), 180 deg | flower0 (near the garden) |
+| `start` | (-15, -64.2, 90 deg) | The fixed start at the hive that is up at kickoff: back on the south wall |
+| `scoreSouth` | (-15, -36, 85 deg) | Volleys 1-2, facing the south cell |
+| `gardenApproach` / `Pickup` | (-62.7, -45) / (-62.7, -57.4), -90 deg | Garden line, nose-first south. x = -62.7 is the narrow fit: the 13.2 in mouth just reaches the west-most pollen while the 17.84 in body stays 0.38 in off the west wall. **Check on the field** (FIRST's CAD walls are 1.3 in inside the field file's) |
+| `gardenTurn` | (-50, -44, -90 deg) | Room to turn after the garden |
+| `flowerWestApproach` / `Pickup` | (-44, -24) / (-52.4, -24), 180 deg | flower0 (near the garden): the flower bar stops 0.5 in short of the foot |
 | `scoreNorth` | (-24, 44, -72 deg) | Volleys 3-4, north cell, facing it |
-| `flowerNorthPickup` | (-24, 57.6, 90 deg) | flower1 (near the tipped hive) |
-| `park` | (-56, 36, 180 deg) | Partly in RED's loading zone |
+| `flowerNorthPickup` | (-24, 52.4, 90 deg) | flower1 (near the tipped hive): the bar stops 0.5 in short of the foot |
+| `park` | (-55, 36, 180 deg) | Partly in RED's loading zone |
+
+**Flower pickups:** the flower bar is built to slide *into* the retrieval opening, but the field
+file's foot is solid, so Zenith (and the sim) stop the bar 0.5 in short. On a real field, drive in
+until the bar seats and move both pickups to that pose.
 
 **Done when** each is measured, the auto re-validates with 0 errors, and `zenith deploy` has been re-run.
 
@@ -155,11 +163,11 @@ Pinpoint pose (after setting the start pose), and replace the number and its pro
 | Hive coordinates | RED (-12.75, 0), BLUE (12.75, 0); cells +/-9.264 in y | `aim/FieldTargets.java` (SPEC, game manual / CAD) | Confirm on the real field | Matches |
 | Aim gains | kP 1.2, max yaw 0.7, min yaw 0.06, tolerance 2 deg | `aim/AimController.java` | Hold left trigger from 5 poses | Settles in < 1 s without oscillation |
 | Turn rate at full yaw | 5.0 rad/s | `AimController.MAX_TURN_RATE_RAD_PER_S` | Spin at full yaw for 2 s, read the Pinpoint | Measured value; aim holds while strafing |
-| Default start pose | (-13, -63, 90 deg) | `teleop/MainHorsTeleOp.java` | Same as the auto's `start` | Matches |
+| Default start pose | (-15, -64.2, 90 deg) | `teleop/MainHorsTeleOp.java` | Same as the auto's `start` | Matches |
 
 **Check on the real field:** put the robot at a measured pose (e.g. (-40, -40, 0)), hold the left
-trigger, and check with a laser or string that the shooter points at the south cell; press A and
-check it swings to the north cell.
+trigger, and check with a laser or string that the shooter points at the south cell; drive north
+across the field's middle and check it swings to the north cell.
 
 ## 9. SimLoop model numbers (so the sim matches the robot)
 
