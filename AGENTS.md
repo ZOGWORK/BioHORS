@@ -229,9 +229,19 @@ the wrong reason costs the team more than a plain stop does.
   - `MechanismConstants`: hardware names, shooter directions, and every shooter/gate number.
   - `pedro/Constants`: Pinpoint localizer, mecanum drivetrain, and `createFollower` for Pedro autos.
     Pedro distances are inches, headings radians.
-- **Sim config lives in:** not written yet. The example from `simloop-starter/` is still installed
-  (`simloop-starter/robot`, `simloop-starter/tests`); replace it with this robot's sim config.
-- **Sim tests live in:** `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/` (none yet).
+  - `robot/BioHorsRobot`: builds every subsystem from one HardwareMap (teleop, auto and sim all use it).
+  - `aim/`: `FieldTargets` (hive cell coordinates), `AimController` (chassis-yaw aim; DriveController yaw
+    is POSITIVE CLOCKWISE, field headings are CCW), `Alliance`, `PoseHandoff` (auto -> teleop via
+    `OpMode.blackboard`).
+  - Field frame everywhere (aim, autos, sim): origin at field centre, inches, +X toward the audience's
+    right (BLUE side), +Y away from the audience, heading radians CCW from +X. BLUE is the point mirror
+    of RED: (x, y, h) -> (-x, -y, h + pi).
+- **Sim config lives in:** `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/sim/BioHorsSim.java`
+  (fake devices under the real names, mecanum plant, fake Pinpoint, shooter motors, gate servo plants).
+  The `simloop-starter/` example is still installed as the install check.
+- **Sim tests live in:** `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/sim/` (`MainHorsTeleOpSimTest`).
+  Run OpModes with `OpModeRunner.forTeamClass(...)` and `.teamPackages("org.firstinspires.ftc.teamcode.",
+  SimClockLoader.PEDRO_PATHING)` so the code's timers read sim time; pass data in through `OpMode.blackboard`.
 - **Conventions we hold to:**
   - Nothing on this robot is tuned yet. Every number carries a provenance label in a comment:
     `MEASURED`, `SET BY HAND`, `SPEC`, `NEEDS MEASUREMENT`, `CARRIED OVER`, `PLACEHOLDER`, `APPROX`,
