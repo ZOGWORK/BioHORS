@@ -33,18 +33,22 @@ class AdvantageScopeFrameTest {
     }
 
     @Test
-    void theRedStartIsDrawnOnTheSouthWallFacingTheHive() {
-        // RED start (-15, -64.2) facing +Y (north, toward the hive): the same axes in AdvantageScope.
+    void theRedStartFacingTheHiveIsDrawnFacingAwayFromTheRedWall() {
+        // RED start (-15, -64.2) facing +Y (north, toward the hive). AdvantageScope Center/Rotated:
+        // their +X is our -Y, so our +Y (north) is their -X: heading 180 deg.
         Pose2d p = AdvantageScopeFrame.pose2d(-15, -64.2, Math.PI / 2);
-        assertEquals(-15 * 0.0254, p.getX(), 1e-9);
-        assertEquals(-64.2 * 0.0254, p.getY(), 1e-9);
-        assertEquals(Math.PI / 2, p.getRotation().getRadians(), 1e-9);
+        assertEquals(64.2 * 0.0254, p.getX(), 1e-9);
+        assertEquals(-15 * 0.0254, p.getY(), 1e-9);
+        assertEquals(Math.PI, Math.abs(p.getRotation().getRadians()), 1e-9);
     }
 
     /**
-     * Our field file and AdvantageScope's field model agree where things are: each garden pollen and
-     * flower of the field file, converted, lands on one of the model's staged pollen (within 2 in).
-     * Read from the model's own GLB when AdvantageScope is installed here; skipped otherwise.
+     * Our field file and AdvantageScope's field model agree where things are. AdvantageScope reads a
+     * logged Center/Rotated pose (X, Y) and draws it in its model at (Y, -X), the model's own axes
+     * (checked by eye in its 2D Field tab: the red garden is drawn on the model's red garden). So
+     * each garden pollen and flower of the field file, logged and turned that way, must land on one
+     * of the model's staged pollen (within 2 in). Read from the model's own GLB when AdvantageScope is
+     * installed here; skipped otherwise.
      */
     @Test
     void ourFieldLinesUpWithAdvantageScopesFieldModel() throws IOException {
@@ -63,8 +67,9 @@ class AdvantageScopeFrameTest {
             boolean garden = kind.equals("pollen") && e.str("id").startsWith("garden");
             if (!flower && !garden) continue;
             Pose2d p = AdvantageScopeFrame.pose2d(e.num("xIn"), e.num("yIn"), 0);
+            double modelX = p.getY(), modelY = -p.getX();   // Center/Rotated -> the model's axes
             double best = Double.MAX_VALUE;
-            for (double[] s : staged) best = Math.min(best, Math.hypot(s[0] - p.getX(), s[1] - p.getY()));
+            for (double[] s : staged) best = Math.min(best, Math.hypot(s[0] - modelX, s[1] - modelY));
             assertTrue(best < 2 * 0.0254, e.str("id") + " is " + best / 0.0254 + " in from the model's nearest pollen");
             checked++;
         }
