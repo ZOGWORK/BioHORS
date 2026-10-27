@@ -18,7 +18,7 @@ pollen auto verified in SimLoop.
 
 | OpMode | File | What it does |
 |---|---|---|
-| HORS Style TeleOp | `teamcode/teleop/HorsStyleTeleOp.java` | Current teleop (see controls below). Will be replaced by the MainHORS teleop |
+| MainHORS TeleOp | `teamcode/teleop/MainHorsTeleOp.java` | The teleop: MainHORS controls plus odometry aim (see below) |
 | Simple Park Auto | `teamcode/auto/SimpleParkAuto.java` | Encoder move-and-park placeholder, not a Pedro auto. Will be replaced by the Zenith 2-tip auto |
 | Tuning (Quickstart) | `teamcode/pedro/Tuning.java` + `procedures/` | PedroPathing tuners, including the Pinpoint Tuner |
 
@@ -38,17 +38,46 @@ pollen auto verified in SimLoop.
 Shooter/gate names, directions, and tuning values live in
 `teamcode/subsystems/MechanismConstants.java`.
 
-## Teleop controls (current; gamepad2 mirrors mechanism buttons)
+## Teleop controls (MainHORS TeleOp; gamepad2 mirrors the mechanism buttons)
 
-- Left stick: drive (forward / strafe)
-- Right stick X: turn
-- Left bumper (hold): slow mode (0.45x)
-- Right trigger: intake IN
-- Left trigger: intake OUT
-- Dpad down: toggle both shooters on/off, each at its own target (start OFF)
-- Dpad left / right: **pollen** shooter target RPM -50 / +50
-- B: toggle both gates, X: open both gates, A: close both gates
-- Gamepads rumble once when either shooter first reaches its target RPM
+| Control | Action |
+|---|---|
+| Left stick | Drive (forward / strafe) |
+| Right stick X | Turn (overridden while aiming) |
+| Left trigger (hold) | **Aim**: turn the robot to face the selected cell of our hive |
+| A (press) | **Switch goal**: the other cell (north/south) of our hive, after a tip |
+| Right bumper (hold) | Slow mode, 0.45x |
+| Right trigger | Intake in |
+| Y (hold) | Outtake |
+| Dpad down | Toggle both shooters on/off, each at its own target (start OFF) |
+| Dpad left / right | **Pollen** shooter target RPM -50 / +50 |
+| B | Toggle both gates (start CLOSED) |
+| X, left bumper | Unmapped |
+
+Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
+alliance and final pose are picked up automatically (the SDK blackboard).
+
+**Aim.** No camera and no turret: holding the left trigger turns the whole chassis to face the
+selected hive cell, from the Pinpoint pose and the hive's fixed field coordinates (BIOBUZZ field
+file: RED hive pivot (-12.75, 0), BLUE (+12.75, 0), cell centres 9.264 in either side along y).
+The driver keeps forward/strafe; yaw gets priority over translation, and a feedforward on the
+bearing rate keeps the aim on target while strafing. The robot does not detect tips: the driver
+presses A when the hive tips. If the Pinpoint is not READY or the pose is not a number, aim falls
+back to manual turn and telemetry shows `POSE INVALID`. Telemetry always shows the alliance,
+target cell, aiming on/off, heading error and pose.
+
+## Simulation (SimLoop)
+
+`./gradlew :TeamCode:testDebugUnitTest` (on Windows `.\gradlew.bat ...`) runs the real teleop
+OpMode on a laptop against fake hardware: `TeamCode/src/test/.../sim/BioHorsSim.java` (the robot's
+fake devices and physics) and `MainHorsTeleOpSimTest.java` (drive, slow mode, aim, goal switch,
+aim while strafing, Pinpoint-fault fallback, BLUE, shooters, gates, intake, determinism). Every
+sim number is a placeholder until measured (see the tuning section), so the sim checks the code's
+logic and wiring, not the real robot's timing.
+
+RLOGs land in `TeamCode/build/sim/` (gitignored; re-run the tests to regenerate). Open
+`teleop-aim.rlog` in AdvantageScope and plot `Truth/headingRad`, `Truth/xIn`, `Truth/yIn` and
+`Shooter/pollenRpm`.
 
 ## Nothing is tuned yet
 
@@ -69,7 +98,11 @@ spec sheet), `PLACEHOLDER` (made up so the code runs), or
    per gate. Both start at the old shared placeholders (0.67 / 0.485).
 3. **Pinpoint** (`pedro/Constants.java`): pod offsets and directions. Run
    the Quickstart's Pinpoint Tuner on the robot.
-4. **Drive shaping, intake power, park auto**: placeholders, labelled in
+4. **Aim** (`aim/AimController.java`): kP, yaw cap, minimum yaw, on-target
+   tolerance, turn rate at full yaw, and which way the shooter fires
+   (`SHOOTER_FACING_OFFSET_RAD`). Teleop default start pose
+   (`teleop/MainHorsTeleOp.java`) when no auto ran first.
+5. **Drive shaping, intake power, park auto**: placeholders, labelled in
    their files.
 
 ## Building

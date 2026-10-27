@@ -92,7 +92,8 @@ public class DriveController {
 
     // ===== Helpers =====
 
-    private static double shapeTranslation(double x) {
+    /** Deadband + expo shaping applied to a translation stick (public so callers that supply their own yaw can match it). */
+    public static double shapeTranslation(double x) {
         x = applyDeadband(x, STICK_DEADBAND);
         return expo(x, TRANSLATION_EXPO);
     }
