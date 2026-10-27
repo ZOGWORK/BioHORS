@@ -278,8 +278,10 @@ public class ShooterTuner extends LinearOpMode {
         resetVolts();
         runBoth(sa, sb, TOGETHER_MEASURE_S, t, ra, rb);
         double vTogether = meanVolts();
-        double bandA = ShooterTuning.analyzeStep(t, ra, a.cfg.targetRpm, BAND).steadyError;
-        double bandB = ShooterTuning.analyzeStep(t, rb, b.cfg.targetRpm, BAND).steadyError;
+        // Worst error over the WHOLE window (it already waited TOGETHER_SETTLE_S to settle), so a
+        // dip that recovers before the end still counts.
+        double bandA = ShooterTuning.maxError(ra, a.cfg.targetRpm);
+        double bandB = ShooterTuning.maxError(rb, b.cfg.targetRpm);
         sa.setShooterOn(false);
         sb.setShooterOn(false);
         runBoth(sa, sb, 0.1, null, null, null);

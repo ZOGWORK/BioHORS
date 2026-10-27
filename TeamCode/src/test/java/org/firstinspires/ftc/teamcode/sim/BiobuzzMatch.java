@@ -251,6 +251,9 @@ public final class BiobuzzMatch {
 
     /** A tipped cell's load, drawn on the floor outboard of it on its own side. */
     private void spill(int cell, int count) {
+        // The pollen still flying into this cell is part of the load that tips: it is drawn in the
+        // spill from now on, not in the air as well.
+        flights.removeIf(f -> f[6] == cell);
         double side = cell == 1 ? 1 : -1;
         for (int i = 0; i < count; i++) {
             double a = (i - (count - 1) / 2.0) * 0.18;

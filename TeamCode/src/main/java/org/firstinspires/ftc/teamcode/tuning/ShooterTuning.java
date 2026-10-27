@@ -75,6 +75,13 @@ public final class ShooterTuning {
         return new double[] {a, b, r2};
     }
 
+    /** Largest |speed - target| over all samples, as a fraction of target (0 if there are none). */
+    public static double maxError(List<Double> speed, double target) {
+        double worst = 0;
+        for (double v : speed) worst = Math.max(worst, Math.abs(v - target) / target);
+        return worst;
+    }
+
     /** What a step to a target speed looked like. */
     public static final class Step {
         /** Seconds from the step until the speed first entered the band; NaN if it never did. */

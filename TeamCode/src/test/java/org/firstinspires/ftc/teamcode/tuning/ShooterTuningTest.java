@@ -105,4 +105,19 @@ class ShooterTuningTest {
         down.report(WEAK);                    // too weak right below too aggressive
         assertTrue(down.failed());
     }
+
+    @Test
+    void maxErrorSeesADipThatRecoversBeforeTheEnd() {
+        List<Double> rpm = new ArrayList<>();
+        for (int i = 0; i < 100; i++) rpm.add(i >= 10 && i < 20 ? 1900.0 : 2000.0); // 5 % dip early on
+        assertEquals(0.05, ShooterTuning.maxError(rpm, 2000), 1e-12);
+        assertEquals(0.0, ShooterTuning.analyzeStep(times(100), rpm, 2000, 0.02).steadyError, 1e-12,
+                "the step analysis only looks at the end, which is why the together check uses maxError");
+    }
+
+    private static List<Double> times(int n) {
+        List<Double> t = new ArrayList<>();
+        for (int i = 0; i < n; i++) t.add(i * 0.02);
+        return t;
+    }
 }
