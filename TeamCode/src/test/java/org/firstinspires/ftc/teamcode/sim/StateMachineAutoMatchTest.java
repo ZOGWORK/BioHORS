@@ -36,6 +36,7 @@ class StateMachineAutoMatchTest {
 
     static final double AUTO_PERIOD_S = 30.0;
     static final double TICK_S = OpModeRunner.DEFAULT_TICK_SECONDS;
+    static final double MAX_STRAFE_FRACTION = 0.35;
 
     @AfterEach
     void clear() {
@@ -56,13 +57,13 @@ class StateMachineAutoMatchTest {
     }
 
     @Test
-    void scoresSixteenAndTipsTwiceAsRedAndBlue() throws IOException {
+    void scoresTwelveAndTipsTwiceAsRedAndBlue() throws IOException {
         Run red1 = run("RED", "run1");
         Run red = run("RED", "");
         Run blue = run("BLUE", "");
         System.out.print(red.report + blue.report);
 
-        assertEquals(16, red.match.scored(), "RED pollen scored in AUTO\n" + red.report);
+        assertEquals(12, red.match.scored(), "RED pollen scored in AUTO (the starter route: 12)\n" + red.report);
         assertEquals(2, red.match.tips(), "RED tips\n" + red.report);
         for (double t : red.match.tipTimes()) {
             assertTrue(t + 4.0 <= 38.0, "tip at " + t + " s completes after TELEOP starts");
@@ -73,7 +74,10 @@ class StateMachineAutoMatchTest {
         assertTrue(red.doneAt() < AUTO_PERIOD_S, "parked at " + red.doneAt() + " s\n" + red.report);
 
         assertTrue(red.match.unintendedContacts().isEmpty(), "contact: " + red.match.unintendedContacts() + "\n" + red.report);
-        assertTrue(red.match.strafeFraction() < 0.20, String.format(Locale.ROOT,
+        // Zenith's starter route turns while it drives, and the 22 in robot slides square to the
+        // south wall onto and off the garden lane. On the same route this follower strafes 32 % where
+        // Zenith's runtime strafes 29 %: up to 35 % here.
+        assertTrue(red.match.strafeFraction() < MAX_STRAFE_FRACTION, String.format(Locale.ROOT,
                 "strafing is %.0f %% of the driving\n%s", 100 * red.match.strafeFraction(), red.report));
 
         java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(red.rlog);
@@ -157,25 +161,16 @@ class StateMachineAutoMatchTest {
      */
     static Pose2d[] plannedRoute(org.firstinspires.ftc.teamcode.aim.Alliance alliance) {
         com.pedropathing.math.Pose[][] legs = {
-                {AutoPoses.START, AutoPoses.AIM_FROM_START},
-                {AutoPoses.AIM_FROM_START, AutoPoses.TO_GARDEN_C1, AutoPoses.TO_GARDEN_C2, AutoPoses.GARDEN_LANE},
-                {AutoPoses.GARDEN_LANE, AutoPoses.TURN_SOUTH_AT_GARDEN},
-                {AutoPoses.TURN_SOUTH_AT_GARDEN, AutoPoses.GARDEN_APPROACH},
-                {AutoPoses.GARDEN_APPROACH, AutoPoses.GARDEN_PICKUP},
-                {AutoPoses.GARDEN_PICKUP, AutoPoses.GARDEN_TURN},
-                {AutoPoses.GARDEN_TURN, AutoPoses.AIM_FROM_GARDEN},
-                {AutoPoses.AIM_FROM_GARDEN, AutoPoses.TO_FLOWER_WEST_C1, AutoPoses.TO_FLOWER_WEST_C2,
-                        AutoPoses.FLOWER_WEST_APPROACH},
-                {AutoPoses.FLOWER_WEST_APPROACH, AutoPoses.FLOWER_WEST_PICKUP},
-                {AutoPoses.FLOWER_WEST_PICKUP, AutoPoses.FLOWER_WEST_APPROACH},
-                {AutoPoses.FLOWER_WEST_APPROACH, AutoPoses.TURN_NORTH},
-                {AutoPoses.TURN_NORTH, AutoPoses.AROUND_WEST_C1, AutoPoses.AROUND_WEST_C2, AutoPoses.SCORE_NORTH},
-                {AutoPoses.SCORE_NORTH, AutoPoses.NORTH_OF_SCORE_NORTH},
-                {AutoPoses.NORTH_OF_SCORE_NORTH, AutoPoses.FLOWER_NORTH_PICKUP},
-                {AutoPoses.FLOWER_NORTH_PICKUP, AutoPoses.NORTH_OF_SCORE_NORTH},
-                {AutoPoses.NORTH_OF_SCORE_NORTH, AutoPoses.SCORE_NORTH},
-                {AutoPoses.SCORE_NORTH, AutoPoses.TURN_TO_PARK},
-                {AutoPoses.TURN_TO_PARK, AutoPoses.PARK}};
+                {AutoPoses.START, AutoPoses.SCORE_SOUTH},
+                bezier(AutoPoses.SCORE_SOUTH, AutoPoses.TO_OTHER_SIDE, AutoPoses.FLOWER_NORTH_APPROACH),
+                {AutoPoses.FLOWER_NORTH_APPROACH, AutoPoses.FLOWER_NORTH_PICKUP},
+                {AutoPoses.FLOWER_NORTH_PICKUP, AutoPoses.FLOWER_NORTH_APPROACH},
+                bezier(AutoPoses.FLOWER_NORTH_APPROACH, AutoPoses.TO_SCORE_NORTH, AutoPoses.SCORE_NORTH),
+                bezier(AutoPoses.SCORE_NORTH, AutoPoses.TO_GARDEN, AutoPoses.ABOVE_GARDEN_LANE),
+                {AutoPoses.ABOVE_GARDEN_LANE, AutoPoses.GARDEN_SWEEP_START},
+                {AutoPoses.GARDEN_SWEEP_START, AutoPoses.GARDEN_SWEEP_END},
+                {AutoPoses.GARDEN_SWEEP_END, AutoPoses.OFF_GARDEN_LANE},
+                bezier(AutoPoses.OFF_GARDEN_LANE, AutoPoses.DRIVE_BACK, AutoPoses.SCORE_NORTH)};
         List<Pose2d> out = new ArrayList<>();
         for (com.pedropathing.math.Pose[] leg : legs) {
             com.pedropathing.math.Pose[] p = new com.pedropathing.math.Pose[leg.length];
@@ -183,20 +178,36 @@ class StateMachineAutoMatchTest {
             double px = p[0].x(), py = p[0].y();
             for (int k = 1; k <= 12; k++) {
                 double t = k / 12.0, x, y;
-                if (p.length == 4) {
-                    double u = 1 - t;
-                    x = u * u * u * p[0].x() + 3 * u * u * t * p[1].x() + 3 * u * t * t * p[2].x() + t * t * t * p[3].x();
-                    y = u * u * u * p[0].y() + 3 * u * u * t * p[1].y() + 3 * u * t * t * p[2].y() + t * t * t * p[3].y();
-                } else {
-                    x = p[0].x() + t * (p[1].x() - p[0].x());
-                    y = p[0].y() + t * (p[1].y() - p[0].y());
+                // de Casteljau: a straight line for two points, a Bezier curve for more.
+                double[] xs = new double[p.length], ys = new double[p.length];
+                for (int i = 0; i < p.length; i++) {
+                    xs[i] = p[i].x();
+                    ys[i] = p[i].y();
                 }
+                for (int n = p.length - 1; n > 0; n--) {
+                    for (int i = 0; i < n; i++) {
+                        xs[i] += t * (xs[i + 1] - xs[i]);
+                        ys[i] += t * (ys[i + 1] - ys[i]);
+                    }
+                }
+                x = xs[0];
+                y = ys[0];
                 out.add(AdvantageScopeFrame.pose2d(x, y, Math.atan2(y - py, x - px)));
                 px = x;
                 py = y;
             }
         }
         return out.toArray(new Pose2d[0]);
+    }
+
+    /** start, the control points, end: one Bezier leg. */
+    static com.pedropathing.math.Pose[] bezier(com.pedropathing.math.Pose start, com.pedropathing.math.Pose[] controls,
+                                               com.pedropathing.math.Pose end) {
+        com.pedropathing.math.Pose[] all = new com.pedropathing.math.Pose[controls.length + 2];
+        all[0] = start;
+        System.arraycopy(controls, 0, all, 1, controls.length);
+        all[all.length - 1] = end;
+        return all;
     }
 
     static Json readJson(File file) throws IOException {

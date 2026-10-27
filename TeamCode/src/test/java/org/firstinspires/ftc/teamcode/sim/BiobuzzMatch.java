@@ -32,7 +32,8 @@ import java.util.List;
  *    its outer face, facing the cell within LAUNCH_CONE_DEG. Otherwise it lands loose.
  *  - Tip: a cell tips when its pollen reaches the field file's tip table entry for the nectar in
  *    it (rules.tipTable; this project's copy says 8). The cell empties and the other comes up.
- *    The 4 s swing is not modelled: shots after the tip go straight to the new up cell.
+ *    The 4 s swing is not modelled, except that for TIP_CATCH_S after a tip a launch still goes into
+ *    the cell that tipped (and spills with it); after that, shots go to the new up cell.
  *  - Physics mode (usePhysics): instead of the rule above, each launch is a real ball in SimLoop's
  *    physics, fired from the CAD shooter exit at the speed the flywheel's real rpm gives
  *    (ShotModel), into the physics hive (BiobuzzHive). A pollen scores when it first seats in one
@@ -70,6 +71,9 @@ public final class BiobuzzMatch {
      *  PLACEHOLDER: 0.07, so a full robot reads clearly below MAINHORS26's 2100 ticks/s loaded
      *  threshold (1960) as its loaded robot did, and 1-3 pollen still read as 1-3. */
     static final double INTAKE_LOAD_PER_PIECE = 0.07;
+    /** For this long after a tip, a launch still goes into the cell that tipped (it has only just started
+     *  to swing) and spills with it. PLACEHOLDER: the hive swings for about 4 s (DSim). */
+    static final double TIP_CATCH_S = 0.5;
     static final double GATE_OPEN_THRESHOLD = (0.485 + 0.67) / 2.0; // halfway between MechanismConstants' positions
 
     private final BioHorsSim sim;
@@ -93,6 +97,7 @@ public final class BiobuzzMatch {
 
     private int held;
     private int launched, scored, missed, collected, tips;
+    private double lastTipS = Double.NEGATIVE_INFINITY;
     private final List<Double> tipTimes = new ArrayList<>();
     private final List<String> contacts = new ArrayList<>();
     private double launchTimer, flowerTimer;
@@ -254,6 +259,12 @@ public final class BiobuzzMatch {
                     int id = world.addHeldPiece("pollen", POLLEN_RADIUS_IN);
                     world.launch(id, "shot", l[0], l[1], l[2], l[3], l[4], l[5]);
                     shots.add(new double[] {id, time, 0});
+                } else if (time - lastTipS <= TIP_CATCH_S && legalInto(x, y, h, !upIsNorth)) {
+                    // The cell that just tipped is only starting to swing: a shot right behind the
+                    // tipping one still goes in, and spills with the rest of its load.
+                    int cell = upIsNorth ? 0 : 1;
+                    scored++;
+                    spill(cell, 1);
                 } else if (launchIsLegal(x, y, h)) {
                     int up = upIsNorth ? 1 : 0;
                     double cellY = (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0;
@@ -264,6 +275,7 @@ public final class BiobuzzMatch {
                     if (cellPollen[up] >= need) {
                         tips++;
                         tipTimes.add(time);
+                        lastTipS = time;
                         spill(up, cellPollen[up]);
                         cellPollen[up] = 0;
                         cellNectar[up] = 0;
@@ -300,6 +312,10 @@ public final class BiobuzzMatch {
         Logger.recordOutput("Match/missed", missed);
         Logger.recordOutput("Match/tips", tips);
         Logger.recordOutput("Match/upCellNorth", upIsNorth);
+        // AdvantageScope's hives are fixed field art and never tip, so mark the cell that is really
+        // up: a pose at its opening (draw it as Axes or a Cone), which moves when the hive tips.
+        Logger.recordOutput("Field/UpCell", Pose3d.struct, AdvantageScopeFrame.piece(hiveX,
+                (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0, CELL_AIM_Z_IN));
         Logger.recordOutput("Truth/xIn", x);
         Logger.recordOutput("Truth/yIn", y);
         Logger.recordOutput("Truth/headingRad", h);
@@ -432,10 +448,15 @@ public final class BiobuzzMatch {
     }
 
     private boolean launchIsLegal(double x, double y, double h) {
+        return legalInto(x, y, h, upIsNorth);
+    }
+
+    /** A launch from (x, y, h) would go into the north (or south) cell, were it up. */
+    private boolean legalInto(double x, double y, double h, boolean north) {
         boolean ownHalf = red ? x < 0 : x > 0;
         double face = FieldFace.OUTER_FACE_IN;
-        boolean outboard = upIsNorth ? y > face : y < -face;
-        double cellY = (upIsNorth ? 1 : -1) * face / 2.0;
+        boolean outboard = north ? y > face : y < -face;
+        double cellY = (north ? 1 : -1) * face / 2.0;
         double bearing = Math.atan2(cellY - y, hiveX - x);
         double off = Math.abs(Math.atan2(Math.sin(bearing - h), Math.cos(bearing - h)));
         return ownHalf && outboard && Math.toDegrees(off) <= LAUNCH_CONE_DEG;

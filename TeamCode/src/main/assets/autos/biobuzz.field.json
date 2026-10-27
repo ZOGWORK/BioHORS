@@ -492,7 +492,12 @@
   "rules": {
     "plugin": "season-biobuzz",
     "tipTable": [
-      8
+      8,
+      7,
+      6,
+      3,
+      1,
+      0
     ],
     "capacity": 4,
     "humanPlayer": {
@@ -500,6 +505,6 @@
       "perTip": 1,
       "provenance": "SPEC (BIOBUZZ Competition Manual V1 §10.3.1 B.ii, §10.1 and G426.A): each alliance's human player starts with 5 nectar in its ALLIANCE AREA, and may enter one of them each time that alliance's hive is TIPPED. G427.C puts an entered nectar on the tiles of the alliance's own LOADING ZONE. G426.B (all remaining nectar with 60 s or less left) is TELEOP only, so it never applies to an auto. DSim agrees: BB_NECTAR_COUNT 8 is 3 staged in the cell and 5 in stock, and bbHumanPlayerTick enters one per tip into the loading zone."
     },
-    "tipTableProvenance": "SET BY HAND: team rule confirmed by Sushil (Oct 27): 8 pollen tip a hive cell, whatever nectar is in it. This DISAGREES with the season package's table [8, 7, 6, 3, 1, 0] (DSim, indexed by the nectar in the up cell; the manual gives none, section 9.6), under which the 3 staged nectar let 3 pollen tip the first cell. Kept at 8 on the team's instruction; confirm on a real field."
+    "tipTableProvenance": " (BioHORS: back to the season table, Oct 27: the team asked for Zenith's starter route, whose first volley tips the hive with the 3 staged nectar; the SimLoop and Zenith docs give this table.)"
   }
 }

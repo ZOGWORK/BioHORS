@@ -271,11 +271,12 @@ Field tab (Field/Robot, Field/Pollen as game pieces, Field/Hive as the hive bar'
 
 ## 10. The tip rule
 
-`autos/field/biobuzz.field.json` `rules.tipTable` is `[8]` (team rule, confirmed by Sushil). The
-season package's table (from DSim, the manual has none) is `[8, 7, 6, 3, 1, 0]`, indexed by the
-nectar in the up cell, which would let the 3 staged nectar tip the first cell with 3 pollen.
-**Confirm on a real field** which is right; if it is the DSim table, the first volley tips the hive
-and the auto plan changes.
+The field file uses the season's tip table again, `[8, 7, 6, 3, 1, 0]`: the pollen needed to tip a
+cell, by the nectar in it (Zenith's season package and SimLoop/Zenith docs; DSim-sourced). Each up
+cell starts with 3 nectar, so **3 pollen tip it the first time**; after a tip the new up cell is
+empty and needs 8. This is what Zenith's starter route (the auto now) is built on: the 4 preloads tip
+the hive. The team's earlier "8 pollen per tip, whatever the nectar" rule is the one-line change back
+(`rules.tipTable` = `[8]` in `autos/field/biobuzz.field.json`); under it this route never tips.
 
 ## 11. Seeing the real robot in AdvantageScope
 
@@ -310,6 +311,14 @@ drawing only and changes no physics.
 `TeamCode/build/sim/state-machine-red.rlog` (or `-blue`). Besides the robot and pollen above, add
 `RealOutputs/Auto/PlannedRoute` to the 3D (or 2D) Field and set its type to **Trajectory** to draw the
 whole planned route; `RealOutputs/Auto/State` shows which state the auto is in at each moment.
+
+
+**Hives in AdvantageScope:** the field model's hives are fixed and never tip; after the first tip
+the robot shoots the north cell, which is up in the game but still drawn down. Add
+`RealOutputs/Field/UpCell` (as Axes or a Cone) to see which cell is really up at each moment.
+AdvantageScope's FTC fields use the Center/Rotated frame (its docs, "Coordinate Systems"): +X to the
+right as seen from the red alliance wall, so `AdvantageScopeFrame` turns our field frame by 90 deg;
+`AdvantageScopeFrameTest` checks our field file against the field model.
 
 **Rebuild it after a CAD change** (Python with `cadquery-ocp` and `numpy`; loading the STEP takes
 a minute or two):
