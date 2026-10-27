@@ -27,9 +27,9 @@ import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
  *   Y (hold) .............. outtake
  *   Dpad down ............. toggle both shooters on/off (each at its own target)
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
- *   X / A ................. NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
- *   B ..................... toggle both gates
- *   Left bumper ........... unmapped
+ *   Left bumper / A ....... NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
+ *   B ..................... toggle both gates (the flower bar lifts slightly while they are open)
+ *   X ..................... toggle the flower bar: DOWN (collect from a flower) / STOWED
  *
  * Before PLAY: dpad left = RED, dpad right = BLUE. If an auto ran first, its alliance and last
  * pose are picked up from the blackboard.
@@ -67,7 +67,7 @@ public class MainHorsTeleOp extends LinearOpMode {
     private boolean poseFromAuto = false;
 
     // Edge-detect state (a press fires once, not every loop).
-    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, bLast, xLast, aLast;
+    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, bLast, xLast, aLast, lbLast;
 
     @Override
     public void runOpMode() {
@@ -180,10 +180,10 @@ public class MainHorsTeleOp extends LinearOpMode {
             if (dpadRightNow && !dpadRightLast) robot.pollenShooter.adjustTargetRpm(MechanismConstants.POLLEN_TRIM_STEP_RPM);
             dpadRightLast = dpadRightNow;
 
-            // Nectar has its own trim and step: X down, A up.
-            boolean xNow = gamepad1.x || gamepad2.x;
-            if (xNow && !xLast) robot.nectarShooter.adjustTargetRpm(-MechanismConstants.NECTAR_TRIM_STEP_RPM);
-            xLast = xNow;
+            // Nectar has its own trim and step: left bumper down, A up.
+            boolean lbNow = gamepad1.left_bumper || gamepad2.left_bumper;
+            if (lbNow && !lbLast) robot.nectarShooter.adjustTargetRpm(-MechanismConstants.NECTAR_TRIM_STEP_RPM);
+            lbLast = lbNow;
 
             boolean aNow = gamepad1.a || gamepad2.a;
             if (aNow && !aLast) robot.nectarShooter.adjustTargetRpm(MechanismConstants.NECTAR_TRIM_STEP_RPM);
@@ -215,6 +215,12 @@ public class MainHorsTeleOp extends LinearOpMode {
             }
             bLast = bNow;
 
+            // ----- Flower bar: X toggles down / stowed; lifted slightly while the gates are open -----
+            boolean xNow = gamepad1.x || gamepad2.x;
+            if (xNow && !xLast) robot.flowerBar.toggle();
+            xLast = xNow;
+            robot.flowerBar.setShooting(!robot.pollenGate.isClosed() || !robot.nectarGate.isClosed());
+
             // ----- Intake: right trigger in, Y out -----
             if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD) {
                 robot.intake.intake();
@@ -226,6 +232,7 @@ public class MainHorsTeleOp extends LinearOpMode {
 
             // ----- Telemetry -----
             telemetry.addData("Alliance", alliance);
+            telemetry.addData("Flower bar", robot.flowerBar.position());
             telemetry.addData("Target", "%s hive, %s cell", alliance, targetCell);
             if (aimHeld && !poseOk) {
                 telemetry.addData("Aiming", "OFF -- POSE INVALID, manual turn");
@@ -254,6 +261,7 @@ public class MainHorsTeleOp extends LinearOpMode {
         xLast = gamepad1.x || gamepad2.x;
         aLast = gamepad1.a || gamepad2.a;
         bLast = gamepad1.b || gamepad2.b;
+        lbLast = gamepad1.left_bumper || gamepad2.left_bumper;
     }
 
     /** The default start pose for an alliance: the RED value, point-mirrored for BLUE. */

@@ -159,7 +159,8 @@
         "mode": "constant",
         "headingRad": -1.5708
       },
-      "notes": "Slides west (still facing south) onto x = -62.7: any westward tilt of the 22 in body near the wall puts the bar's corner past it, so this short leg is driven sideways."
+      "notes": "Slides west (still facing south) to just short of the pickup lane, slowly so it stops where it is told: any westward tilt of the 22 in body near the wall puts the bar corner past it, so this short leg is driven sideways.",
+      "speedFraction": 0.4
     },
     {
       "id": "intakeOnGarden",
@@ -185,14 +186,15 @@
             }
           ],
           "heading": {
-            "mode": "tangent"
+            "mode": "constant",
+            "headingRad": -1.5708
           },
           "speedFraction": 0.35,
           "expect": {
             "collectFrom": "gardenRed",
             "count": 4
           },
-          "notes": "Slowly nose-first into the garden line: the 13.2 in mouth spans all four pollen at once."
+          "notes": "Slowly into the garden line holding the heading square to the west wall (the last 0.35 in west is a tiny slide): the 13.2 in mouth spans all four pollen at once."
         },
         {
           "id": "gardenUntilFull",
@@ -374,6 +376,12 @@
       "notes": "Starts the intake before the slow approach."
     },
     {
+      "id": "flowerBarDownWest",
+      "kind": "command",
+      "name": "flowerBarDown",
+      "notes": "Puts the flower bar down to reach into flower0's opening."
+    },
+    {
       "id": "collectFlowerWest",
       "kind": "path",
       "segments": [
@@ -407,6 +415,12 @@
       "kind": "command",
       "name": "intakeOff",
       "notes": "Stops the intake."
+    },
+    {
+      "id": "flowerBarStowWest",
+      "kind": "command",
+      "name": "flowerBarStow",
+      "notes": "Folds the flower bar up before backing off."
     },
     {
       "id": "backOffFlowerWest",
@@ -513,6 +527,12 @@
       "notes": "Starts the intake before the slow approach."
     },
     {
+      "id": "flowerBarDownNorth",
+      "kind": "command",
+      "name": "flowerBarDown",
+      "notes": "Puts the flower bar down to reach into flower1's opening."
+    },
+    {
       "id": "collectFlowerNorth",
       "kind": "path",
       "segments": [
@@ -546,6 +566,12 @@
       "kind": "command",
       "name": "intakeOff",
       "notes": "Stops the intake."
+    },
+    {
+      "id": "flowerBarStowNorth",
+      "kind": "command",
+      "name": "flowerBarStow",
+      "notes": "Folds the flower bar up before backing off."
     },
     {
       "id": "backOffFlowerNorth",

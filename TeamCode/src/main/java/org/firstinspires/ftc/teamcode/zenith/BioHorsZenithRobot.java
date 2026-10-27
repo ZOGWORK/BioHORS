@@ -33,6 +33,7 @@ public class BioHorsZenithRobot implements ZenithRobot {
     private ZenithSubsystems.Drive drive;
     private ZenithSubsystems.Intake intake;
     private ZenithSubsystems.Launcher launcher;
+    private ZenithSubsystems.FlowerBar flowerBar;
     private PollenEstimate pollen;
     private Alliance alliance = Alliance.RED;
 
@@ -47,11 +48,12 @@ public class BioHorsZenithRobot implements ZenithRobot {
         pollen = new PollenEstimate(PollenEstimate.CAPACITY); // preload: 4 pollen
         intake = new ZenithSubsystems.Intake(hardware, pollen);
         launcher = new ZenithSubsystems.Launcher(hardware);
+        flowerBar = new ZenithSubsystems.FlowerBar(hardware);
     }
 
     @Override
     public void registerCommands(AutoFromFile opMode) {
-        BioHorsCommands.register(intake, launcher, pollen);
+        BioHorsCommands.register(intake, launcher, flowerBar, pollen);
     }
 
     @Override

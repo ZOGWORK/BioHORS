@@ -42,6 +42,7 @@ public class ScoreCommand extends CommandBase {
         feeding = false;
         done = false;
         launcher.closeGate();
+        launcher.barClearOfShots(true);
         launcher.spinUp();
         timer.reset();
     }
@@ -65,6 +66,7 @@ public class ScoreCommand extends CommandBase {
     @Override
     public void end(boolean interrupted) {
         launcher.closeGate();
+        launcher.barClearOfShots(false);
         intake.stop();
         if (feeding) pollen.launched(count);
     }

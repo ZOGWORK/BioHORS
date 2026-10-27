@@ -24,8 +24,8 @@ import java.util.List;
  *  - Intake: a pollen is taken in when it overlaps the intake mouth (robot.json mouths[0]) while
  *    the intake motors run inward and the robot holds fewer than 4.
  *  - Flower: a running intake whose mouth is at a flower's retrieval opening (the face of the
- *    flower's foot toward the field), facing it, pulls one pollen from the bottom every
- *    FLOWER_S_PER_PIECE.
+ *    flower's foot toward the field), facing it, WITH THE FLOWER BAR DOWN (its servo really at the
+ *    down position), pulls one pollen from the bottom every FLOWER_S_PER_PIECE.
  *  - Launch: with the pollen gate really open, the intake feeding and the pollen flywheel at
  *    least LAUNCH_MIN_RPM, one pollen leaves every LAUNCH_S_PER_PIECE.
  *  - A launch scores in the alliance's up cell only from that cell's floor quarter, outboard of
@@ -114,7 +114,7 @@ public final class BiobuzzMatch {
         this.sim = sim;
         this.red = red;
         this.held = preload;
-        Json fp = robot.get("footprint").get("startIn");
+        Json fp = robot.get("footprint").get("expandedIn"); // the longest the robot gets (flower bar out)
         robotLength = fp.num("lengthIn");
         robotWidth = fp.num("widthIn");
         robotHeight = robot.get("heightIn").num("value");
@@ -211,7 +211,9 @@ public final class BiobuzzMatch {
 
         // ---- intake: flower retrieval opening ----
         Flower at = null;
-        if (intakeIn && held < 4) {
+        boolean barDown = Math.abs(sim.flowerLeftPlant.getPosition()
+                - org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN) < 0.05;
+        if (intakeIn && held < 4 && barDown) {
             double mx = x + fwdX * (mouthOffsetX + mouthHalfDepth) - fwdY * mouthOffsetY;
             double my = y + fwdY * (mouthOffsetX + mouthHalfDepth) + fwdX * mouthOffsetY;
             for (Flower f : flowers) {
@@ -289,6 +291,7 @@ public final class BiobuzzMatch {
         Logger.recordOutput("Truth/headingRad", h);
         Logger.recordOutput("Shooter/pollenRpm", sim.pollenShooterRpm());
         Logger.recordOutput("Gate/pollen", sim.pollenGatePlant.getPosition());
+        Logger.recordOutput("FlowerBar/position", sim.flowerLeftPlant.getPosition());
         Logger.recordOutput("Intake/power", sim.intakeLeft.getPower());
     }
 

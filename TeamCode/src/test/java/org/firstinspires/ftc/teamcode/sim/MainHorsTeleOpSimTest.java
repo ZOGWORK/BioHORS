@@ -14,6 +14,7 @@ import org.horizon36596.simloop.opmode.OpModeRunner;
 import org.horizon36596.simloop.simclock.SimClockLoader;
 import org.horizon36596.simloop.sim.RlogDecodedCompare;
 import org.junit.jupiter.api.AfterEach;
+import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.junit.jupiter.api.Test;
 import org.psilynx.psikit.core.Logger;
 
@@ -329,7 +330,7 @@ class MainHorsTeleOpSimTest {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5;                                  // both on
             g1.a = (tick >= 10 && tick < 13) || (tick >= 20 && tick < 23);         // nectar +50 twice
-            g2.x = tick >= 30 && tick < 33;                                        // nectar -50 (operator)
+            g2.left_bumper = tick >= 30 && tick < 33;                              // nectar -50 (operator)
             g1.dpad_left = tick >= 40 && tick < 43;                                // pollen -50
         }, null);
         String shown = lastTelemetry(result);
@@ -351,7 +352,7 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
-    void bTogglesBothGatesAndXLeavesTheGatesAlone() {
+    void bTogglesBothGatesAndXTogglesTheFlowerBar() {
         BioHorsSim open = new BioHorsSim();
         startAt(open, "RED", -13.0, -63.0, Math.PI / 2.0);
         run(open, 50, (phase, tick, g1, g2) -> {
@@ -375,8 +376,30 @@ class MainHorsTeleOpSimTest {
         run(x, 50, (phase, tick, g1, g2) -> {
             if (phase == OpModePhase.ACTIVE) g1.x = true;
         }, null);
-        assertEquals(0.485, x.pollenGatePlant.getPosition(), 0.02, "X (nectar trim) does not move the gates");
-        assertEquals(0.485, x.nectarGatePlant.getPosition(), 0.02, "X (nectar trim) does not move the gates");
+        assertEquals(0.485, x.pollenGatePlant.getPosition(), 0.02, "X (flower bar) does not move the gates");
+        assertEquals(0.485, x.nectarGatePlant.getPosition(), 0.02, "X (flower bar) does not move the gates");
+        assertEquals(MechanismConstants.FLOWER_BAR_DOWN, x.flowerLeftPlant.getPosition(), 0.02, "X puts the bar down");
+        OpMode.blackboard.clear();
+
+        BioHorsSim xTwice = new BioHorsSim();
+        startAt(xTwice, "RED", -13.0, -63.0, Math.PI / 2.0);
+        run(xTwice, 60, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.x = (tick >= 2 && tick < 5) || (tick >= 20 && tick < 23);
+        }, null);
+        assertEquals(MechanismConstants.FLOWER_BAR_STOWED, xTwice.flowerLeftPlant.getPosition(), 0.02,
+                "X again stows the bar");
+        OpMode.blackboard.clear();
+
+        BioHorsSim shoot = new BioHorsSim();
+        startAt(shoot, "RED", -13.0, -63.0, Math.PI / 2.0);
+        run(shoot, 60, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.x = tick >= 2 && tick < 5;     // bar down
+            g1.b = tick >= 20 && tick < 23;   // gates open: the bar lifts slightly
+        }, null);
+        assertEquals(MechanismConstants.FLOWER_BAR_SHOOTING, shoot.flowerLeftPlant.getPosition(), 0.02,
+                "with the gates open the bar sits at its shooting position");
     }
 
     @Test

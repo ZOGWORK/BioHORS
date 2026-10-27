@@ -15,16 +15,16 @@
       "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); south of the RED hive, in the south cell's quarter and outboard of its outer face, facing the south cell's centre; the bar tip stays clear of the hive frame's west foot bar. NEEDS MEASUREMENT on the real field."
     },
     "gardenApproach": {
-      "xIn": -62.7,
+      "xIn": -62.5,
       "yIn": -45.0,
       "headingRad": -1.5708,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); north of the RED garden line, nose (intake) south toward it; x = -62.7 keeps the 17.84 in body (0.38 in clear) inside the west wall while the centred 13.2 in mouth spans all four pollen. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); north of the RED garden line, nose south toward it, 0.35 in east of the pickup lane so an overshooting slide stays clear of the west wall (the 17.84 in body reaches the wall at x = -63.08). NEEDS MEASUREMENT on the real field."
     },
     "gardenPickup": {
-      "xIn": -62.7,
-      "yIn": -57.4,
+      "xIn": -62.85,
+      "yIn": -57.0,
       "headingRad": -1.5708,
-      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar 0.4 in from the south wall, the mouth over the garden line (y = -70.6). NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: planning choice; from the CAD footprint (bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar 0.8 in from the south wall (room for the follower to overshoot), the mouth over the garden line (y = -70.6). NEEDS MEASUREMENT on the real field."
     },
     "gardenTurn": {
       "xIn": -50.0,

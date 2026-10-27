@@ -86,6 +86,24 @@ public final class ZenithSubsystems {
         }
     }
 
+    /** The flower bar (flowerLeft + flowerRight): stowed, or down to collect from a flower. */
+    public static class FlowerBar extends SubsystemBase {
+        private final BioHorsRobot robot;
+
+        public FlowerBar(BioHorsRobot robot) {
+            this.robot = robot;
+            robot.flowerBar.setDown(false);
+        }
+
+        public void down() {
+            robot.flowerBar.setDown(true);
+        }
+
+        public void stow() {
+            robot.flowerBar.setDown(false);
+        }
+    }
+
     /** The pollen shooter and the pollen gate (gateRight). Auto is pollen only. */
     public static class Launcher extends SubsystemBase {
         private final BioHorsRobot robot;
@@ -113,6 +131,11 @@ public final class ZenithSubsystems {
 
         public void closeGate() {
             robot.pollenGate.setClosed(true);
+        }
+
+        /** Lifts the flower bar slightly while a volley runs, so the shots clear it. */
+        public void barClearOfShots(boolean shooting) {
+            robot.flowerBar.setShooting(shooting);
         }
 
         /** Both shooters' velocity loops run every loop (the nectar one stays off in auto). */
