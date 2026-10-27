@@ -244,6 +244,10 @@ the wrong reason costs the team more than a plain stop does.
   read `.claude/skills/build-auto/references/robot.md` first. Edit with the Zenith MCP tools (`.mcp.json`),
   or `npx zenith ... --json`; then `npx zenith deploy` and `codegen`. No mid-path markers (Pedro 3.0.2 lacks
   `Follower.curveCompletion()`, which Zenith v0.1.2's marker runner calls).
+- **Optimization loop:** `.claude/skills/run-loop` (SimLoop's `loop` package: edit, replay, score, gate,
+  keep last-best). User-started only, with `/run-loop`. For an auto objective, the envelope must include
+  `ZenithAutoMatchTest`'s checks (16 scored, 2 tips, no contact, strafing under 20 %, both alliances) and
+  no edit may change a PLACEHOLDER shot or sim constant to score higher.
 - **Sim tests live in:** `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/sim/` (`MainHorsTeleOpSimTest`, `ZenithAutoMatchTest`).
   Run OpModes with `OpModeRunner.forTeamClass(...)` and `.teamPackages("org.firstinspires.ftc.teamcode.",
   SimClockLoader.PEDRO_PATHING)` so the code's timers read sim time; pass data in through `OpMode.blackboard`.
