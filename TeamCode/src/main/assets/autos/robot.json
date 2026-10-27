@@ -1,0 +1,162 @@
+{
+  "$schema": "https://libraries.horizon36596.org/zenith/schema/v1/robot.json",
+  "formatVersion": 1,
+  "name": "BioHORS",
+  "frame": {
+    "forward": "+x",
+    "left": "+y",
+    "headingZero": "+x",
+    "headingPositive": "ccw"
+  },
+  "footprint": {
+    "startIn": {
+      "lengthIn": 18,
+      "widthIn": 18,
+      "provenance": "NEEDS MEASUREMENT: not measured yet; assumed the 18 in BIOBUZZ starting-size limit, the largest legal footprint, so geometry checks are conservative"
+    },
+    "expandedIn": {
+      "lengthIn": 18,
+      "widthIn": 18,
+      "provenance": "NEEDS MEASUREMENT: assumed nothing sticks out past the frame"
+    },
+    "centreOfRotationIn": {
+      "xIn": 0,
+      "yIn": 0,
+      "provenance": "NEEDS MEASUREMENT: assumed the middle of the frame"
+    }
+  },
+  "heightIn": {
+    "value": 18,
+    "provenance": "NEEDS MEASUREMENT: assumed 18 in"
+  },
+  "kinematics": {
+    "maxForwardVelInPerS": {
+      "value": 60,
+      "provenance": "PLACEHOLDER (SET FROM SIM): matches pedro/Constants and the SimLoop drive model, not the real robot; measure with Pedro's Foresight Tuner"
+    },
+    "maxStrafeVelInPerS": {
+      "value": 50,
+      "provenance": "PLACEHOLDER (SET FROM SIM): matches pedro/Constants and the SimLoop drive model, not the real robot; measure with Pedro's Foresight Tuner"
+    },
+    "forwardDecelInPerS2": {
+      "value": 60,
+      "provenance": "PLACEHOLDER (SET FROM SIM): matches pedro/Constants and the SimLoop drive model, not the real robot; measure with Pedro's Foresight Tuner"
+    },
+    "strafeDecelInPerS2": {
+      "value": 50,
+      "provenance": "PLACEHOLDER (SET FROM SIM): matches pedro/Constants and the SimLoop drive model, not the real robot; measure with Pedro's Foresight Tuner"
+    },
+    "accelInPerS2": {
+      "value": 220,
+      "provenance": "CALIBRATED FROM SIM 2026-10-27 (57 steps)"
+    },
+    "maxAngularVelRadPerS": {
+      "value": 5,
+      "provenance": "PLACEHOLDER: same as AimController.MAX_TURN_RATE_RAD_PER_S; measure by spinning at full yaw"
+    },
+    "defaultPathSpeedFraction": {
+      "value": 0.8,
+      "provenance": "SET BY HAND: 80 percent of full speed on every path unless a step says otherwise (BioHorsZenithRobot.DEFAULT_SPEED_FRACTION)"
+    },
+    "settleS": {
+      "value": 0.4,
+      "provenance": "CALIBRATED FROM SIM 2026-10-27 (57 steps)"
+    },
+    "follower": {
+      "library": "pedro",
+      "version": "3.0.2",
+      "holdEnd": true
+    }
+  },
+  "mouths": [
+    {
+      "id": "front",
+      "side": "FRONT",
+      "offsetIn": {
+        "xIn": 7,
+        "yIn": 0
+      },
+      "widthIn": 16,
+      "depthIn": 4,
+      "provenance": "PLACEHOLDER: the two intake motors run one intake across the front (intake faces up in the team's top view); width and depth not measured"
+    }
+  ],
+  "capacity": {
+    "elementKind": "pollen",
+    "max": 4,
+    "provenance": "SET BY HAND: confirmed by Sushil (Oct 27): the robot holds 4 pollen; also BIOBUZZ G407"
+  },
+  "shooter": {
+    "kind": "fixed",
+    "settleS": {
+      "value": 0.25,
+      "provenance": "PLACEHOLDER: time to settle before launching"
+    }
+  },
+  "commands": [
+    {
+      "name": "intakeOn",
+      "summary": "Runs the intake inward and keeps it running.",
+      "estimateS": "0",
+      "requires": [
+        "intake"
+      ],
+      "stationary": false
+    },
+    {
+      "name": "intakeOff",
+      "summary": "Stops the intake.",
+      "estimateS": "0",
+      "requires": [
+        "intake"
+      ],
+      "stationary": false
+    },
+    {
+      "name": "spinUp",
+      "summary": "Brings the pollen shooter up to speed; ends once it is at speed (or after 2 s).",
+      "estimateS": "1.0",
+      "requires": [
+        "launcher"
+      ],
+      "stationary": false
+    },
+    {
+      "name": "score",
+      "summary": "Launches count pollen into the alliance's up hive cell: spins the pollen shooter up if needed, opens the pollen gate and feeds with the intake, then closes the gate. The robot must stand still while it runs.",
+      "params": {
+        "count": {
+          "type": "integer",
+          "min": 1,
+          "max": 4,
+          "default": 4
+        }
+      },
+      "estimateS": "0.4 + count * 0.4",
+      "requires": [
+        "launcher",
+        "intake"
+      ],
+      "stationary": true,
+      "ledger": {
+        "launches": "count"
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "name": "holdingPiece",
+      "summary": "At least one pollen is aboard. ESTIMATE: the robot has no pollen sensor yet (PollenEstimate)."
+    },
+    {
+      "name": "hopperFull",
+      "summary": "The robot holds 4 pollen, the most it may. ESTIMATE from intake run time (PollenEstimate).",
+      "ledger": "full"
+    },
+    {
+      "name": "hopperEmpty",
+      "summary": "The robot holds no pollen. ESTIMATE (PollenEstimate).",
+      "ledger": "empty"
+    }
+  ]
+}

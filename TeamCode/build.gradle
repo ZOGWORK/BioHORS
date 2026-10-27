@@ -22,10 +22,32 @@ android {
     packagingOptions {
         jniLibs.useLegacyPackaging true
     }
+
+    testOptions {
+        unitTests.all {
+            // Zenith's sim (zenith.json sim.command) names the auto with -Dzenith.auto=<auto>.
+            // Gradle does not pass its own -D options into the test JVM, so this does, and a
+            // named run always re-runs: the auto files it reads are not task inputs.
+            // The match test reads the deployed auto, robot, field and waypoint files from disk;
+            // declaring them as inputs makes a changed plan re-run it, with or without -Dzenith.auto.
+            inputs.dir("$rootDir/TeamCode/src/main/assets/autos")
+                    .withPropertyName('zenithAutos')
+                    .withPathSensitivity(PathSensitivity.RELATIVE)
+
+            def zenithAuto = System.getProperty('zenith.auto')
+            if (zenithAuto) {
+                systemProperty 'zenith.auto', zenithAuto
+                outputs.upToDateWhen { false }
+            }
+        }
+    }
 }
 
 dependencies {
     implementation project(':FtcRobotController')
+
+    // Parameterized JUnit 5 tests (same version as simloop.gradle's JUnit 5).
+    testImplementation 'org.junit.jupiter:junit-jupiter-params:5.11.3'
 }
 
 apply from: "$rootDir/simloop-starter/simloop.gradle"

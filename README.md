@@ -11,15 +11,15 @@ Robot: mecanum drive with Pinpoint odometry (2 pods), 2 intake motors,
 independent gate servos** (one per shooter). No turret: aiming turns the
 whole robot.
 
-Planned: the MainHORS teleop with odometry aim, and a Zenith-planned 2-tip
-pollen auto verified in SimLoop.
+The MainHORS teleop with odometry aim, and a Zenith-planned 2-tip pollen auto, both tested in SimLoop.
 
 ## OpModes
 
 | OpMode | File | What it does |
 |---|---|---|
 | MainHORS TeleOp | `teamcode/teleop/MainHorsTeleOp.java` | The teleop: MainHORS controls plus odometry aim (see below) |
-| Simple Park Auto | `teamcode/auto/SimpleParkAuto.java` | Encoder move-and-park placeholder, not a Pedro auto. Will be replaced by the Zenith 2-tip auto |
+| Two tip | `teamcode/zenith/generated/TwoTipAuto.java` (generated) | The 2-tip pollen auto, played from `autos/two-tip.auto.json` by Zenith (see below) |
+| Choose Alliance | `teamcode/opmodes/ChooseAlliance.java` | Run before the auto: dpad left = RED, dpad right = BLUE |
 | Tuning (Quickstart) | `teamcode/pedro/Tuning.java` + `procedures/` | PedroPathing tuners, including the Pinpoint Tuner |
 
 ## Hardware map (must match the Robot Controller config exactly)
@@ -67,20 +67,52 @@ bearing rate keeps the aim on target while strafing. If the Pinpoint is not READ
 back to manual turn and telemetry shows `POSE INVALID`. Telemetry always shows the alliance,
 target cell, aiming on/off, heading error and pose.
 
+## The 2-tip auto (Zenith)
+
+`autos/two-tip.auto.json`, planned with [Zenith](https://zenith.horizon36596.org) and played on the
+robot by Zenith's runtime through the Pedro v3 follower and the named commands in
+`zenith/BioHorsCommands.java`. Pollen only, 16 pollen in 4 volleys of 4, 8 per tip (team rule):
+
+1. Score the 4 preload into the south cell (the cell up at kickoff for RED).
+2. Sweep the RED garden (4), score again: south cell 8, **tip 1**; the north cell comes up.
+3. Take flower0's 4 (west wall), go round the west side of the hive frame, score into the north cell.
+4. Take flower1's 4 (north wall), score again: north cell 8, **tip 2**. Park in the loading zone.
+
+![The two-tip auto](docs/two-tip.png)
+
+One file for both alliances: written for RED, mirrored for BLUE (BIOBUZZ is point-symmetric). Run
+**Choose Alliance** before INIT. When the auto stops, its alliance and pose go to the teleop's aim.
+
+Editing it: `npm install` (pins the Zenith CLI and MCP in `package.json`), then use the Zenith MCP
+server (`.mcp.json`) or `npx zenith validate|estimate|render|deploy|sim ... --json`. The
+`build-auto` skill (`.claude/skills/build-auto/`, with `references/robot.md` for this robot) is the
+workflow. Never edit `TeamCode/src/main/assets/autos/` or `zenith/generated/`: `npx zenith deploy`
+writes them. No mid-path markers: Zenith v0.1.2's marker runner needs a Pedro method Pedro 3.0.2 lacks.
+
 ## Simulation (SimLoop)
 
-`./gradlew :TeamCode:testDebugUnitTest` (on Windows `.\gradlew.bat ...`) runs the real teleop
-OpMode on a laptop against fake hardware: `TeamCode/src/test/.../sim/BioHorsSim.java` (the robot's
-fake devices and physics) and `MainHorsTeleOpSimTest.java` (drive, slow mode, aim, goal switch,
-aim while strafing, Pinpoint-fault fallback, BLUE, shooters, gates, intake, determinism). Every
-sim number is a placeholder until measured (see the tuning section), so the sim checks the code's
+`./gradlew :TeamCode:testDebugUnitTest` (Windows: `.\gradlew.bat ...`) runs the real OpModes on a
+laptop against fake hardware, in `TeamCode/src/test/java/org/firstinspires/ftc/teamcode/sim/`:
+
+- `BioHorsSim`: this robot's fake devices and physics (drive, Pinpoint, shooters, gates, intake).
+- `MainHorsTeleOpSimTest`: the teleop (drive, slow mode, aim, goal switch, aim while strafing,
+  Pinpoint-fault fallback, BLUE, shooters, gates, intake, determinism).
+- `ZenithAutoMatchTest` + `BiobuzzMatch` + `TracedZenithAuto`: the deployed auto as a BIOBUZZ match,
+  stopped at 30 s like the field: RED twice (identical logs) and BLUE once. It checks 16 pollen and
+  2 tips in AUTO, every step in order, no structure contact, strafing under 20 % of the driving,
+  and the robot's belief against the sim's truth. `npx zenith sim two-tip` runs the same test.
+
+Every sim number is a placeholder until measured (`docs/TUNING.md`), so the sim proves the code's
 logic and wiring, not the real robot's timing.
 
-RLOGs land in `TeamCode/build/sim/` (gitignored; re-run the tests to regenerate). Open
-`teleop-aim.rlog` in AdvantageScope and plot `Truth/headingRad`, `Truth/xIn`, `Truth/yIn` and
-`Shooter/pollenRpm`.
+RLOGs and Zenith traces land in `TeamCode/build/sim/` (gitignored; re-run the tests to regenerate).
+Open them in [AdvantageScope](https://docs.advantagescope.org/): `two-tip-red.rlog` (plot
+`Truth/xIn` vs `Truth/yIn` on the 2D field, `Match/scored`, `Match/tips`, `Shooter/pollenRpm`) and
+`teleop-aim.rlog` (`Truth/headingRad`).
 
 ## Nothing is tuned yet
+
+The full brief, item by item, is [`docs/TUNING.md`](docs/TUNING.md).
 
 Every tuning number in the code carries a provenance label: `SPEC` (from a
 spec sheet), `PLACEHOLDER` (made up so the code runs), or
@@ -103,7 +135,7 @@ spec sheet), `PLACEHOLDER` (made up so the code runs), or
    tolerance, turn rate at full yaw, and which way the shooter fires
    (`SHOOTER_FACING_OFFSET_RAD`). Teleop default start pose
    (`teleop/MainHorsTeleOp.java`) when no auto ran first.
-5. **Drive shaping, intake power, park auto**: placeholders, labelled in
+5. **Drive shaping, intake power, Foresight gains, auto timing**: placeholders, labelled in
    their files.
 
 ## Building
@@ -111,6 +143,14 @@ spec sheet), `PLACEHOLDER` (made up so the code runs), or
 Open in Android Studio (Narwhal 3 Feature Drop or later) and build like any
 FTC SDK project. The PedroPathing dependencies (revhub 3.0.2, tuning 1.0.1)
 are in `build.dependencies.gradle`.
+
+## Horizon's tools
+
+Zenith (beta) and SimLoop (alpha) are by Horizon (FTC 36596) and are early; they are looking for
+testers and contributors. Zenith: <https://zenith.horizon36596.org> · SimLoop:
+<https://github.com/Horizon-36596/simloop> · Example robot:
+<https://github.com/Horizon-36596/Horizon-Library-Examples> · Docs: <https://libraries.horizon36596.org> ·
+Discord: <https://discord.gg/p2D3JpM4f6> · Release video: <https://youtu.be/NFww9Mt-ZR4>
 
 ## Workflow
 
