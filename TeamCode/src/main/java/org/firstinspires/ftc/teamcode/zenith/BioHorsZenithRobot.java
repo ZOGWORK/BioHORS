@@ -18,8 +18,11 @@ import org.horizon36596.zenith.solverslib.ZenithRobot;
  * This robot as the Zenith runtime sees it. zenith.json names this class as deploy.robotClass, and
  * every OpMode `zenith deploy` writes builds one.
  *
- * Alliance: set before INIT with the "Choose Alliance" OpMode (stored on the SDK blackboard);
- * RED if it was never set. The auto files are written for RED and mirrored for BLUE.
+ * Alliance: the auto file's own. Each alliance has its own file and OpMode: "Two tip" is
+ * autos/two-tip.auto.json (RED), "Two tip (BLUE)" is autos/two-tip-blue.auto.json, written from the
+ * RED one by tools/mirror_auto.mjs with Zenith's mirror. Choosing the OpMode chooses the alliance;
+ * the "Choose Alliance" blackboard value is not read here, so a value left over from an earlier
+ * match can never run the path on the wrong side.
  *
  * When the auto stops, the alliance and the final pose go on the blackboard for the teleop's aim.
  */
@@ -39,8 +42,7 @@ public class BioHorsZenithRobot implements ZenithRobot {
 
     @Override
     public void init(AutoFromFile opMode) {
-        Alliance saved = PoseHandoff.savedAlliance();
-        alliance = saved == null ? Alliance.RED : saved;
+        alliance = "BLUE".equals(opMode.spec().alliance) ? Alliance.BLUE : Alliance.RED;
 
         hardware = new BioHorsRobot(opMode.hardwareMap, opMode.telemetry);
         foresight = Constants.foresightConfig();
