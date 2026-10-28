@@ -73,17 +73,23 @@ target cell, aiming on/off, heading error and pose.
 
 `autos/two-tip.auto.json`, planned with [Zenith](https://zenith.horizon36596.org) and played on the
 robot by Zenith's runtime through the Pedro v3 follower and the named commands in
-`zenith/BioHorsCommands.java`. Pollen only, 16 pollen in 4 volleys of 4, 8 per tip (team rule):
+`zenith/BioHorsCommands.java`. Pollen only, 12 pollen in 3 volleys of 4 (RED described):
 
-1. Score the 4 preload into the south cell (the cell up at kickoff for RED).
-2. Sweep the RED garden (4), score again: south cell 8, **tip 1**; the north cell comes up.
-3. Take flower0's 4 (west wall), go round the west side of the hive frame, score into the north cell.
-4. Take flower1's 4 (north wall), score again: north cell 8, **tip 2**. Park in the loading zone.
+1. Score the 4 preload from `scoreSouth` into the up cell, on the 3 staged nectar: **tip 1**.
+2. Go round the west of the hive frame to flower1 (north wall), take its 4 with the flower bar down,
+   score them from `scoreNorth`.
+3. Sweep the RED garden row along the south wall (bar stowed), drive back and score from
+   `scoreNorth`: **tip 2**. Park.
 
-![The two-tip auto](docs/two-tip.png)
+![The two-tip auto, RED](docs/two-tip.png) ![The two-tip auto, BLUE](docs/two-tip-blue.png)
 
-One file for both alliances: written for RED, mirrored for BLUE (BIOBUZZ is point-symmetric). Run
-**Choose Alliance** before INIT. When the auto stops, its alliance and pose go to the teleop's aim.
+**One OpMode per alliance: pick the one for your side.** "Two tip" runs `autos/two-tip.auto.json`
+(RED); "Two tip (BLUE)" runs `autos/two-tip-blue.auto.json`, Zenith's mirror of the RED file
+(BIOBUZZ is point-symmetric), written by `node tools/mirror_auto.mjs`. The Zenith autos ignore
+**Choose Alliance** (it is still used by the state-machine auto and by the teleop when no auto ran).
+When the auto stops, its alliance and pose go to the teleop's aim. After any change to the RED auto
+or `autos/waypoints.json`, re-run `node tools/mirror_auto.mjs`, then `npx zenith deploy` and
+`npx zenith codegen two-tip-blue`; `BlueAutoMirrorTest` fails until you do.
 
 Editing it: `npm install` (pins the Zenith CLI and MCP in `package.json`), then use the Zenith MCP
 server (`.mcp.json`) or `npx zenith validate|estimate|render|deploy|sim ... --json`. The
