@@ -29,6 +29,7 @@ public final class AutoPoses {
     public static final Pose GARDEN_SWEEP_START = new Pose(-40.0, -61.17, Math.PI);
     public static final Pose GARDEN_SWEEP_END = new Pose(-59.6, -61.62, Math.PI);
     public static final Pose OFF_GARDEN_LANE = new Pose(-50.0, -50.0, Math.PI);
+    public static final Pose PARK_LANE = new Pose(-54.7, 54.0, Math.PI);
     public static final Pose PARK = new Pose(-54.7, 36.0, Math.PI);
 
     // ---- Bezier control points ----
@@ -39,6 +40,7 @@ public final class AutoPoses {
             new Pose(-48.0, 50.0), new Pose(-50.0, -30.0), new Pose(-26.0, -54.7)};
     public static final Pose[] DRIVE_BACK = {
             new Pose(-50.0, -40.0), new Pose(-58.0, 62.0), new Pose(-13.0, 56.0)};
+    public static final Pose[] TO_PARK_LANE = {new Pose(-13.0, 55.0), new Pose(-35.0, 55.0)};
 
     // ---- headings along the curves, piece by piece (radians, RED), as in the draft ----
     // Written by tools/zenith_headings.py: Pedro reads a piece's end as a fraction of the

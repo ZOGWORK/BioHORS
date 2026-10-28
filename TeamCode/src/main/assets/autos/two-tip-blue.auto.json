@@ -675,6 +675,40 @@
       "notes": "Four more pollen into the north cell, which now holds 8, so the hive tips a second time."
     },
     {
+      "id": "toParkLane",
+      "kind": "path",
+      "segments": [
+        {
+          "kind": "bezier",
+          "from": "current",
+          "control": [
+            {
+              "xIn": 13,
+              "yIn": -55,
+              "provenance": "SET BY HAND (team's sketch, 2026-10-28): leaves the north scoring spot toward the north wall before heading west, so the robot runs west along the north side of the field"
+            },
+            {
+              "xIn": 35,
+              "yIn": -55,
+              "provenance": "SET BY HAND (team's sketch, 2026-10-28): leaves the north scoring spot toward the north wall before heading west, so the robot runs west along the north side of the field"
+            }
+          ],
+          "to": {
+            "xIn": 54.7,
+            "yIn": -54,
+            "headingRad": 0.000007346410206832132,
+            "provenance": "SET BY HAND (team's sketch, 2026-10-28): the point mirror of waypoints.json parkLane (see its provenance there)"
+          }
+        }
+      ],
+      "heading": {
+        "mode": "linear",
+        "fromRad": 1.5707926535897931,
+        "toRad": -0.000007346410206832132
+      },
+      "notes": "After the last volley (the team's sketch): out toward the north wall, then west along it past flower1, turning from facing the hive to facing west (clockwise, a quarter turn) on the way, to a spot straight north of the park spot."
+    },
+    {
       "id": "park",
       "kind": "path",
       "segments": [
@@ -690,11 +724,10 @@
         }
       ],
       "heading": {
-        "mode": "linear",
-        "fromRad": 1.5707926535897931,
-        "toRad": -0.000007346410206832132
+        "mode": "constant",
+        "headingRad": 0.000007346410206832132
       },
-      "notes": "Parks after the last volley: west to the park spot, partly in RED's loading zone, turning from facing the hive to facing west (clockwise, a quarter turn) on the way."
+      "notes": "Slides south into the park spot still facing west (the robot's left), coming in from the north side: partly in RED's loading zone."
     }
   ]
 }
