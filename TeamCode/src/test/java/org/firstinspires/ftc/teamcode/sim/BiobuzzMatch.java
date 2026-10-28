@@ -423,6 +423,7 @@ public final class BiobuzzMatch {
     private static final class Ball {
         double t0, x, y, z, vx, vy, vz;
         int cell = -1;
+        boolean fresh = true;   // made this tick: it starts moving next tick, when it is dt old
 
         static Ball loose(double x, double y, double z, double vx, double vy, double vz) {
             Ball b = new Ball();
@@ -446,10 +447,16 @@ public final class BiobuzzMatch {
         }
 
         void advance(double dt, double time) {
+            if (fresh) {
+                fresh = false;
+                return;
+            }
             double r = POLLEN_RADIUS_IN, wall = 72 - r;
             if (z > r || vz > 0) {
+                // Exact for constant gravity over the tick, so a launch reaches the cell opening
+                // after FLIGHT_S as toCell solved it.
+                z += vz * dt - 0.5 * GRAVITY_IN_PER_S2 * dt * dt;
                 vz -= GRAVITY_IN_PER_S2 * dt;
-                z += vz * dt;
             }
             x += vx * dt;
             y += vy * dt;

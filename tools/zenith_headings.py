@@ -68,22 +68,42 @@ def build(P, start_h, spec):
 
 R = lambda x: round(x, 4)
 PI = math.pi
-legs = {
-    'toOtherSide': ([(-13, -36), (-46, -50), (-50, 4.79), (-40, 34), (-24, 42)], PI / 2,
+# Each leg's heading plan: the waypoint it starts from (the step before it ends there) and its
+# pieces, as (end, mode, heading). The curve itself is read from the draft below, so a tuned control
+# point or waypoint gets headings for the route as it now is.
+PLAN = {
+    'toOtherSide': ('scoreSouth',
                     [(0.2038, 'linear', None), (0.8679, 'tangent', None), (1.0, 'linear', PI / 2)]),
-    'toScoreNorth': ([(-24, 52.4), (-24, 46), (-13, 60), (-13, 44)], PI / 2,
+    'toScoreNorth': ('flowerNorthPickup',
                      # The starter backs off with tangentReversed; from our pickup, 6.4 in north of
                      # its first control point, that turns at once and swings a corner into the
                      # flower's foot. So: straight back facing the flower for the starter's first
                      # piece, then its turn on through west to facing south.
                      [(0.2041, 'constant', PI / 2), (0.3742, 'linear', PI), (0.5442, 'linear', 3 * PI / 2),
                       (1.0, 'constant', -PI / 2)]),
-    'toGarden': ([(-13, 44), (-48, 50), (-50, -30), (-26, -56), (-36, -56)], -PI / 2,
-                 [(0.2186, 'linear', None), (1.0, 'tangent', None)]),
-    'driveBack': ([(-50, -50), (-50, -40), (-58, 62), (-13, 56), (-13, 44)], PI,
+    'toGarden': ('scoreNorth', [(0.2186, 'linear', None), (1.0, 'tangent', None)]),
+    'driveBack': ('offGardenLane',
                   [(0.1612, 'linear', None), (0.707, 'tangentReversed', None), (0.8242, 'linear', None),
                    (1.0, 'constant', -PI / 2)]),
 }
+
+def all_steps(steps):
+    for st in steps:
+        yield st
+        yield from all_steps(st.get('steps', []))
+
+waypoints = json.load(open('autos/waypoints.json', encoding='utf-8'))['waypoints']
+draft = {st['id']: st for st in all_steps(json.load(open('autos/two-tip.auto.json', encoding='utf-8'))['steps'])}
+legs = {}
+for name, (start, spec) in PLAN.items():
+    seg = draft[name]['segments'][0]
+    assert seg['kind'] == 'bezier' and seg['from'] == 'current' and len(draft[name]['segments']) == 1, name
+    w0 = waypoints[start]
+    pts = [(w0['xIn'], w0['yIn'])] + [(c['xIn'], c['yIn']) for c in seg['control']]
+    to = seg['to']
+    end = waypoints[to['ref']] if 'ref' in to else to
+    pts.append((end['xIn'], end['yIn']))
+    legs[name] = (pts, w0['headingRad'], spec)
 pieces = {}
 for name, (P, h0, spec) in legs.items():
     pieces[name] = build(P, h0, spec)
