@@ -3,7 +3,7 @@
   "formatVersion": 4,
   "name": "two-tip",
   "title": "Two tip",
-  "description": "Zenith's starter example auto (examples/starter collect-and-score), tuned to BioHORS: shoot the four preloads from the south, which tips the hive (3 nectar staged in the up cell); go round the west of the hive to flower1 and score its four in the north cell; sweep the RED garden line west and score its four north for the second tip. The flower bar goes down for every pickup.",
+  "description": "Zenith's starter example auto (examples/starter collect-and-score), tuned to BioHORS: shoot the four preloads from the south, which tips the hive (3 nectar staged in the up cell); go round the west of the hive to flower1 and score its four in the north cell; sweep the RED garden line west and score its four north for the second tip. The flower bar goes down only to collect from the flower.",
   "robot": "autos/robot.json",
   "field": "autos/field/biobuzz.field.json",
   "alliance": "RED",
@@ -325,12 +325,6 @@
       "notes": "Starts the intake before the sweep. (Pedro 3.0.2 cannot run Zenith's mid-path markers, so the starter's t = 0 marker is a command first.)"
     },
     {
-      "id": "flowerBarDownGarden",
-      "kind": "command",
-      "name": "flowerBarDown",
-      "notes": "Puts the flower bar down for the garden sweep too."
-    },
-    {
       "id": "sweepGarden",
       "kind": "path",
       "segments": [
@@ -364,12 +358,6 @@
       "id": "stopGardenIntake",
       "kind": "command",
       "name": "intakeOff"
-    },
-    {
-      "id": "flowerBarStowGarden",
-      "kind": "command",
-      "name": "flowerBarStow",
-      "notes": "Folds the flower bar up."
     },
     {
       "id": "offGardenLane",

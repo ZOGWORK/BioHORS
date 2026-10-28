@@ -27,7 +27,7 @@ import static org.firstinspires.ftc.teamcode.auto.AutoPoses.*;
  * <pre>
  *  start -> the south score spot: volley 4 preloads (the 3 staged nectar mean they tip the hive)
  *        -> round the west of the hive to flower1 (north wall), bar down: 4 -> volley 4 north
- *        -> back round to the garden lane: sweep west, bar down, intake toward the red alliance
+ *        -> back round to the garden lane: sweep west, intake toward the red alliance
  *           wall, taking the 4 garden pollen in a line -> round to the north spot: volley 4: tip 2
  * </pre>
  *
@@ -71,9 +71,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         SHOOT_FLOWER,
         TO_GARDEN,              // back round the west of the hive, ending heading west above the lane
         SLIDE_ONTO_LANE,        // down onto the lane, square to the south wall
-        SWEEP_GARDEN,           // bar down, intake on, west along the row: the pollen come in a line
+        SWEEP_GARDEN,           // intake on, west along the row (bar stowed): the pollen come in a line
         WAIT_GARDEN_FULL,
-        OFF_GARDEN_LANE,        // up off the lane still facing west, bar up
+        OFF_GARDEN_LANE,        // up off the lane still facing west
         DRIVE_BACK,             // round to the north score spot, spinning up on the way
         SHOOT_GARDEN,           // tip 2
         DONE
@@ -249,7 +249,6 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 go(Paths.line(here(), p(GARDEN_SWEEP_START)).constant(h(FACING_WEST)), SLIDE_SPEED);
                 break;
             case SWEEP_GARDEN:
-                mech.flowerBarDown();
                 mech.collect();
                 // West along the row, intake toward the red alliance wall, heading held square to the
                 // south wall: the pollen come in one after another.
@@ -257,7 +256,6 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
             case OFF_GARDEN_LANE:
                 mech.intakeOff();
-                mech.flowerBarStow();
                 go(Paths.line(here(), p(OFF_GARDEN_LANE)).constant(h(FACING_WEST)), OFF_LANE_SPEED);
                 break;
             case DRIVE_BACK:
