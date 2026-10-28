@@ -28,9 +28,9 @@
     },
     "flowerNorthPickup": {
       "xIn": -24.0,
-      "yIn": 52.4,
+      "yIn": 52.75,
       "headingRad": 1.5708,
-      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), flowerNorthPickup, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar tip 0.5 in short of flower1's foot face (y = 67.1), so it can reach into the retrieval opening. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: tuned to BioHORS with the flower bar DOWN (its tip 14.19 in ahead of the drive centre, MEASURED FROM CAD): the bar tip 0.16 in short of flower1's foot (the field file's box, y = 67.1), 0.35 in closer than before. The bar is built to slide into the retrieval opening; the field file's foot is solid, so it stops just short. NEEDS MEASUREMENT on the real field: drive in until the bar seats."
     },
     "aboveGardenLane": {
       "xIn": -36.0,
@@ -45,10 +45,10 @@
       "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepStart, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); just above the lane heading west (0.35 in short: a slide ends a few tenths past its target, and the slow sweep eases down onto the lane, y = -61.52, before the first pollen). Against FIRST's CAD wall (y = -70.674) and garden (pollen at y = -69.27), heading west the 13.2 in mouth reaches a pollen against the south wall only with the centre between y = -61.75 (the side on the wall) and -61.27. NEEDS MEASUREMENT on the real field."
     },
     "gardenSweepEnd": {
-      "xIn": -56.1,
+      "xIn": -59.6,
       "yIn": -61.62,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepEnd, tuned to BioHORS (CAD footprint: bar tip and mouth front 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide). y = -61.62: the side 0.13 in off FIRST's CAD south wall (y = -70.674), so the 13.2 in mouth overlaps the wall-side pollen by 0.23 in. x = -56.1: the mouth front 0.35 in short of the west wall (x = -70.674), so the corner pollen (FIRST's CAD -69.27, -69.27) is well inside the mouth, not grazed by its corner; the flower bar is stowed, folded back inside the frame, so nothing solid reaches that far. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepEnd, tuned to BioHORS with the flower bar stowed (robot.json: front roller 10.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide). y = -61.62: the side 0.13 in off FIRST's CAD south wall (y = -70.674), so the 13.2 in mouth overlaps the wall-side pollen by 0.23 in. x = -59.6: the front roller right over the corner pollen (FIRST's CAD -69.27, -69.27), 0.87 in short of the west wall (x = -70.674), about 0.2 in after the robot rolls on. NEEDS MEASUREMENT on the real field."
     },
     "offGardenLane": {
       "xIn": -50.0,

@@ -79,6 +79,11 @@ public final class BiobuzzMatch {
     // per output rev (SPEC for that motor; 2800 ticks/s free is its 1158 rpm). PLACEHOLDER: every
     // roller turns 1:1 with it (the CAD has no belts or gears to read a ratio from).
     static final double INTAKE_TICKS_PER_REV = 145.1;
+    // MEASURED FROM CAD (advantagescope/Robot_BioHORS): the fixed frame's front, and the flower bar's tip
+    // when it is down (model_6). robot.json describes the robot with the bar stowed; with it down, the
+    // flower mech's opening between these two is the intake, and the bar tip is the robot's front.
+    static final double FRAME_FRONT_IN = 9.62;
+    static final double FLOWER_BAR_TIP_IN = 14.19;
     // Drawing only. The CAD has the bar DOWN (collect). PLACEHOLDER: the bar turns 90 deg for every
     // 0.65 of servo travel (the first placeholder STOWED, 0.15, drawn 90 deg up); so SHOOTING (0.65)
     // is 21 deg up and STOWED (0.05) 104 deg up, folded back with its tip inside the frame.
@@ -109,7 +114,8 @@ public final class BiobuzzMatch {
     private boolean otherUpIsNorth;               // the other alliance's hive at kickoff
     private final double robotLength, robotWidth, robotHeight;
     private final double corForward, corLeft; // where the turning centre sits in the box (robot.json)
-    private final double mouthOffsetX, mouthOffsetY, mouthHalfWidth, mouthHalfDepth;
+    private final double mouthOffsetX, mouthOffsetY, mouthHalfWidth, mouthHalfDepth;   // robot.json: the bar-stowed intake
+    private final double barMouthOffsetX, barMouthHalfDepth;   // the flower mech's opening, the bar down
     private final int[] tipTable;
 
     private final List<double[]> loosePollen = new ArrayList<>();   // {x, y, r}
@@ -163,9 +169,11 @@ public final class BiobuzzMatch {
     static final int HOPPER_CAPACITY = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.HOPPER_CAPACITY;
     static final double MISS_AFTER_S = 2.5;       // a shot not seated this long after launch has missed
     private GamePieceTracker world;               // null: the rule-based launch above
-    private TriggerVolume intakeMouth;            // physics mode: robot.json's mouth, robot frame
+    private TriggerVolume intakeMouth;            // physics mode: robot.json's mouth (bar stowed), robot frame
+    private TriggerVolume barDownMouth;           // physics mode: the flower mech's opening, the bar down
     private boolean barStowedShape;               // physics mode: the robot's solid shape has the bar stowed
     private boolean barStowedNow;                 // both servos near STOWED this tick (the bar folded inside the frame)
+    private boolean barDownNow;                   // both servos near DOWN this tick (the bar at the floor, collecting)
     private final java.util.Set<Integer> redNectar = new java.util.HashSet<>(), blueNectar = new java.util.HashSet<>();
     private static final java.util.Collection<String> POLLEN_ONLY = java.util.Collections.singletonList("pollen");
     private final List<double[]> shots = new ArrayList<>(); // {id, launch time, state: 0 flying, 1 scored, 2 missed}
@@ -194,6 +202,8 @@ public final class BiobuzzMatch {
         mouthOffsetY = mouth.get("offsetIn").num("yIn");
         mouthHalfWidth = mouth.num("widthIn") / 2.0;
         mouthHalfDepth = mouth.num("depthIn") / 2.0;
+        barMouthOffsetX = (FRAME_FRONT_IN + FLOWER_BAR_TIP_IN) / 2.0;
+        barMouthHalfDepth = (FLOWER_BAR_TIP_IN - FRAME_FRONT_IN) / 2.0;
 
         Json table = field.get("rules").get("tipTable");
         tipTable = new int[table.size()];
@@ -263,6 +273,8 @@ public final class BiobuzzMatch {
         loosePollen.clear();
         for (int i = 0; i < held; i++) world.addHeldPiece("pollen", POLLEN_RADIUS_IN);
         intakeMouth = new TriggerVolume("intake", mouthOffsetX, mouthOffsetY, 2 * mouthHalfDepth, 2 * mouthHalfWidth);
+        barDownMouth = new TriggerVolume("intakeBarDown", barMouthOffsetX, mouthOffsetY, 2 * barMouthHalfDepth,
+                2 * mouthHalfWidth);
         return this;
     }
 
@@ -288,6 +300,9 @@ public final class BiobuzzMatch {
         double stowedPos = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_STOWED;
         barStowedNow = Math.abs(sim.flowerLeftPlant.getPosition() - stowedPos) < 0.05
                 && Math.abs(sim.flowerRightPlant.getPosition() - (1.0 - stowedPos)) < 0.05;
+        double downPos = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN;
+        barDownNow = Math.abs(sim.flowerLeftPlant.getPosition() - downPos) < 0.05
+                && Math.abs(sim.flowerRightPlant.getPosition() - (1.0 - downPos)) < 0.05;
 
         // ---- intake: garden pollen under the mouth ----
         if (world != null) {
@@ -297,7 +312,8 @@ public final class BiobuzzMatch {
             }
             world.updateRobotPose(x, y, h);
             // AUTO is pollen only: a spilled nectar under the mouth is left where it is.
-            int took = world.tryAcquire(intakeMouth, intakeIn && held < HOPPER_CAPACITY, POLLEN_ONLY);
+            int took = world.tryAcquire(barDownNow ? barDownMouth : intakeMouth, intakeIn && held < HOPPER_CAPACITY,
+                    POLLEN_ONLY);
             collected += took;
             held = world.getHeldCount();
         } else if (intakeIn) {
@@ -317,8 +333,9 @@ public final class BiobuzzMatch {
         boolean barDown = Math.abs(sim.flowerLeftPlant.getPosition() - down) < 0.05
                 && Math.abs(sim.flowerRightPlant.getPosition() - (1.0 - down)) < 0.05;
         if (intakeIn && held < 4 && barDown) {
-            double mx = x + fwdX * (mouthOffsetX + mouthHalfDepth) - fwdY * mouthOffsetY;
-            double my = y + fwdY * (mouthOffsetX + mouthHalfDepth) + fwdX * mouthOffsetY;
+            // The flower mech's opening, at the bar tip: only the bar down reaches a flower.
+            double mx = x + fwdX * (barMouthOffsetX + barMouthHalfDepth) - fwdY * mouthOffsetY;
+            double my = y + fwdY * (barMouthOffsetX + barMouthHalfDepth) + fwdX * mouthOffsetY;
             for (Flower f : flowers) {
                 if (f.count > 0 && f.reachable(mx, my, fwdX, fwdY)) at = f;
             }
@@ -479,6 +496,12 @@ public final class BiobuzzMatch {
     /** When the other alliance's hive tipped (physics mode). */
     public List<Double> otherTipTimes() {
         return otherTipTimes;
+    }
+
+    /** For a focused test: a loose pollen on the floor at (x, y), in either mode. Call before the first step. */
+    void addLoosePollen(double x, double y) {
+        if (world != null) world.addLoosePiece("pollen", x, y, POLLEN_RADIUS_IN);
+        else loosePollen.add(new double[] {x, y, POLLEN_RADIUS_IN});
     }
 
     /** Physics mode: every piece SimLoop tracks (pollen and nectar, aboard or not). */
@@ -777,7 +800,8 @@ public final class BiobuzzMatch {
         double left = -dx * Math.sin(h) + dy * Math.cos(h);
         // A circle against the mouth's rectangle, as SimLoop's TriggerVolume tests it: a ball in a
         // corner must reach the mouth's corner, not just each of its sides.
-        double outFwd = Math.max(0, Math.abs(fwd - mouthOffsetX) - mouthHalfDepth);
+        double ox = barDownNow ? barMouthOffsetX : mouthOffsetX, hd = barDownNow ? barMouthHalfDepth : mouthHalfDepth;
+        double outFwd = Math.max(0, Math.abs(fwd - ox) - hd);
         double outLeft = Math.max(0, Math.abs(left - mouthOffsetY) - mouthHalfWidth);
         return Math.hypot(outFwd, outLeft) <= p[2];
     }
@@ -830,12 +854,12 @@ public final class BiobuzzMatch {
     private double lastContactTime = -1;
 
     /**
-     * How far the solid robot reaches ahead of the drive centre now: the flower bar's tip with the bar
-     * out (robot.json's 22 in box), the frame front with it stowed (folded back inside the frame).
+     * How far the solid robot reaches ahead of the drive centre now: the front roller with the bar
+     * stowed (robot.json's box), the flower bar's tip (FLOWER_BAR_TIP_IN) when it is anywhere else.
      */
     private double frontIn() {
-        double boxFront = -corForward + robotLength / 2;
-        return barStowedNow ? mouthOffsetX - mouthHalfDepth : boxFront;
+        double boxFront = -corForward + robotLength / 2;   // robot.json: the bar stowed, the front roller
+        return barStowedNow ? boxFront : Math.max(boxFront, FLOWER_BAR_TIP_IN);
     }
 
     private double[][] corners(double x, double y, double h) {

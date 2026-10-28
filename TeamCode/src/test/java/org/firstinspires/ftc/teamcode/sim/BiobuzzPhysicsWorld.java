@@ -138,20 +138,18 @@ public final class BiobuzzPhysicsWorld {
     public static RobotShape robotShape(Json robot, boolean barStowed) {
         Json fp = robot.get("footprint").get("expandedIn");
         double length = fp.num("lengthIn"), width = fp.num("widthIn"), height = robot.get("heightIn").num("value");
-        Json mouth = robot.get("mouths").at(0);
-        double mouthX = mouth.get("offsetIn").num("xIn"), mouthDepth = mouth.num("depthIn"), mouthWidth = mouth.num("widthIn");
-        double front = mouthX + mouthDepth / 2.0;              // the bar tip
-        double frameFront = mouthX - mouthDepth / 2.0;         // where the chassis ends and the mouth starts
-        double back = front - length;
-        double plateWidth = (width - mouthWidth) / 2.0;
-        double plateY = mouthWidth / 2.0 + plateWidth / 2.0;
-        double plateX = (frameFront + front) / 2.0, plateHalfX = (front - frameFront) / 2.0;
+        double cor = robot.get("footprint").get("centreOfRotationIn").num("xIn");
+        double back = -cor - length / 2.0;                      // robot.json: the box with the bar stowed
+        double frameFront = BiobuzzMatch.FRAME_FRONT_IN, tip = BiobuzzMatch.FLOWER_BAR_TIP_IN;
+        double mouthWidth = robot.get("mouths").at(0).num("widthIn");
         OrientedBox chassis = OrientedBox.axisAligned("chassis", (back + frameFront) / 2.0, 0, height / 2.0,
                 (frameFront - back) / 2.0, width / 2.0, height / 2.0);
         if (barStowed) return new RobotShape(Collections.singletonList(chassis));
-        return new RobotShape(Arrays.asList(
-                OrientedBox.axisAligned("chassis", (back + frameFront) / 2.0, 0, height / 2.0,
-                        (frameFront - back) / 2.0, width / 2.0, height / 2.0),
+        // The bar out: its two side plates beside the opening, from the frame front to the bar tip.
+        double plateWidth = (width - mouthWidth) / 2.0;
+        double plateY = mouthWidth / 2.0 + plateWidth / 2.0;
+        double plateX = (frameFront + tip) / 2.0, plateHalfX = (tip - frameFront) / 2.0;
+        return new RobotShape(Arrays.asList(chassis,
                 OrientedBox.axisAligned("plateLeft", plateX, plateY, PLATE_HEIGHT_IN / 2.0,
                         plateHalfX, plateWidth / 2.0, PLATE_HEIGHT_IN / 2.0),
                 OrientedBox.axisAligned("plateRight", plateX, -plateY, PLATE_HEIGHT_IN / 2.0,

@@ -10,19 +10,19 @@
   },
   "footprint": {
     "startIn": {
-      "lengthIn": 22.0,
+      "lengthIn": 18.0,
       "widthIn": 17.84,
-      "provenance": "MEASURED FROM CAD (33950 Robot.step): the 22.0 in box with the flower bar out. The team says the bar is STOWED at the start (Oct 27), making the robot its 17.4 in frame (9.6 in ahead of the drive centre, 7.8 in behind); Zenith has one centre of rotation (-3.2 in, set for the 22 in box), so a 17.4 in start box would be placed 2.3 in off the wall. The 22 in box puts the back on the wall exactly as the stowed robot does."
+      "provenance": "MEASURED FROM CAD (advantagescope/Robot_BioHORS, from 33950 Robot.step): the robot with the flower bar STOWED, folded back inside the frame (FLOWER_BAR_STOWED): 7.8 in behind the drive centre to the front intake roller's reach 10.2 in ahead (the fixed frame ends at 9.62), 17.84 in wide. Zenith checks every step against one box; the bar is down only to collect from a flower, so the sim (BiobuzzMatch) checks the bar's 14.19 in reach there, from the servos' real position."
     },
     "expandedIn": {
-      "lengthIn": 22.0,
+      "lengthIn": 18.0,
       "widthIn": 17.84,
-      "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): flower bar out: 22.0 x 17.84 in"
+      "provenance": "MEASURED FROM CAD (advantagescope/Robot_BioHORS, from 33950 Robot.step): the robot with the flower bar STOWED, folded back inside the frame (FLOWER_BAR_STOWED): 7.8 in behind the drive centre to the front intake roller's reach 10.2 in ahead (the fixed frame ends at 9.62), 17.84 in wide. Zenith checks every step against one box; the bar is down only to collect from a flower, so the sim (BiobuzzMatch) checks the bar's 14.19 in reach there, from the servos' real position."
     },
     "centreOfRotationIn": {
-      "xIn": -3.2,
+      "xIn": -1.2,
       "yIn": 0,
-      "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): the drive centre (midway between the four wheels) sits 3.2 in behind the middle of the 22 in box, because the flower bar sticks out at the front"
+      "provenance": "MEASURED FROM CAD: the drive centre (midway between the four wheels) sits 1.2 in behind the middle of the 18.0 in bar-stowed box (7.8 in behind it, 10.2 in ahead)."
     }
   },
   "heightIn": {
@@ -73,12 +73,12 @@
       "id": "front",
       "side": "FRONT",
       "offsetIn": {
-        "xIn": 11.9,
+        "xIn": 9.91,
         "yIn": 0
       },
       "widthIn": 13.2,
-      "depthIn": 4.6,
-      "provenance": "MEASURED FROM CAD (33950 Robot.step, Onshape export Oct 27): the flower mech's opening: between the frame front (9.6 in ahead of the drive centre) and the flower bar tip (14.2 in), 13.2 in between its side plates; pollen rolls up the floor-level intake ramp to the two roller stages"
+      "depthIn": 0.58,
+      "provenance": "MEASURED FROM CAD (advantagescope/Robot_BioHORS): with the flower bar stowed the intake takes a pollen where the front roller's star wheels reach past the frame front: 9.62 to 10.2 in ahead of the drive centre, 13.2 in across (between the flower mech's side plates). With the bar down the flower mech's opening reaches on to the bar tip (14.19 in); the sim uses that only while the bar is down."
     }
   ],
   "capacity": {

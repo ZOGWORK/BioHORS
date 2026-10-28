@@ -106,7 +106,7 @@ public abstract class TwoTipGenerated extends AutoFromFile {
     }
 
     private Command stepCollectFlowerFrom(Pose2d from, java.util.function.BooleanSupplier endCondition) {
-        Path seg0 = Paths.line(Poses.toPedro(from), Poses.toPedro(alliance(pose(-24.0, 52.4, 1.5708)) /* ref: flowerNorthPickup */)).constant(headingRad(1.5708));
+        Path seg0 = Paths.line(Poses.toPedro(from), Poses.toPedro(alliance(pose(-24.0, 52.75, 1.5708)) /* ref: flowerNorthPickup */)).constant(headingRad(1.5708));
         Path path = seg0;
         Command drive = followPath(path, 0.3);
         drive = Parallel.race(drive, new WaitUntilCommand(endCondition));
@@ -136,7 +136,7 @@ public abstract class TwoTipGenerated extends AutoFromFile {
 
     private Command stepToScoreNorthFrom(Pose2d from) {
         // The lengths, marker distances and heading splits below are the planned path's; the runtime measures the live one.
-        Path seg0 = Paths.curve(Poses.toPedro(from), Poses.toPedro(alliance(pose(-24.0, 46.0, 0.0))), Poses.toPedro(alliance(pose(-13.0, 60.0, 0.0))), Poses.toPedro(alliance(pose(-13.0, 48.0, -1.5708)) /* ref: scoreNorth */)).heading(com.pedropathing.paths.interpolator.Interpolator.piecewise().until(0.2794, com.pedropathing.paths.interpolator.Interpolator.constant(headingRad(1.5708))).until(0.4485, (curve, t) -> headingRad(1.5708) + turnRad(1.5708 * Math.min(1, Math.max(0, (t - 0.2794) / 0.1691)))).until(0.6077, (curve, t) -> headingRad(3.1416) + turnRad(1.5708 * Math.min(1, Math.max(0, (t - 0.4485) / 0.1592)))).until(1.0, com.pedropathing.paths.interpolator.Interpolator.constant(headingRad(-1.5708))));
+        Path seg0 = Paths.curve(Poses.toPedro(from), Poses.toPedro(alliance(pose(-24.0, 46.0, 0.0))), Poses.toPedro(alliance(pose(-13.0, 60.0, 0.0))), Poses.toPedro(alliance(pose(-13.0, 48.0, -1.5708)) /* ref: scoreNorth */)).heading(com.pedropathing.paths.interpolator.Interpolator.piecewise().until(0.2718, com.pedropathing.paths.interpolator.Interpolator.constant(headingRad(1.5708))).until(0.4451, (curve, t) -> headingRad(1.5708) + turnRad(1.5708 * Math.min(1, Math.max(0, (t - 0.2718) / 0.1733)))).until(0.6056, (curve, t) -> headingRad(3.1416) + turnRad(1.5708 * Math.min(1, Math.max(0, (t - 0.4451) / 0.1605)))).until(1.0, com.pedropathing.paths.interpolator.Interpolator.constant(headingRad(-1.5708))));
         Path path = seg0;
         Command drive = followPath(path, defaultSpeedFraction());
         return drive;
@@ -181,7 +181,7 @@ public abstract class TwoTipGenerated extends AutoFromFile {
     }
 
     private Command stepSweepGardenFrom(Pose2d from) {
-        Path seg0 = Paths.line(Poses.toPedro(from), Poses.toPedro(alliance(pose(-56.1, -61.62, 3.1416)) /* ref: gardenSweepEnd */)).constant(headingRad(3.1416));
+        Path seg0 = Paths.line(Poses.toPedro(from), Poses.toPedro(alliance(pose(-59.6, -61.62, 3.1416)) /* ref: gardenSweepEnd */)).constant(headingRad(3.1416));
         Path path = seg0;
         Command drive = followPath(path, 0.2);
         return drive;
