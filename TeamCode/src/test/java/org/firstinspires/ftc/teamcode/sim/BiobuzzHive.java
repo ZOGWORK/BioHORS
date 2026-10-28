@@ -27,7 +27,9 @@ import java.util.List;
  *   - axle height and cell height APPROX: chosen so the up cell's opening spans about 53.5 to 65.6 in
  *     (manual Fig 9-10) at the 30 deg stop: the floor lip is 21.46 sin 30 = 10.73 in above the axle.
  *   - hold (mass, centre of mass, inertia, damping) CALIBRATED in BiobuzzHiveTest so that 8 pollen
- *     in the up cell tip it and 7 do not (the team's rule), and the swing takes a few seconds.
+ *     shot into the up cell (ShotModel, as the auto fires them) tip it and 7 do not (the rule for a cell
+ *     with no nectar), and the swing takes a few seconds. Shot pollen roll back toward the axle, so they
+ *     tip it later than pollen set down at the cell's mouth would.
  */
 public final class BiobuzzHive {
 
@@ -45,8 +47,8 @@ public final class BiobuzzHive {
 
     // Hold: CALIBRATED in BiobuzzHiveTest (8 pollen tip, 7 do not). Mass in pollen units.
     public static double HIVE_MASS = 20.0;          // CALIBRATED
-    public static double COM_HEIGHT_IN = 7.2;       // CALIBRATED: mid-band of 6.8..7.6 in, where the 8th pollen tips it
-    public static double INERTIA = 30000.0;         // CALIBRATED: the swing at the tip load takes 3.7 s (DSim: about 4 s, APPROX)
+    public static double COM_HEIGHT_IN = 5.6;       // CALIBRATED: mid-band of 5.2..6.0 in, where the 8th real shot tips it (BiobuzzHiveTest, at this inertia)
+    public static double INERTIA = 22000.0;         // CALIBRATED: with the hold above the swing at the tip load takes about 2.7 s (DSim: about 4 s, APPROX)
     public static double DAMPING_PER_S = 0.6;       // CALIBRATED
 
     private BiobuzzHive() {

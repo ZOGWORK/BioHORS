@@ -21,8 +21,8 @@ public final class AutoPoses {
 
     // ---- named waypoints (autos/waypoints.json) ----
     public static final Pose START = new Pose(-13.0, -62.87, Math.PI / 2);
-    public static final Pose SCORE_SOUTH = new Pose(-13.0, -36.0, Math.PI / 2);
-    public static final Pose SCORE_NORTH = new Pose(-13.0, 44.0, -Math.PI / 2);
+    public static final Pose SCORE_SOUTH = new Pose(-13.0, -48.0, Math.PI / 2);
+    public static final Pose SCORE_NORTH = new Pose(-13.0, 48.0, -Math.PI / 2);
     public static final Pose FLOWER_NORTH_APPROACH = new Pose(-24.0, 42.0, Math.PI / 2);
     public static final Pose FLOWER_NORTH_PICKUP = new Pose(-24.0, 52.4, Math.PI / 2);
     public static final Pose ABOVE_GARDEN_LANE = new Pose(-36.0, -54.7, Math.PI);
@@ -46,25 +46,25 @@ public final class AutoPoses {
     // linear pieces between the curve's true direction, each starting where the last ended.
     // AutoPosesTest checks there is no jump.
     public static final HeadingPiece[] TO_OTHER_SIDE_HEADING = {
-            HeadingPiece.linear(0.2038, 1.5708, 2.3725), HeadingPiece.linear(0.3038, 2.3725, 1.968),
-            HeadingPiece.linear(0.4038, 1.968, 1.7484), HeadingPiece.linear(0.5038, 1.7484, 1.5973),
-            HeadingPiece.linear(0.6038, 1.5973, 1.4676), HeadingPiece.linear(0.7038, 1.4676, 1.3318),
-            HeadingPiece.linear(0.8038, 1.3318, 1.159), HeadingPiece.linear(0.8679, 1.159, 1.0042),
-            HeadingPiece.linear(1.0, 1.0042, 1.5708)};
+            HeadingPiece.linear(0.2038, 1.5708, 2.2316), HeadingPiece.linear(0.3038, 2.2316, 1.9476),
+            HeadingPiece.linear(0.4038, 1.9476, 1.7628), HeadingPiece.linear(0.5038, 1.7628, 1.6217),
+            HeadingPiece.linear(0.6038, 1.6217, 1.4946), HeadingPiece.linear(0.7038, 1.4946, 1.3587),
+            HeadingPiece.linear(0.8038, 1.3587, 1.1845), HeadingPiece.linear(0.8679, 1.1845, 1.0273),
+            HeadingPiece.linear(1.0, 1.0273, 1.5708)};
     public static final HeadingPiece[] TO_SCORE_NORTH_HEADING = {
             HeadingPiece.constant(0.2041, 1.5708), HeadingPiece.linear(0.3742, 1.5708, 3.1416),
             HeadingPiece.linear(0.5442, 3.1416, 4.7124), HeadingPiece.constant(1.0, -1.5708)};
     public static final HeadingPiece[] TO_GARDEN_HEADING = {
-            HeadingPiece.linear(0.2186, -1.5708, -2.0722), HeadingPiece.linear(0.3186, -2.0722, -1.8395),
-            HeadingPiece.linear(0.4186, -1.8395, -1.6956), HeadingPiece.linear(0.5186, -1.6956, -1.5908),
-            HeadingPiece.linear(0.6186, -1.5908, -1.5055), HeadingPiece.linear(0.7186, -1.5055, -1.4308),
-            HeadingPiece.linear(0.8186, -1.4308, -1.3661), HeadingPiece.linear(0.9186, -1.3661, -1.3489),
-            HeadingPiece.linear(1.0, -1.3489, -3.1416)};
+            HeadingPiece.linear(0.2186, -1.5708, -2.0558), HeadingPiece.linear(0.3186, -2.0558, -1.8395),
+            HeadingPiece.linear(0.4186, -1.8395, -1.7005), HeadingPiece.linear(0.5186, -1.7005, -1.5969),
+            HeadingPiece.linear(0.6186, -1.5969, -1.5113), HeadingPiece.linear(0.7186, -1.5113, -1.4357),
+            HeadingPiece.linear(0.8186, -1.4357, -1.3693), HeadingPiece.linear(0.9186, -1.3693, -1.348),
+            HeadingPiece.linear(1.0, -1.348, -3.1416)};
     public static final HeadingPiece[] DRIVE_BACK_HEADING = {
-            HeadingPiece.linear(0.1612, 3.1416, 4.7008), HeadingPiece.linear(0.2612, 4.7008, 4.6557),
-            HeadingPiece.linear(0.3612, 4.6557, 4.6022), HeadingPiece.linear(0.4612, 4.6022, 4.5358),
-            HeadingPiece.linear(0.5612, 4.5358, 4.4474), HeadingPiece.linear(0.6612, 4.4474, 4.3192),
-            HeadingPiece.linear(0.707, 4.3192, 4.2367), HeadingPiece.linear(0.8242, 4.2367, 4.7124),
+            HeadingPiece.linear(0.1612, 3.1416, 4.7009), HeadingPiece.linear(0.2612, 4.7009, 4.656),
+            HeadingPiece.linear(0.3612, 4.656, 4.6031), HeadingPiece.linear(0.4612, 4.6031, 4.5376),
+            HeadingPiece.linear(0.5612, 4.5376, 4.4518), HeadingPiece.linear(0.6612, 4.4518, 4.3299),
+            HeadingPiece.linear(0.707, 4.3299, 4.2536), HeadingPiece.linear(0.8242, 4.2536, 4.7124),
             HeadingPiece.constant(1.0, -1.5708)};
 
     /** One piece of a path's heading, up to {@code endT} of the path: Zenith's piecewise modes. */

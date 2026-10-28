@@ -38,12 +38,18 @@ public final class BiobuzzPhysicsWorld {
     /** APPROX (CAD footprint numbers, robot.json): the flower mech's side plates beside the mouth stand
      *  this tall: what a rolling pollen meets beside the mouth. */
     static final double PLATE_HEIGHT_IN = 6.0;
+    /** MEASURED FROM CAD (AdvantageScope's field model, am-5852 Nectar: 3.6 in across every way). */
+    static final double NECTAR_RADIUS_IN = 1.8;
+    /** CALIBRATED in StagedNectarTest (pollen = 1): the middle of 1.20-1.50, where the 3 nectar staged
+     *  in an up cell make 3 shot pollen tip it, as the season's tip table says. Not a weighed nectar. */
+    static double NECTAR_MASS = 1.35;
 
     private BiobuzzPhysicsWorld() {
     }
 
     public static GamePiecePhysicsConfig physics() {
-        return GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).maxSubstepSeconds(SUBSTEP_S).build();
+        return GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).pieceMass("nectar", NECTAR_MASS)
+                .maxSubstepSeconds(SUBSTEP_S).build();
     }
 
     /** The field: walls, both hives, both hive frames, the flower feet. */
@@ -72,6 +78,24 @@ public final class BiobuzzPhysicsWorld {
         b.kinematicBody(frame("hiveFrameRed", frameRed));
         b.kinematicBody(frame("hiveFrameBlue", frameBlue));
         return b.build();
+    }
+
+    /**
+     * The 3 nectar staged in a hive's up cell at kickoff (field file: each hive holds 3), set down
+     * spread across the cell's width at its open end, to settle at the back as the field is set.
+     */
+    /** Returns the 3 nectar's piece ids. */
+    public static int[] stageNectar(org.horizon36596.simloop.field.GamePieceTracker t, boolean red, boolean north) {
+        String hive = BiobuzzHive.bodyName(red);
+        double y = (north ? 1 : -1) * (BiobuzzHive.OUTER_FACE_Y_IN - NECTAR_RADIUS_IN - 0.5);
+        double[] f = new double[3];
+        int[] ids = new int[3];
+        for (int i = 0; i < 3; i++) {
+            double x = -6.0 + 6.0 * i;
+            t.getWorld().getKinematicBody(hive).toField(t.getBodyAngleRad(hive), x, y, NECTAR_RADIUS_IN + 0.3, f);
+            ids[i] = t.addPieceAt("nectar", f[0], f[1], f[2], NECTAR_RADIUS_IN);
+        }
+        return ids;
     }
 
     /** A static body (no hinge, never turned): pieces bounce off its shapes, nothing moves it. */

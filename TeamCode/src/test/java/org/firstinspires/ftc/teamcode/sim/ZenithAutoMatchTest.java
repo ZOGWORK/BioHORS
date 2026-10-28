@@ -154,6 +154,12 @@ class ZenithAutoMatchTest {
             String auto = System.getProperty("zenith.auto", AUTO_NAME);
             Result a = runMatch(auto, "RED", "physics1", true);
             Result b = runMatch(auto, "RED", "physics", true);
+            java.util.Map<String, Integer> where = new java.util.TreeMap<>();
+            for (org.horizon36596.simloop.field.GamePiece p : b.match.allPieces()) {
+                String k = p.getKind() + " " + (p.getSeatedCellName() != null ? p.getSeatedCellName() : p.getState());
+                where.merge(k, 1, Integer::sum);
+            }
+            System.out.println("PHYSICS pieces at the end: " + where + ", hive angles " + java.util.Arrays.toString(b.match.hiveAnglesDeg()));
             System.out.print("PHYSICS (what-if shot " + WHAT_IF_PITCH_DEG + " deg, grip " + WHAT_IF_GRIP + ")"
                     + b.report);
 
@@ -162,6 +168,10 @@ class ZenithAutoMatchTest {
             // rolled back under it included) left the robot.
             assertEquals(PRELOAD_PHYSICS + b.match.collected(), b.match.launched(), "pollen launched\n" + b.report);
             assertTrue(b.match.collected() >= 8, "the flower's 4 and the garden's 4 come aboard\n" + b.report);
+            // From the scoring spots 48 in out, at AUTO_POLLEN_RPM, every real shot seats (under the
+            // what-if shot), and the hive tips twice: 3 on the staged nectar, then 8 in the empty cell.
+            assertEquals(EXPECTED_SCORED, b.match.scored(), "real shots seated\n" + b.report);
+            assertEquals(EXPECTED_TIPS, b.match.tips(), "tips in physics\n" + b.report);
             assertEquals(b.match.launched(), b.match.scored() + b.match.missed(),
                     "a launch neither seated nor missed\n" + b.report);
             for (org.horizon36596.simloop.field.GamePiece p : b.match.shotPieces()) {

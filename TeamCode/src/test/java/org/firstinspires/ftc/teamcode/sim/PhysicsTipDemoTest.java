@@ -130,9 +130,12 @@ class PhysicsTipDemoTest {
             // and fired again: every launch past the 8 aboard must be one the intake really took.
             assertEquals(8, match.launched() - match.collected(), "all 8 pollen aboard should leave the robot");
             assertEquals(0, match.held(), "the robot should end empty");
-            assertTrue(match.scored() >= 8, "every one of the 8 should seat in the up cell, got " + match.scored());
-            assertEquals(1, match.tips(), "8 pollen tip the cell once (team rule)");
-            assertTrue(southFloor >= 6, "the tipped cell should spill its load on its own side, got " + southFloor);
+            // The up cell starts with its 3 staged nectar, so the 3rd seated pollen tips it (the season
+            // table); the shots after that go into the swinging cell or miss once it has swung away.
+            assertTrue(match.scored() >= 3, "at least the 3 that tip it should seat, got " + match.scored());
+            assertEquals(1, match.tips(), "the cell tips once");
+            // At least the 3 pollen that tipped it (with the staged nectar) come out on its own side.
+            assertTrue(southFloor >= 3, "the tipped cell should spill its load on its own side, got " + southFloor);
             java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(rlog);
             for (String k : new String[] {"Field/Robot", "Field/RobotComponents", "Field/Pollen", "Field/Hive"}) {
                 assertTrue(keys.stream().anyMatch(x -> x.endsWith(k)), "RLOG has no " + k);

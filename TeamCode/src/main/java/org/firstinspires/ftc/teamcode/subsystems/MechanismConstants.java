@@ -49,6 +49,14 @@ public final class MechanismConstants {
     /** Pollen shooter. Used in auto and teleop. */
     public static final ShooterController.Config POLLEN_SHOOTER = new ShooterController.Config();
 
+    /**
+     * The pollen flywheel's speed in AUTO, from the scoring spots 48 in from the hive axle. PLACEHOLDER,
+     * SET FROM SIM: the middle of the 1650-1850 rpm that seat a pollen from there in the sim's physics,
+     * under the WHAT-IF shot (70 deg exit at 0.8 of the rim speed; the shot is not measured). Film a
+     * shot, measure its exit angle and speed, then re-run ShotSweepTest and set this from it.
+     */
+    public static double AUTO_POLLEN_RPM = 1750.0;
+
     /** Nectar shooter. Teleop / endgame only. Runs at its own (different) speed. */
     public static final ShooterController.Config NECTAR_SHOOTER = new ShooterController.Config();
 

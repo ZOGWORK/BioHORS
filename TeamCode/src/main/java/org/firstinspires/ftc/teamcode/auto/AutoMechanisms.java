@@ -111,6 +111,7 @@ public class AutoMechanisms {
 
     /** Spins the pollen flywheel up without firing (e.g. while driving to the score spot). */
     public void spinUp() {
+        robot.pollenShooter.setTargetRpm(MechanismConstants.AUTO_POLLEN_RPM);
         robot.pollenShooter.setShooterOn(true);
     }
 
@@ -126,6 +127,7 @@ public class AutoMechanisms {
             return;
         }
         volleyCount = count;
+        robot.pollenShooter.setTargetRpm(MechanismConstants.AUTO_POLLEN_RPM);
         robot.pollenShooter.setShooterOn(true);
         robot.pollenGate.setClosed(true);
         robot.flowerBar.setShooting(true);   // lift the bar clear first; feeding waits for it

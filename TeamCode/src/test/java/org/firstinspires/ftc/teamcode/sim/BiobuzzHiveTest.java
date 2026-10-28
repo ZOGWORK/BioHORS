@@ -61,17 +61,19 @@ class BiobuzzHiveTest {
         }
     }
 
-    /** Seconds from the 8th pollen to the far stop (15 = did not get there). */
+    /** Seconds from the pollen that tips it to the far stop (15 = did not get there). */
     static double swingSeconds() {
         GamePieceTracker tracker = tracker(BiobuzzHive.body(true));
         String hive = BiobuzzHive.bodyName(true);
         tracker.setBodyMotion(hive, BiobuzzHive.angleWithUp(false), 0.0);
         run(tracker, 1.0);
-        for (int n = 1; n <= 7; n++) {
+        // Set pollen down one at a time until the next one tips it, then time that swing.
+        int tipAt = pollenToTip(BiobuzzHive.COM_HEIGHT_IN);
+        for (int n = 1; n < tipAt; n++) {
             dropIntoUpCell(tracker, true, false, n);
             run(tracker, 6.0);
         }
-        dropIntoUpCell(tracker, true, false, 8);
+        dropIntoUpCell(tracker, true, false, tipAt);
         double t = 0;
         while (tracker.getBodyAngleRad(hive) < BiobuzzHive.TILT_RAD - 1e-6 && t < 15) {
             tracker.advance(0.02);
@@ -80,9 +82,73 @@ class BiobuzzHiveTest {
         return t;
     }
 
+    /**
+     * How many real shots (ShotModel, the what-if exit, AUTO_POLLEN_RPM from 48 in south of RED's hive)
+     * it takes to tip it from south-up, one every 0.3 s as the robot feeds; -1 if 12 did not.
+     */
+    static int shotsToTip(double comHeight) {
+        return shotsToTip(comHeight, false);
+    }
+
+    /** As shotsToTip, with the 3 nectar staged in the up cell first (BiobuzzPhysicsWorld.stageNectar). */
+    static int shotsToTip(double comHeight, boolean nectar) {
+        double saved = BiobuzzHive.COM_HEIGHT_IN;
+        BiobuzzHive.COM_HEIGHT_IN = comHeight;
+        int[] out = {-1};
+        try {
+            ShotSweepTest.withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+                GamePieceTracker tracker = new GamePieceTracker(12, FieldWorld.builder().perimeter(72, 72)
+                        .physics(BiobuzzPhysicsWorld.physics()).kinematicBody(BiobuzzHive.body(true)).build());
+                String hive = BiobuzzHive.bodyName(true);
+                tracker.setBodyMotion(hive, BiobuzzHive.angleWithUp(false), 0.0);
+                if (nectar) BiobuzzPhysicsWorld.stageNectar(tracker, true, false);
+                run(tracker, nectar ? 3.0 : 1.0);
+                for (int n = 1; n <= 12 && out[0] < 0; n++) {
+                    double[] l = ShotModel.pollenLaunch(-13.0, -48.0, Math.PI / 2,
+                            org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_POLLEN_RPM, 0, 0);
+                    int id = tracker.addHeldPiece("pollen", R);
+                    tracker.launch(id, "shot", l[0], l[1], l[2], l[3], l[4], l[5]);
+                    run(tracker, 0.3);
+                    // Settle before the next shot counts: a tip shows within a couple of seconds.
+                    if (n >= (nectar ? 1 : 6)) {
+                        run(tracker, 2.0);
+                        if (tracker.getBodyAngleRad(hive) > -BiobuzzHive.TILT_RAD + Math.toRadians(5)) out[0] = n;
+                    }
+                }
+            });
+            return out[0];
+        } finally {
+            BiobuzzHive.COM_HEIGHT_IN = saved;
+        }
+    }
+
+    @Test
+    void shotSweepIsPrinted() {
+        double savedI = BiobuzzHive.INERTIA;
+        try {
+            for (double inertia : new double[] {14000, 18000, 22000}) {
+                BiobuzzHive.INERTIA = inertia;
+                for (double com = 5.0; com <= 6.61; com += 0.2) {
+                    double savedC = BiobuzzHive.COM_HEIGHT_IN;
+                    BiobuzzHive.COM_HEIGHT_IN = com;
+                    double swing;
+                    try {
+                        swing = swingSeconds();
+                    } finally {
+                        BiobuzzHive.COM_HEIGHT_IN = savedC;
+                    }
+                    System.out.printf(java.util.Locale.ROOT, "SHOTS I %.0f com %.1f: shot %d, swing %.1f s%n",
+                            inertia, com, shotsToTip(com), swing);
+                }
+            }
+        } finally {
+            BiobuzzHive.INERTIA = savedI;
+        }
+    }
+
     @Test
     void theEighthPollenTipsItAndSevenDoNot() {
-        assertEquals(8, pollenToTip(BiobuzzHive.COM_HEIGHT_IN), "team rule: 8 pollen per tip");
+        assertEquals(8, shotsToTip(BiobuzzHive.COM_HEIGHT_IN), "an empty cell: 8 shot pollen tip it (season table)");
     }
 
     @Test
@@ -91,11 +157,13 @@ class BiobuzzHiveTest {
         String hive = BiobuzzHive.bodyName(true);
         tracker.setBodyMotion(hive, BiobuzzHive.angleWithUp(false), 0.0);
         run(tracker, 1.0);
-        for (int n = 1; n <= 7; n++) {
+        // Set pollen down one at a time until the next one tips it, then time that swing.
+        int tipAt = pollenToTip(BiobuzzHive.COM_HEIGHT_IN);
+        for (int n = 1; n < tipAt; n++) {
             dropIntoUpCell(tracker, true, false, n);
             run(tracker, 6.0);
         }
-        dropIntoUpCell(tracker, true, false, 8);
+        dropIntoUpCell(tracker, true, false, tipAt);
         double t = 0;
         while (tracker.getBodyAngleRad(hive) < BiobuzzHive.TILT_RAD - 1e-6 && t < 15) {
             tracker.advance(0.02);
@@ -109,12 +177,14 @@ class BiobuzzHiveTest {
             if (p.getFieldZInches() < 4.0 && p.getFieldYInches() < -10.0) onSouthFloor++;
         }
         System.out.println("SPILL south floor " + onSouthFloor);
-        assertTrue(onSouthFloor >= 6, "most of the load should spill on the south side, got " + onSouthFloor);
+        assertTrue(onSouthFloor >= tipAt - 2, "most of the load should spill on the south side, got " + onSouthFloor);
     }
 
     static GamePieceTracker tracker(KinematicBody hive) {
-        GamePiecePhysicsConfig physics = GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).build();
-        return new GamePieceTracker(1, FieldWorld.builder().perimeter(72, 72).physics(physics).kinematicBody(hive).build());
+        // The same physics the match runs on (BiobuzzPhysicsWorld), sub-step included: the hold is
+        // calibrated to it.
+        return new GamePieceTracker(1, FieldWorld.builder().perimeter(72, 72).physics(BiobuzzPhysicsWorld.physics())
+                .kinematicBody(hive).build());
     }
 
     /** Sets a pollen down just inside the up cell's open end, spread across its width. */

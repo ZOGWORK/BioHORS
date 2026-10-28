@@ -119,6 +119,8 @@ public final class ZenithSubsystems {
         }
 
         public void spinUp() {
+            // The auto's speed for its scoring spots (MechanismConstants.AUTO_POLLEN_RPM), not teleop's.
+            robot.pollenShooter.setTargetRpm(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_POLLEN_RPM);
             robot.pollenShooter.setShooterOn(true);
         }
 

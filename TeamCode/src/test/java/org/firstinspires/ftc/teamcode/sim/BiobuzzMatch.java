@@ -163,6 +163,8 @@ public final class BiobuzzMatch {
     static final double MISS_AFTER_S = 2.5;       // a shot not seated this long after launch has missed
     private GamePieceTracker world;               // null: the rule-based launch above
     private TriggerVolume intakeMouth;            // physics mode: robot.json's mouth, robot frame
+    private final java.util.Set<Integer> redNectar = new java.util.HashSet<>(), blueNectar = new java.util.HashSet<>();
+    private static final java.util.Collection<String> POLLEN_ONLY = java.util.Collections.singletonList("pollen");
     private final List<double[]> shots = new ArrayList<>(); // {id, launch time, state: 0 flying, 1 scored, 2 missed}
     private int stop;                             // -1 south cell up, +1 north up
     private double swingStart = Double.NaN;
@@ -246,6 +248,10 @@ public final class BiobuzzMatch {
         world.setRobotShape(BiobuzzPhysicsWorld.robotShape(robotJson));
         world.setBodyMotion(BiobuzzHive.bodyName(red), BiobuzzHive.angleWithUp(upIsNorth), 0.0);
         world.setBodyMotion(BiobuzzHive.bodyName(!red), BiobuzzHive.angleWithUp(otherUpIsNorth), 0.0);
+        // Each hive's 3 staged nectar, in its up cell, before any pollen: with them the first tip takes
+        // 3 pollen (the season table), as on the real field.
+        for (int id : BiobuzzPhysicsWorld.stageNectar(world, red, upIsNorth)) (red ? redNectar : blueNectar).add(id);
+        for (int id : BiobuzzPhysicsWorld.stageNectar(world, !red, otherUpIsNorth)) (red ? blueNectar : redNectar).add(id);
         stop = upIsNorth ? 1 : -1;
         otherStop = otherUpIsNorth ? 1 : -1;
         // The garden's pollen become real pieces on the floor (ids first, in field-file order, so a
@@ -277,7 +283,8 @@ public final class BiobuzzMatch {
         // ---- intake: garden pollen under the mouth ----
         if (world != null) {
             world.updateRobotPose(x, y, h);
-            int took = world.tryAcquire(intakeMouth, intakeIn && held < HOPPER_CAPACITY);
+            // AUTO is pollen only: a spilled nectar under the mouth is left where it is.
+            int took = world.tryAcquire(intakeMouth, intakeIn && held < HOPPER_CAPACITY, POLLEN_ONLY);
             collected += took;
             held = world.getHeldCount();
         } else if (intakeIn) {
@@ -461,11 +468,24 @@ public final class BiobuzzMatch {
         return otherTipTimes;
     }
 
-    /** Physics mode: every ball on the field (on the floor, in flight, in a cell), not the ones aboard. */
+    /** Physics mode: every piece SimLoop tracks (pollen and nectar, aboard or not). */
+    public List<GamePiece> allPieces() {
+        return world == null ? new ArrayList<>() : new ArrayList<>(world.getPieces());
+    }
+
+    /** Physics mode: {own hive, other hive} angles now, degrees. */
+    public double[] hiveAnglesDeg() {
+        return world == null ? new double[0] : new double[] {Math.toDegrees(world.getBodyAngleRad(BiobuzzHive.bodyName(red))),
+                Math.toDegrees(world.getBodyAngleRad(BiobuzzHive.bodyName(!red)))};
+    }
+
+    /** Physics mode: every pollen on the field (on the floor, in flight, in a cell), not the ones aboard. */
     public List<GamePiece> fieldPieces() {
         List<GamePiece> out = new ArrayList<>();
         if (world != null) {
-            for (GamePiece p : world.getPieces()) if (!p.isHeld() && p.isVisibleOnField()) out.add(p);
+            for (GamePiece p : world.getPieces()) {
+                if (!p.isHeld() && p.isVisibleOnField() && "pollen".equals(p.getKind())) out.add(p);
+            }
         }
         return out;
     }
@@ -661,11 +681,19 @@ public final class BiobuzzMatch {
         }
         if (world != null) {
             // Every real ball not aboard: on the floor, in flight, in a hive cell.
+            List<Pose3d> nectarRed = new ArrayList<>(), nectarBlue = new ArrayList<>();
             for (GamePiece p : world.getPieces()) {
                 if (p.isHeld() || !p.isVisibleOnField()) continue;
+                if ("nectar".equals(p.getKind())) {
+                    (redNectar.contains(p.getId()) ? nectarRed : nectarBlue)
+                            .add(AdvantageScopeFrame.piece(p.getFieldXInches(), p.getFieldYInches(), p.getFieldZInches()));
+                    continue;
+                }
                 pieces.add(AdvantageScopeFrame.piece(p.getFieldXInches(), p.getFieldYInches(), p.getFieldZInches()));
             }
             Logger.recordOutput("Field/Pollen", pieces.toArray(new Pose3d[0]));
+            Logger.recordOutput("Field/NectarRed", nectarRed.toArray(new Pose3d[0]));
+            Logger.recordOutput("Field/NectarBlue", nectarBlue.toArray(new Pose3d[0]));
             return;
         }
         for (Ball b : balls) pieces.add(AdvantageScopeFrame.piece(b.x, b.y, b.z));
