@@ -176,7 +176,8 @@ class StateMachineAutoMatchTest {
                 {AutoPoses.GARDEN_SWEEP_START, AutoPoses.GARDEN_SWEEP_END},
                 {AutoPoses.GARDEN_SWEEP_END, AutoPoses.OFF_GARDEN_LANE},
                 bezier(AutoPoses.OFF_GARDEN_LANE, AutoPoses.DRIVE_BACK, AutoPoses.SCORE_NORTH),
-                {AutoPoses.SCORE_NORTH, AutoPoses.PARK}};
+                bezier(AutoPoses.SCORE_NORTH, AutoPoses.TO_PARK_LANE, AutoPoses.PARK_LANE),
+                {AutoPoses.PARK_LANE, AutoPoses.PARK}};
         List<Pose2d> out = new ArrayList<>();
         for (com.pedropathing.math.Pose[] leg : legs) {
             com.pedropathing.math.Pose[] p = new com.pedropathing.math.Pose[leg.length];
