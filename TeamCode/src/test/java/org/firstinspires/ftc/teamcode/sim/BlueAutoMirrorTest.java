@@ -26,8 +26,10 @@ import java.util.Set;
 class BlueAutoMirrorTest {
 
     private static final String AUTO = "two-tip";
-    private static final Set<String> TEXT = Set.of("notes", "description", "name", "title", "provenance", "id",
-            "$schema", "authors", "created");
+    /** Differ only at the top: the file's own name, title and description. */
+    private static final Set<String> TOP_TEXT = Set.of("name", "title", "description", "$schema", "authors", "created");
+    /** Free text anywhere; step ids and command names are compared like everything else. */
+    private static final Set<String> TEXT = Set.of("notes", "provenance");
     private static final double EPS = 1e-6;
 
     @Test
@@ -56,7 +58,7 @@ class BlueAutoMirrorTest {
         }
         if (r.isObject()) {
             for (String k : r.keys()) {
-                if (TEXT.contains(k)) continue;
+                if (TEXT.contains(k) || (at.isEmpty() && TOP_TEXT.contains(k))) continue;
                 if (!b.has(k)) {
                     bad.add(at + "." + k + " missing");
                     continue;

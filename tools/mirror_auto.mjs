@@ -10,18 +10,30 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { execSync } from "node:child_process";
 
 const name = process.argv[2] ?? "two-tip";
 
-// Zenith is run with npx, so its packages live in the npx cache; ZENITH_NODE_MODULES overrides.
+// Where zenith-core is: ZENITH_NODE_MODULES if set, else this repo's node_modules (after `npm install`,
+// which pins the CLI in package.json), else npx's cache (`npx zenith ...` without an install).
 function zenithModules() {
+    const has = (nm) => fs.existsSync(path.join(nm, "@horizon36596", "zenith-core"));
     if (process.env.ZENITH_NODE_MODULES) return process.env.ZENITH_NODE_MODULES;
-    const npx = path.join(process.env.LOCALAPPDATA ?? path.join(os.homedir(), ".npm"), "npm-cache", "_npx");
+    if (has("node_modules")) return "node_modules";
+    let cache;
+    try {
+        cache = execSync("npm config get cache", { encoding: "utf8" }).trim();
+    } catch {
+        cache = process.platform === "win32"
+            ? path.join(process.env.LOCALAPPDATA ?? os.homedir(), "npm-cache")
+            : path.join(os.homedir(), ".npm");
+    }
+    const npx = path.join(cache, "_npx");
     for (const dir of fs.existsSync(npx) ? fs.readdirSync(npx) : []) {
         const nm = path.join(npx, dir, "node_modules");
-        if (fs.existsSync(path.join(nm, "@horizon36596", "zenith-core"))) return nm;
+        if (has(nm)) return nm;
     }
-    throw new Error("zenith-core not found: run `npx zenith --help` once, or set ZENITH_NODE_MODULES");
+    throw new Error("zenith-core not found: run `npm install` in the repo, or set ZENITH_NODE_MODULES");
 }
 
 const nm = zenithModules();
