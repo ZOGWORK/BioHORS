@@ -649,6 +649,11 @@ def build():
             ['Auto', 'SPINUP_TIMEOUT_S, FEED_S_PER_PIECE, FEED_EXTRA_S', '2.0, 0.4, 0.2', 'PLACEHOLDER', 'Time a real volley'],
             ['Auto', 'State machine speeds (DEFAULT ... OFF_LANE)', '0.8 .. 0.2', 'SET BY HAND', 'Run the auto; slow down where it misses'],
             ['Auto', 'FLOWER_WAIT_S, GARDEN_WAIT_S, SWEEP_TIMEOUT_S', '1.0, 0.8, 3.0', 'SET BY HAND', 'Run the auto'],
+            ['Auto', 'COLLECT_NO_PROGRESS_S, FLOWER_BAR_SETTLE_S (' + M + ')', '0.5, 0.25', 'PLACEHOLDER', 'Film a collect and a volley'],
+            ['Auto', 'SPIN_UP_TIMEOUT_S (BioHorsCommands), INTAKE_S_PER_PIECE (PollenEstimate)', '2.0, 0.35', 'PLACEHOLDER', 'Time a real spin-up and collect'],
+            ['Auto', 'DEFAULT_SPEED_FRACTION (BioHorsZenithRobot)', '0.8', 'PLACEHOLDER', 'Same as robot.json default speed'],
+            ['Aim', 'MAX_TURN_RATE_RAD_PER_S (AimController)', '5.0', 'PLACEHOLDER', 'Spin at full yaw, read the Pinpoint'],
+            ['Drive', 'headingDeviationTolerance (pedro/Constants)', '3 deg', 'PLACEHOLDER', 'Keep unless volleys face off the cell'],
             ['Sim', 'ShotModel exit angle and grip (test side)', '70 deg, 0.8', 'WHAT-IF', 'Film a shot (5d)'],
             ['Sim', 'X/Y_POD_OFFSET_IN (BioHorsSim)', '0, 0', 'copy', 'Copy from the robot']]
     story += [bar(8), Spacer(1, 10),

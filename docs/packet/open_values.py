@@ -11,9 +11,17 @@ for dp, _, fs in os.walk(root):
         if not f.endswith('.java') or f == 'TwoTipGenerated.java':
             continue
         p = os.path.join(dp, f).replace(os.sep, '/')
+        above = ''  # the comment block right above this line, where a label is often written
         for i, l in enumerate(open(p, encoding='utf-8'), 1):
-            if pat.search(l) and ('=' in l or '.set(' in l):
-                rows.append((p.replace(root + '/', ''), i, l.strip()[:160]))
+            t = l.strip()
+            if t.startswith(('//', '/*', '*')):
+                above += ' ' + t
+                continue
+            assigns = ('=' in t and not t.startswith(('if', 'for', 'while', 'return'))) or '.set(' in t
+            if assigns and (pat.search(t) or pat.search(above)):
+                label = '' if pat.search(t) else '   [' + pat.search(above).group(0) + ', in the comment above]'
+                rows.append((p.replace(root + '/', ''), i, t[:160] + label))
+            above = ''
 for r in rows:
     print('%s:%d  %s' % r)
 print(len(rows), 'java lines')
