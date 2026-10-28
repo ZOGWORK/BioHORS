@@ -55,8 +55,8 @@ public class MainHorsTeleOp extends LinearOpMode {
     // Where the robot is assumed to start when no auto ran before this teleop. RED values; BLUE
     // is the point mirror. The auto's `start` waypoint: back on the south wall (the drive centre
     // 7.8 in off it, MEASURED FROM CAD), facing the hive. Not measured on a real field.
-    public static double DEFAULT_START_X_IN = -15.0;   // NEEDS MEASUREMENT (= autos/waypoints.json start)
-    public static double DEFAULT_START_Y_IN = -64.2;   // MEASURED FROM CAD (-72 + 7.8)
+    public static double DEFAULT_START_X_IN = -13.0;   // NEEDS MEASUREMENT (= autos/waypoints.json start)
+    public static double DEFAULT_START_Y_IN = -62.87;  // MEASURED FROM CAD (FIRST CAD wall -70.674 + 7.8; = waypoints.json start)
     public static double DEFAULT_START_HEADING_RAD = Math.PI / 2.0; // facing the hive (north)
 
     private BioHorsRobot robot;
