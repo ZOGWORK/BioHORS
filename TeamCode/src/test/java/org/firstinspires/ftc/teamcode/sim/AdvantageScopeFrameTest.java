@@ -84,18 +84,23 @@ class AdvantageScopeFrameTest {
     @Test
     void theFlywheelComponentsSpinWhereTheModelPutsThem() throws IOException {
         File dir = new File(projectRoot(), "advantagescope/Robot_BioHORS");
-        for (String f : new String[] {"model.glb", "model_0.glb", "model_1.glb"}) {
+        for (String f : new String[] {"model.glb", "model_0.glb", "model_1.glb", "model_2.glb", "model_3.glb",
+                "model_4.glb", "model_5.glb", "model_6.glb"}) {
             assertTrue(new File(dir, f).isFile(), "missing " + f);
         }
         Json components;
         try (InputStream in = new FileInputStream(new File(dir, "config.json"))) {
             components = Json.parse(in, "config.json").get("components");
         }
-        assertEquals(2, components.size(), "model_0 pollen and model_1 nectar");
-        Pose3d[] logged = {
-            AdvantageScopeFrame.robotFlywheel(BiobuzzMatch.POLLEN_AXLE_FORWARD_IN, BiobuzzMatch.POLLEN_AXLE_UP_IN, 0),
-            AdvantageScopeFrame.robotFlywheel(BiobuzzMatch.NECTAR_AXLE_FORWARD_IN, BiobuzzMatch.NECTAR_AXLE_UP_IN, 0)};
-        for (int i = 0; i < 2; i++) {
+        // With every joint at zero (flywheels and rollers unturned, the bar DOWN as in the CAD) the
+        // logged poses and config.json's zeroed positions must cancel, or a part is drawn away from
+        // where the CAD puts it (and orbits instead of turning in place).
+        Pose3d[] logged = BiobuzzMatch.robotComponents(0, 0, 0,
+                BiobuzzMatch.flowerBarAngleRad(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN));
+        assertEquals(7, components.size(), "flywheels, four intake axles, flower bar");
+        assertEquals(components.size(), logged.length, "one logged pose per component");
+        for (int i = 0; i < logged.length; i++) {
+            assertEquals(0.0, logged[i].getRotation().getY(), 1e-9, "component " + i + " turned at zero");
             Json zero = components.at(i).get("zeroedPosition");
             assertEquals(0.0, logged[i].getX() + zero.at(0).num(), 1e-5, "component " + i + " x");
             assertEquals(0.0, logged[i].getY() + zero.at(1).num(), 1e-5, "component " + i + " y");

@@ -5,9 +5,23 @@ Usage (Python with cadquery-ocp and numpy installed):
 
 Reads the STEP with OpenCascade XCAF (gmsh hangs on this file), meshes every placed part, moves
 it into the robot frame of docs/ROBOT_CAD.md, and writes:
-    model.glb    everything except the two flywheel assemblies
+    model.glb    everything except the moving parts below
     model_0.glb  the pollen flywheel ("Wheel W sonic and weight" under "Pollen Shooter Assembly")
     model_1.glb  the nectar flywheel (the same, under "Nectar Shooter Assembly")
+    model_2.glb  intake 1st stage roller ("Intake 1st Stage", the front star-wheel shaft)
+    model_3.glb  intake 2nd stage roller ("Intake 2nd Stage" under "Intake Assembly")
+    model_4.glb  transfer roller (the other "Intake 2nd Stage", not under "Intake Assembly",
+                 over the transfer ramp)
+    model_5.glb  gecko wheels ("Gecko Wheel Intake")
+    model_6.glb  flower bar ("Flower Mech": both plates and the bar) with the two servo hubs
+                 that turn it
+
+Every component mesh stays in the robot frame, like model.glb. Its joint (the axle, or for the
+flower bar the servo output axis) is printed at the end: config.json's zeroedPosition for that
+component is minus the joint point in metres, so AdvantageScope moves the joint to the origin, and
+a logged component pose at the joint with zero rotation puts the part back where the CAD has it.
+Every joint axis is the robot frame's +y (left). The joint's left coordinate is set to 0, as the
+axis runs along y.
 
 Robot frame (inches, then metres in the file): forward = 1.735 - cadX, left = -cadY,
 up = cadZ + 1.105, so the origin is the drive centre on the floor, the pose AdvantageScope draws.
@@ -88,20 +102,52 @@ def to_robot_m(p):
     return np.stack([DRIVE_CENTRE_CAD_X_IN - x_in, -y_in, z_in - FLOOR_CAD_Z_IN], axis=1) * IN_TO_M
 
 
-def target_of(path):
+# Moving parts, in config.json component order: (output file, what it is, which parts go there
+# given the joined assembly path, which of those parts give the joint (their bounding-box centre in
+# forward and up, averaged when several match)). The joint axis is +y (left) for every one.
+COMPONENTS = [
+    ("model_0", "pollen flywheel",
+     lambda j: "Wheel W sonic and weight" in j and "Pollen Shooter Assembly" in j,
+     lambda name: "Steel Shaft" in name),
+    ("model_1", "nectar flywheel",
+     lambda j: "Wheel W sonic and weight" in j and "Nectar Shooter Assembly" in j,
+     lambda name: "Steel Shaft" in name),
+    ("model_2", "intake 1st stage roller",
+     lambda j: "Intake Assembly" in j and "Intake 1st Stage" in j,
+     lambda name: "Steel Shaft" in name),
+    ("model_3", "intake 2nd stage roller",
+     lambda j: "Intake Assembly" in j and "Intake 2nd Stage" in j,
+     lambda name: "Steel Shaft" in name),
+    ("model_4", "transfer roller",
+     lambda j: "Intake Assembly" not in j and "Intake 2nd Stage" in j,
+     lambda name: "Steel Shaft" in name),
+    ("model_5", "gecko wheels",
+     lambda j: "Gecko Wheel Intake" in j,
+     lambda name: "Gecko" in name),
+    # The plates' pivot hole is on the servo output axis; the servo hubs turn with the bar.
+    ("model_6", "flower bar",
+     lambda j: "Flower Mech" in j or ("Intake Assembly" in j and "/Servo Hub" in j),
+     lambda name: name.startswith("Servo Hub")),
+]
+
+
+def component_of(path):
     joined = "/".join(path)
-    if "Wheel W sonic and weight" in joined:
-        if "Pollen Shooter Assembly" in joined:
-            return "model_0"
-        if "Nectar Shooter Assembly" in joined:
-            return "model_1"
-    return "model"
+    for comp in COMPONENTS:
+        if comp[2](joined):
+            return comp
+    return None
+
+
+def target_of(path):
+    comp = component_of(path)
+    return comp[0] if comp else "model"
 
 
 # target -> rgb -> list of (positions, indices)
-meshes = {"model": {}, "model_0": {}, "model_1": {}}
+meshes = {"model": {}, **{c[0]: {} for c in COMPONENTS}}
 dropped = 0
-axles = {}
+joint_points = {}  # target -> list of joint points (robot frame, m)
 
 
 def add_part(shape, loc, path, rgb):
@@ -115,10 +161,12 @@ def add_part(shape, loc, path, rgb):
         return
     lo, hi = box.CornerMin(), box.CornerMax()
     size_in = max(hi.X() - lo.X(), hi.Y() - lo.Y(), hi.Z() - lo.Z()) * MM_TO_IN
-    target = target_of(path)
-    if "Steel Shaft" in path[-1] and target != "model":
-        # The flywheel's spin axis: the shaft's bounding-box centre (it runs along cadY).
-        axles[target] = to_robot_m(np.array([[(lo.X() + hi.X()) / 2, 0, (lo.Z() + hi.Z()) / 2]]))[0]
+    comp = component_of(path)
+    target = comp[0] if comp else "model"
+    if comp and comp[3](path[-1]):
+        # The joint axis runs along cadY: the joint part's bounding-box centre in cadX and cadZ.
+        joint_points.setdefault(target, []).append(
+            to_robot_m(np.array([[(lo.X() + hi.X()) / 2, 0, (lo.Z() + hi.Z()) / 2]]))[0])
     if size_in < SMALL_PART_IN and target == "model":
         dropped += 1
         return
@@ -233,13 +281,16 @@ def write_glb(path, groups):
 
 # Parts are found by their CAD names: after a rename, stop before overwriting any file with an
 # empty model or leaving config.json zeroed at an axle that is no longer found.
-missing = [n for n, g in meshes.items() if not g] + ["%s axle" % n for n in ("model_0", "model_1") if n not in axles]
+axles = {n: np.mean(p, axis=0) for n, p in joint_points.items()}
+missing = [n for n, g in meshes.items() if not g] + ["%s joint" % c[0] for c in COMPONENTS if c[0] not in axles]
 if missing:
-    sys.exit("nothing found for %s; check target_of() and the shaft name against the CAD. "
+    sys.exit("nothing found for %s; check COMPONENTS against the CAD names. "
              "No file written." % ", ".join(missing))
 for name, groups in meshes.items():
     n = write_glb("%s/%s.glb" % (out_dir, name), groups)
     print(name, "triangles", n, "colours", len(groups))
-for name, a in sorted(axles.items()):
-    print(name, "axle (robot frame, m)", [round(v, 4) for v in a])
+for name, what, _, _ in COMPONENTS:
+    a = axles[name]
+    print("%s %s joint (robot frame): forward %.3f in, up %.3f in; zeroedPosition [%.6f, 0, %.6f]"
+          % (name, what, a[0] / IN_TO_M, a[2] / IN_TO_M, -a[0], -a[2]))
 print("done in %.1f s" % (time.time() - t0))

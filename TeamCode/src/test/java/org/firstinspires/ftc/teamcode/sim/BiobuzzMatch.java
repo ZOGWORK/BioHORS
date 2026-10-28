@@ -70,6 +70,18 @@ public final class BiobuzzMatch {
     // MEASURED FROM CAD: each flywheel's 8 mm shaft centre, in the robot frame (docs/ROBOT_CAD.md).
     // advantagescope/Robot_BioHORS/config.json zeroes the components at these same points.
     static final double POLLEN_AXLE_FORWARD_IN = -5.3945, POLLEN_AXLE_UP_IN = 11.613;
+    // MEASURED FROM CAD (advantagescope/tools/step_to_glb.py): the intake's four spinning axles,
+    // front to back (1st stage roller, 2nd stage roller, transfer roller, gecko wheels), and the
+    // flower bar's servo axis, robot frame {forward, up} inches. All turn about the robot's +y (left).
+    static final double[][] INTAKE_AXLES_IN = {{8.2783, 4.8845}, {4.7815, 6.0181}, {1.42, 6.9806}, {-0.8624, 6.6342}};
+    static final double FLOWER_BAR_PIVOT_FORWARD_IN = 6.9072, FLOWER_BAR_PIVOT_UP_IN = 4.8809;
+    // Drawing only. The intake motor: the 1150 rpm goBILDA Yellow Jacket the CAD shows, 145.1 ticks
+    // per output rev (SPEC for that motor; 2800 ticks/s free is its 1158 rpm). PLACEHOLDER: every
+    // roller turns 1:1 with it (the CAD has no belts or gears to read a ratio from).
+    static final double INTAKE_TICKS_PER_REV = 145.1;
+    // Drawing only. The CAD has the bar DOWN (collect). PLACEHOLDER: the servo's STOWED position is
+    // drawn as the bar swung up 90 deg, and other positions in proportion (SHOOTING is then 21 deg up).
+    static final double FLOWER_BAR_STOWED_RAD = Math.toRadians(90.0);
     static final double NECTAR_AXLE_FORWARD_IN = -5.6115, NECTAR_AXLE_UP_IN = 11.5365;
     // APPROX: the ball rides under the wheel toward the front, so the wheel's underside moves
     // forward: positive rpm turns it negatively about the robot's left (+y) axis. Drawing only.
@@ -81,6 +93,12 @@ public final class BiobuzzMatch {
     /** For this long after a tip, a launch still goes into the cell that tipped (it has only just started
      *  to swing) and spills with it. PLACEHOLDER: the hive swings for about 4 s (DSim). */
     static final double TIP_CATCH_S = 0.5;
+    /** Drawing only (rule mode): a tip swings the drawn hive from one stop to the other in this long.
+     *  APPROX: DSim's swing, about 4 s. */
+    static final double HIVE_SWING_S = 4.0;
+    /** Drawing only: the hive model's axle height, MEASURED FROM CAD (AdvantageScope's field model,
+     *  its two F608ZZ bearings; advantagescope/tools/build_hive_assets.py pivots the model there). */
+    static final double HIVE_MODEL_AXLE_Z_IN = 43.95;
     static final double GATE_OPEN_THRESHOLD = (0.485 + 0.67) / 2.0; // halfway between MechanismConstants' positions
 
     private final BioHorsSim sim;
@@ -99,6 +117,11 @@ public final class BiobuzzMatch {
 
     private final double hiveX;
     private boolean upIsNorth;
+    private double drawnHiveRad = Double.NaN;   // rule mode: the hive as drawn, swinging toward its stop
+    /** Drawing only: how often the driven path (Auto/DrivenPath) gains a point. SET BY HAND. */
+    static final double TRAIL_EVERY_S = 0.25;
+    private final List<Pose2d> trail = new ArrayList<>();
+    private double trailTimer = Double.POSITIVE_INFINITY;
     private final int[] cellPollen = new int[2];   // [south, north]
     private final int[] cellNectar = new int[2];
 
@@ -137,7 +160,7 @@ public final class BiobuzzMatch {
     private int stop;                             // -1 south cell up, +1 north up
     private double swingStart = Double.NaN;
     private double prevX = Double.NaN, prevY;
-    private double pollenSpinRad, nectarSpinRad;
+    private double pollenSpinRad, nectarSpinRad, intakeSpinRad;
 
     public BiobuzzMatch(BioHorsSim sim, Json field, Json robot, boolean red, int preload) {
         this.sim = sim;
@@ -221,6 +244,7 @@ public final class BiobuzzMatch {
     /** One tick of the world, after the robot code and the plants. */
     public void step(double dt) {
         time += dt;
+        trailTimer += dt;
         double x = sim.drivePlant.getX();
         double y = sim.drivePlant.getY();
         double h = sim.drivePlant.getHeading();
@@ -330,6 +354,9 @@ public final class BiobuzzMatch {
 
         pollenSpinRad = (pollenSpinRad + sim.pollenShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
         nectarSpinRad = (nectarSpinRad + sim.nectarShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
+        // Intake in (positive power) turns each roller's underside backward: positive about +y.
+        intakeSpinRad = (intakeSpinRad + sim.intakeLeft.getVelocity() / INTAKE_TICKS_PER_REV * 2 * Math.PI * dt)
+                % (2 * Math.PI);
 
         checkContacts(x, y, h, intakeIn);
 
@@ -348,6 +375,21 @@ public final class BiobuzzMatch {
         Logger.recordOutput("Match/upCellNorth", upIsNorth);
         // AdvantageScope's hives are fixed field art and never tip, so mark the cell that is really
         // up: a pose at its opening (draw it as Axes or a Cone), which moves when the hive tips.
+        // The alliance's hive, turned about its axle, for the tipping-hive field and the "Hive (Red)" /
+        // "Hive (Blue)" models (advantagescope/tools/build_hive_assets.py). Physics mode: the hive's
+        // real angle. Rule mode: it swings to the up cell's stop over HIVE_SWING_S after a tip.
+        double hiveRad;
+        if (world != null) {
+            hiveRad = world.getBodyAngleRad(BiobuzzHive.bodyName(red));
+        } else {
+            double target = BiobuzzHive.angleWithUp(upIsNorth);
+            if (Double.isNaN(drawnHiveRad)) drawnHiveRad = target;
+            double step = 2 * BiobuzzHive.TILT_RAD / HIVE_SWING_S * dt;
+            drawnHiveRad += Math.max(-step, Math.min(step, target - drawnHiveRad));
+            hiveRad = drawnHiveRad;
+        }
+        Logger.recordOutput("Field/HiveModel", Pose3d.struct,
+                AdvantageScopeFrame.hive(hiveX, HIVE_MODEL_AXLE_Z_IN, hiveRad));
         Logger.recordOutput("Field/UpCell", Pose3d.struct, AdvantageScopeFrame.piece(hiveX,
                 (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0, CELL_AIM_Z_IN));
         Logger.recordOutput("Truth/xIn", x);
@@ -356,6 +398,8 @@ public final class BiobuzzMatch {
         Logger.recordOutput("Shooter/pollenRpm", sim.pollenShooterRpm());
         Logger.recordOutput("Gate/pollen", sim.pollenGatePlant.getPosition());
         Logger.recordOutput("FlowerBar/position", sim.flowerLeftPlant.getPosition());
+        Logger.recordOutput("Viz/flowerBarDeg", Math.toDegrees(flowerBarAngleRad(sim.flowerLeftPlant.getPosition())));
+        Logger.recordOutput("Viz/intakeSpinDeg", Math.toDegrees(intakeSpinRad));
         Logger.recordOutput("Intake/power", sim.intakeLeft.getPower());
     }
 
@@ -504,12 +548,14 @@ public final class BiobuzzMatch {
 
     private void logField(double x, double y, double h) {
         Logger.recordOutput("Field/Robot", Pose2d.struct, AdvantageScopeFrame.pose2d(x, y, h));
-        // Order matches the model's components: model_0 pollen, model_1 nectar.
-        Logger.recordOutput("Field/RobotComponents", new Pose3d[] {
-                AdvantageScopeFrame.robotFlywheel(POLLEN_AXLE_FORWARD_IN, POLLEN_AXLE_UP_IN,
-                        FLYWHEEL_SPIN_SIGN * pollenSpinRad),
-                AdvantageScopeFrame.robotFlywheel(NECTAR_AXLE_FORWARD_IN, NECTAR_AXLE_UP_IN,
-                        FLYWHEEL_SPIN_SIGN * nectarSpinRad)});
+        // The path the robot really drove so far (draw it as a Trajectory beside Auto/PlannedRoute).
+        if (trailTimer >= TRAIL_EVERY_S) {
+            trailTimer = 0;
+            trail.add(AdvantageScopeFrame.pose2d(x, y, h));
+            Logger.recordOutput("Auto/DrivenPath", Pose2d.struct, trail.toArray(new Pose2d[0]));
+        }
+        Logger.recordOutput("Field/RobotComponents", robotComponents(pollenSpinRad, nectarSpinRad, intakeSpinRad,
+                flowerBarAngleRad(sim.flowerLeftPlant.getPosition())));
         List<Pose3d> pieces = new ArrayList<>();
         for (double[] p : loosePollen) pieces.add(AdvantageScopeFrame.piece(p[0], p[1], p[2]));
         for (Flower f : flowers) {
@@ -542,6 +588,36 @@ public final class BiobuzzMatch {
             }
         }
         Logger.recordOutput("Field/Pollen", pieces.toArray(new Pose3d[0]));
+    }
+
+    /**
+     * The custom robot model's moving parts, in its components' order: model_0 pollen flywheel,
+     * model_1 nectar flywheel, model_2..5 the intake's axles front to back, model_6 the flower bar.
+     * Each is posed at its CAD joint, turned about the robot's +y.
+     */
+    static Pose3d[] robotComponents(double pollenSpinRad, double nectarSpinRad, double intakeSpinRad,
+                                    double flowerBarRad) {
+        Pose3d[] out = new Pose3d[3 + INTAKE_AXLES_IN.length];
+        out[0] = AdvantageScopeFrame.robotFlywheel(POLLEN_AXLE_FORWARD_IN, POLLEN_AXLE_UP_IN,
+                FLYWHEEL_SPIN_SIGN * pollenSpinRad);
+        out[1] = AdvantageScopeFrame.robotFlywheel(NECTAR_AXLE_FORWARD_IN, NECTAR_AXLE_UP_IN,
+                FLYWHEEL_SPIN_SIGN * nectarSpinRad);
+        for (int i = 0; i < INTAKE_AXLES_IN.length; i++) {
+            out[2 + i] = AdvantageScopeFrame.robotFlywheel(INTAKE_AXLES_IN[i][0], INTAKE_AXLES_IN[i][1], intakeSpinRad);
+        }
+        out[out.length - 1] = AdvantageScopeFrame.robotFlywheel(FLOWER_BAR_PIVOT_FORWARD_IN, FLOWER_BAR_PIVOT_UP_IN,
+                flowerBarRad);
+        return out;
+    }
+
+    /**
+     * The flower bar's angle from its CAD (down) pose, about the robot's +y: 0 at the servo's DOWN
+     * position, negative raising it (the tip moves up), FLOWER_BAR_STOWED_RAD up at STOWED.
+     */
+    static double flowerBarAngleRad(double servoPosition) {
+        double down = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN;
+        double stowed = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_STOWED;
+        return -FLOWER_BAR_STOWED_RAD * (servoPosition - down) / (stowed - down);
     }
 
     private boolean launchIsLegal(double x, double y, double h) {
