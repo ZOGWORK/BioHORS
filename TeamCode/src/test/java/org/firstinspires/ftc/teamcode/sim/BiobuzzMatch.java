@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.sim;
 
-import org.horizon36596.simloop.field.FieldWorld;
 import org.horizon36596.simloop.field.GamePiece;
-import org.horizon36596.simloop.field.GamePiecePhysicsConfig;
 import org.horizon36596.simloop.field.GamePieceTracker;
 import org.horizon36596.simloop.field.TriggerVolume;
 import org.horizon36596.zenith.Json;
@@ -105,6 +103,9 @@ public final class BiobuzzMatch {
 
     private final BioHorsSim sim;
     private final boolean red;
+    private final Json field;
+    private final Json robotJson;
+    private boolean otherUpIsNorth;               // the other alliance's hive at kickoff
     private final double robotLength, robotWidth, robotHeight;
     private final double corForward, corLeft; // where the turning centre sits in the box (robot.json)
     private final double mouthOffsetX, mouthOffsetY, mouthHalfWidth, mouthHalfDepth;
@@ -165,12 +166,16 @@ public final class BiobuzzMatch {
     private final List<double[]> shots = new ArrayList<>(); // {id, launch time, state: 0 flying, 1 scored, 2 missed}
     private int stop;                             // -1 south cell up, +1 north up
     private double swingStart = Double.NaN;
+    private int otherStop;                        // the other alliance's hive, the same way
+    private final List<Double> otherTipTimes = new ArrayList<>();
     private double prevX = Double.NaN, prevY;
     private double pollenSpinRad, nectarSpinRad, intakeSpinRad;
 
     public BiobuzzMatch(BioHorsSim sim, Json field, Json robot, boolean red, int preload) {
         this.sim = sim;
         this.red = red;
+        this.field = field;
+        this.robotJson = robot;
         this.held = preload;
         Json fp = robot.get("footprint").get("expandedIn"); // the longest the robot gets (flower bar out)
         robotLength = fp.num("lengthIn");
@@ -203,6 +208,8 @@ public final class BiobuzzMatch {
                 upIsNorth = "NORTH".equals(e.str("upSide"));
                 int nectar = e.get("holds").size();
                 cellNectar[upIsNorth ? 1 : 0] = nectar; // the staged nectar sits in the up cell
+            } else if (id.equals("hive" + (red ? "Blue" : "Red"))) {
+                otherUpIsNorth = "NORTH".equals(e.str("upSide"));
             }
         }
         hiveX = pivotX;
@@ -234,12 +241,13 @@ public final class BiobuzzMatch {
      * first step.
      */
     public BiobuzzMatch usePhysics() {
-        GamePiecePhysicsConfig physics = GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).build();
         // Capacity: the hopper's 4, or more for a demo that starts with more aboard.
-        world = new GamePieceTracker(Math.max(HOPPER_CAPACITY, held), FieldWorld.builder().perimeter(fieldHalfIn, fieldHalfIn)
-                .physics(physics).kinematicBody(BiobuzzHive.body(red)).build());
+        world = new GamePieceTracker(Math.max(HOPPER_CAPACITY, held), BiobuzzPhysicsWorld.world(field));
+        world.setRobotShape(BiobuzzPhysicsWorld.robotShape(robotJson));
         world.setBodyMotion(BiobuzzHive.bodyName(red), BiobuzzHive.angleWithUp(upIsNorth), 0.0);
+        world.setBodyMotion(BiobuzzHive.bodyName(!red), BiobuzzHive.angleWithUp(otherUpIsNorth), 0.0);
         stop = upIsNorth ? 1 : -1;
+        otherStop = otherUpIsNorth ? 1 : -1;
         // The garden's pollen become real pieces on the floor (ids first, in field-file order, so a
         // replay picks them up in the same order), then the preloads.
         for (double[] p : loosePollen) world.addLoosePiece("pollen", p[0], p[1], p[2]);
@@ -387,6 +395,14 @@ public final class BiobuzzMatch {
         }
         Logger.recordOutput("Field/HiveModel", Pose3d.struct,
                 AdvantageScopeFrame.hive(hiveX, HIVE_MODEL_AXLE_Z_IN, hiveRad));
+        // Both hives by alliance, for the tipping-hive field (it has neither): the other one is the
+        // physics body in physics mode, and stays on its kickoff stop in rule mode (no one scores in it).
+        double otherRad = world != null ? world.getBodyAngleRad(BiobuzzHive.bodyName(!red))
+                : BiobuzzHive.angleWithUp(otherUpIsNorth);
+        Pose3d own = AdvantageScopeFrame.hive(hiveX, HIVE_MODEL_AXLE_Z_IN, hiveRad);
+        Pose3d other = AdvantageScopeFrame.hive(-hiveX, HIVE_MODEL_AXLE_Z_IN, otherRad);
+        Logger.recordOutput("Field/HiveModelRed", Pose3d.struct, red ? own : other);
+        Logger.recordOutput("Field/HiveModelBlue", Pose3d.struct, red ? other : own);
         Logger.recordOutput("Field/UpCell", Pose3d.struct, AdvantageScopeFrame.piece(hiveX,
                 (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0, CELL_AIM_Z_IN));
         Logger.recordOutput("Truth/xIn", x);
@@ -431,6 +447,53 @@ public final class BiobuzzMatch {
         }
         Logger.recordOutput("Match/hiveAngleDeg", Math.toDegrees(a));
         Logger.recordOutput("Field/Hive", Pose3d.struct, AdvantageScopeFrame.hive(hiveX, BiobuzzHive.AXLE_Z_IN, a));
+        // The other alliance's hive is a physics body too: it tips when its own load says so.
+        double b = world.getBodyAngleRad(BiobuzzHive.bodyName(!red));
+        if (Math.abs(b + otherStop * tilt) < eps) {
+            otherTipTimes.add(time);
+            otherStop = -otherStop;
+        }
+        Logger.recordOutput("Match/otherHiveAngleDeg", Math.toDegrees(b));
+    }
+
+    /** When the other alliance's hive tipped (physics mode). */
+    public List<Double> otherTipTimes() {
+        return otherTipTimes;
+    }
+
+    /** Physics mode: every ball on the field (on the floor, in flight, in a cell), not the ones aboard. */
+    public List<GamePiece> fieldPieces() {
+        List<GamePiece> out = new ArrayList<>();
+        if (world != null) {
+            for (GamePiece p : world.getPieces()) if (!p.isHeld() && p.isVisibleOnField()) out.add(p);
+        }
+        return out;
+    }
+
+    /** The pollen poses in the last frame of a log that has Field/Pollen, field frame inches {x, y, z}. */
+    static List<double[]> lastLoggedPollenIn(java.nio.file.Path rlog) throws java.io.IOException {
+        List<java.util.Map<String, String>> frames = org.horizon36596.simloop.sim.RlogDecodedCompare.decode(rlog);
+        for (int i = frames.size() - 1; i >= 0; i--) {
+            for (java.util.Map.Entry<String, String> e : frames.get(i).entrySet()) {
+                if (!e.getKey().endsWith("RealOutputs/Field/Pollen")) continue;
+                // The struct array decodes as its raw bytes: 7 little-endian doubles a Pose3d
+                // (translation x, y, z in metres, then the rotation quaternion), AdvantageScope's frame.
+                String[] parts = e.getValue().replaceAll("[\\[\\] ]", "").split(",");
+                java.nio.ByteBuffer buf = java.nio.ByteBuffer.allocate(parts.length).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+                for (String part : parts) if (!part.isEmpty()) buf.put((byte) Integer.parseInt(part));
+                buf.flip();
+                List<double[]> out = new ArrayList<>();
+                while (buf.remaining() >= 56) {
+                    double ax = buf.getDouble(), ay = buf.getDouble(), az = buf.getDouble();
+                    for (int k = 0; k < 4; k++) buf.getDouble();
+                    // AdvantageScope (X, Y) is our (-y, x): ours x = Y, y = -X.
+                    out.add(new double[] {ay / AdvantageScopeFrame.M_PER_IN, -ax / AdvantageScopeFrame.M_PER_IN,
+                            az / AdvantageScopeFrame.M_PER_IN});
+                }
+                return out;
+            }
+        }
+        throw new IllegalStateException("no Field/Pollen in " + rlog);
     }
 
     /** Every ball launched in physics mode, in flight, seated or on the floor (empty otherwise). */

@@ -76,6 +76,17 @@ class PhysicsTipDemoTest {
 
     @Test
     void eightRealShotsTipTheHiveAndItSpills() throws IOException {
+        demo(true);
+    }
+
+    /** BLUE's hive is a physics body too: the point mirror of RED's demo, into its north cell. */
+    @Test
+    void eightRealShotsTipBluesHiveAndItSpills() throws IOException {
+        demo(false);
+    }
+
+    private void demo(boolean red) throws IOException {
+        OpMode.blackboard.clear();
         double savedPitch = ShotModel.POLLEN_PITCH_DEG, savedGrip = ShotModel.GRIP_EFFICIENCY;
         ShotModel.POLLEN_PITCH_DEG = ZenithAutoMatchTest.WHAT_IF_PITCH_DEG;
         ShotModel.GRIP_EFFICIENCY = ZenithAutoMatchTest.WHAT_IF_GRIP;
@@ -88,17 +99,19 @@ class PhysicsTipDemoTest {
             File assets = new File(root, "TeamCode/src/main/assets/autos");
             BioHorsSim sim = new BioHorsSim();
             BiobuzzMatch match = new BiobuzzMatch(sim, readJson(new File(assets, "biobuzz.field.json")),
-                    readJson(new File(assets, "robot.json")), true, 8).usePhysics();
-            sim.placeAt(-12.75, SPOT_Y_IN, Math.PI / 2);
-            Path rlog = new File(root, "TeamCode/build/sim/physics-tip-demo.rlog").toPath();
+                    readJson(new File(assets, "robot.json")), red, 8).usePhysics();
+            double side = red ? 1 : -1;   // BLUE: the point mirror, (x, y, h) -> (-x, -y, h + pi)
+            sim.placeAt(-12.75 * side, SPOT_Y_IN * side, Math.PI / 2 + (red ? 0 : Math.PI));
+            Path rlog = new File(root, "TeamCode/build/sim/physics-tip-demo" + (red ? "" : "-blue") + ".rlog").toPath();
             Files.createDirectories(rlog.getParent());
 
             OpMode.blackboard.put(ALLIANCE + "rpm", rpm);
             OpModeRunner.forTeamClass(ShootFromHere.class, sim.hardwareMap)
                     .teamPackages("org.firstinspires.ftc.teamcode.")
                     .keepBlackboard(true)
+                    .tickSeconds(ZenithAutoMatchTest.PHYSICS_TICK_S)
                     .initLoopTicks(5)
-                    .activeTicks((int) Math.round(14.0 / OpModeRunner.DEFAULT_TICK_SECONDS))
+                    .activeTicks((int) Math.round(14.0 / ZenithAutoMatchTest.PHYSICS_TICK_S))
                     .eachTick(dt -> {
                         sim.step(dt);
                         match.step(dt);
@@ -107,9 +120,9 @@ class PhysicsTipDemoTest {
 
             int southFloor = 0;
             for (GamePiece p : match.shotPieces()) {
-                if (p.getFieldZInches() < 4.0 && p.getFieldYInches() < -10.0) southFloor++;
+                if (p.getFieldZInches() < 4.0 && side * p.getFieldYInches() < -10.0) southFloor++;
             }
-            System.out.printf(Locale.ROOT, "TIP DEMO rpm %.0f: launched %d, scored %d, tips %d at %s, "
+            System.out.printf(Locale.ROOT, (red ? "RED" : "BLUE") + " TIP DEMO rpm %.0f: launched %d, scored %d, tips %d at %s, "
                             + "missed %s, on the south floor %d%n", rpm, match.launched(), match.scored(),
                     match.tips(), match.tipTimes(), match.missLog(), southFloor);
 
@@ -119,7 +132,7 @@ class PhysicsTipDemoTest {
             assertEquals(0, match.held(), "the robot should end empty");
             assertTrue(match.scored() >= 8, "every one of the 8 should seat in the up cell, got " + match.scored());
             assertEquals(1, match.tips(), "8 pollen tip the cell once (team rule)");
-            assertTrue(southFloor >= 6, "the tipped cell should spill its load on the south side, got " + southFloor);
+            assertTrue(southFloor >= 6, "the tipped cell should spill its load on its own side, got " + southFloor);
             java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(rlog);
             for (String k : new String[] {"Field/Robot", "Field/RobotComponents", "Field/Pollen", "Field/Hive"}) {
                 assertTrue(keys.stream().anyMatch(x -> x.endsWith(k)), "RLOG has no " + k);
