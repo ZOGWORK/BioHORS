@@ -52,21 +52,25 @@ class PhysicsFidelityTest {
 
     @Test
     void pollenInACellPileUpWithoutOverlapping() throws IOException {
-        GamePieceTracker t = tracker(8);
+        GamePieceTracker t = tracker(10);
         String hive = BiobuzzHive.bodyName(true);
         t.setBodyMotion(hive, BiobuzzHive.angleWithUp(false), 0.0);
+        t.setBodyHeld(hive, true);   // held on its stop: 10 would tip it, and this is about the pile
         t.setBodyMotion(BiobuzzHive.bodyName(false), BiobuzzHive.angleWithUp(true), 0.0);
-        for (int n = 1; n <= 6; n++) {
-            BiobuzzHiveTest.dropIntoUpCell(t, true, false, 1);   // all at the same spot: they must pile
+        for (int n = 1; n <= 10; n++) {
+            // Six spots across the cell's width, then the same spots again: a second layer on the first.
+            BiobuzzHiveTest.dropIntoUpCell(t, true, false, n);
             BiobuzzHiveTest.run(t, 0.6);
         }
         BiobuzzHiveTest.run(t, 2.0);
         List<GamePiece> ps = t.getPieces();
+        String cell = BiobuzzHive.cellName(true, false);
+        for (GamePiece p : ps) assertEquals(cell, p.getSeatedCellName(), "every pollen should stay in the cell: " + p);
         double closest = Double.MAX_VALUE;
         for (int i = 0; i < ps.size(); i++) {
             for (int j = i + 1; j < ps.size(); j++) closest = Math.min(closest, distance(ps.get(i), ps.get(j)));
         }
-        System.out.printf(Locale.ROOT, "CELL 6 pollen dropped on one spot: closest centres %.2f in%n", closest);
+        System.out.printf(Locale.ROOT, "CELL 10 pollen piled in the cell: closest centres %.2f in%n", closest);
         assertTrue(closest >= 2 * R - OVERLAP_TOL_IN, "pollen in the cell overlap: centres " + closest + " in apart");
     }
 
@@ -164,12 +168,17 @@ class PhysicsFidelityTest {
             double speed = Math.hypot(vy, vz), pitch = Math.atan2(vz, vy);
             int ball = t.addHeldPiece("pollen", R);
             t.launch(ball, "shot", x0, y0, z0, vx, vy, vz);
-            boolean entered = false;
+            boolean entered = false, turnedBack = false;
             double[] local = new double[3];
             for (double s = 0; s < 3.0; s += DT) {
                 t.advance(DT);
                 GamePiece p = t.getPiece(ball);
                 body.toLocal(t.getBodyAngleRad(hive), p.getFieldXInches(), p.getFieldYInches(), p.getFieldZInches(), local);
+                // Moving toward the cell (+y) and then away from it, near its open face: it hit something.
+                if (p.getVelocityYInchesPerSecond() < -1.0 && p.getFieldZInches() > 30.0
+                        && p.getFieldYInches() > -BiobuzzHive.OUTER_FACE_Y_IN - 6.0) {
+                    turnedBack = true;
+                }
                 if (Math.abs(local[0]) < BiobuzzHive.HALF_WIDTH_X_IN && local[1] < -BiobuzzHive.INNER_WALL_Y_IN
                         && local[1] > -BiobuzzHive.OUTER_FACE_Y_IN && local[2] > 0 && local[2] < BiobuzzHive.CELL_HEIGHT_IN) {
                     entered = true;
@@ -179,9 +188,9 @@ class PhysicsFidelityTest {
             boolean in = p.getSeatedCellName() != null;
             if (entered && in) seated++;
             // Off the lip or a wall edge: never got inside, back on the floor on the shooter's side.
-            if (!entered && !in && p.getFieldZInches() < 3.0 && p.getFieldYInches() < -BiobuzzHive.OUTER_FACE_Y_IN) rejected++;
-            System.out.printf(Locale.ROOT, "CELL shot %d: %.0f in/s at %.1f deg, entered %s, %s at (%.1f, %.1f, %.1f)%n",
-                    k, speed, Math.toDegrees(pitch), entered, in ? "seated" : "loose", p.getFieldXInches(),
+            if (!entered && !in && turnedBack) rejected++;
+            System.out.printf(Locale.ROOT, "CELL shot %d: %.0f in/s at %.1f deg, entered %s, bounced back %s, %s at (%.1f, %.1f, %.1f)%n",
+                    k, speed, Math.toDegrees(pitch), entered, turnedBack, in ? "seated" : "loose", p.getFieldXInches(),
                     p.getFieldYInches(), p.getFieldZInches());
         }
         assertTrue(seated > 0, "no shot stayed in the cell");
