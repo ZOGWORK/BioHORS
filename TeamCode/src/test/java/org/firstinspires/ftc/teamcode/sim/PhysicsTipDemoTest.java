@@ -113,8 +113,11 @@ class PhysicsTipDemoTest {
                             + "missed %s, on the south floor %d%n", rpm, match.launched(), match.scored(),
                     match.tips(), match.tipTimes(), match.missLog(), southFloor);
 
-            assertEquals(8, match.launched(), "all 8 pollen should leave the robot");
-            assertEquals(8, match.scored(), "every shot should seat in the up cell");
+            // The intake runs while it feeds, so a spilled ball that rolls under the mouth is taken
+            // and fired again: every launch past the 8 aboard must be one the intake really took.
+            assertEquals(8, match.launched() - match.collected(), "all 8 pollen aboard should leave the robot");
+            assertEquals(0, match.held(), "the robot should end empty");
+            assertTrue(match.scored() >= 8, "every one of the 8 should seat in the up cell, got " + match.scored());
             assertEquals(1, match.tips(), "8 pollen tip the cell once (team rule)");
             assertTrue(southFloor >= 6, "the tipped cell should spill its load on the south side, got " + southFloor);
             java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(rlog);

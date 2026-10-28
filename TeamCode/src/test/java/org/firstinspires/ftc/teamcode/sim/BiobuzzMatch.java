@@ -4,6 +4,7 @@ import org.horizon36596.simloop.field.FieldWorld;
 import org.horizon36596.simloop.field.GamePiece;
 import org.horizon36596.simloop.field.GamePiecePhysicsConfig;
 import org.horizon36596.simloop.field.GamePieceTracker;
+import org.horizon36596.simloop.field.TriggerVolume;
 import org.horizon36596.zenith.Json;
 import org.psilynx.psikit.core.Logger;
 import org.psilynx.psikit.core.wpi.math.Pose2d;
@@ -34,11 +35,15 @@ import java.util.List;
  *    it (rules.tipTable; this project's copy says 8). The cell empties and the other comes up.
  *    The 4 s swing is not modelled, except that for TIP_CATCH_S after a tip a launch still goes into
  *    the cell that tipped (and spills with it); after that, shots go to the new up cell.
- *  - Physics mode (usePhysics): instead of the rule above, each launch is a real ball in SimLoop's
- *    physics, fired from the CAD shooter exit at the speed the flywheel's real rpm gives
- *    (ShotModel), into the physics hive (BiobuzzHive). A pollen scores when it first seats in one
- *    of the hive's cells; a tip is the hive swinging from one stop to the other under the load;
- *    the tipped cell's pollen roll out onto the floor. The staged nectar is not modelled there.
+ *  - Physics mode (usePhysics): every pollen is a real ball in SimLoop's game-piece physics. The
+ *    garden's lie loose on the floor and the intake takes one when its mouth (robot.json, a
+ *    TriggerVolume) is over it while both intake motors run inward; the preloads and a flower's
+ *    pollen are held pieces; each launch fires the next held ball from the CAD shooter exit at the
+ *    speed the flywheel's real rpm gives (ShotModel), into the physics hive (BiobuzzHive). A pollen
+ *    scores when it first seats in one of the hive's cells; a tip is the hive swinging from one
+ *    stop to the other under the load; the tipped cell's pollen roll out onto the floor, where the
+ *    intake can take them again. A miss falls, bounces and rolls. The staged nectar is not
+ *    modelled there, and the flowers still hand over their pollen by the rule above.
  *  - Intake load: each pollen aboard slows both intake motors by INTAKE_LOAD_PER_PIECE while they
  *    run inward, which is what the robot's intake-encoder pollen count reads.
  *  - Contact: the footprint (robot.json) against the field file's low obstacles (hive frame
@@ -124,8 +129,10 @@ public final class BiobuzzMatch {
 
     // ---- physics mode ----
     static final double POLLEN_RADIUS_IN = 1.4;   // SPEC (field file)
+    static final int HOPPER_CAPACITY = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.HOPPER_CAPACITY;
     static final double MISS_AFTER_S = 2.5;       // a shot not seated this long after launch has missed
     private GamePieceTracker world;               // null: the rule-based launch above
+    private TriggerVolume intakeMouth;            // physics mode: robot.json's mouth, robot frame
     private final List<double[]> shots = new ArrayList<>(); // {id, launch time, state: 0 flying, 1 scored, 2 missed}
     private int stop;                             // -1 south cell up, +1 north up
     private double swingStart = Double.NaN;
@@ -197,10 +204,17 @@ public final class BiobuzzMatch {
      */
     public BiobuzzMatch usePhysics() {
         GamePiecePhysicsConfig physics = GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).build();
-        world = new GamePieceTracker(4, FieldWorld.builder().perimeter(72, 72).physics(physics)
-                .kinematicBody(BiobuzzHive.body(red)).build());
+        // Capacity: the hopper's 4, or more for a demo that starts with more aboard.
+        world = new GamePieceTracker(Math.max(HOPPER_CAPACITY, held), FieldWorld.builder().perimeter(72, 72)
+                .physics(physics).kinematicBody(BiobuzzHive.body(red)).build());
         world.setBodyMotion(BiobuzzHive.bodyName(red), BiobuzzHive.angleWithUp(upIsNorth), 0.0);
         stop = upIsNorth ? 1 : -1;
+        // The garden's pollen become real pieces on the floor (ids first, in field-file order, so a
+        // replay picks them up in the same order), then the preloads.
+        for (double[] p : loosePollen) world.addLoosePiece("pollen", p[0], p[1], p[2]);
+        loosePollen.clear();
+        for (int i = 0; i < held; i++) world.addHeldPiece("pollen", POLLEN_RADIUS_IN);
+        intakeMouth = new TriggerVolume("intake", mouthOffsetX, mouthOffsetY, 2 * mouthHalfDepth, 2 * mouthHalfWidth);
         return this;
     }
 
@@ -221,7 +235,12 @@ public final class BiobuzzMatch {
         strafeIn += Math.abs(sim.drivePlant.getLateralVelocity()) * dt;
 
         // ---- intake: garden pollen under the mouth ----
-        if (intakeIn) {
+        if (world != null) {
+            world.updateRobotPose(x, y, h);
+            int took = world.tryAcquire(intakeMouth, intakeIn && held < HOPPER_CAPACITY);
+            collected += took;
+            held = world.getHeldCount();
+        } else if (intakeIn) {
             for (int i = loosePollen.size() - 1; i >= 0 && held < 4; i--) {
                 if (mouthTouches(loosePollen.get(i), x, y, h)) {
                     loosePollen.remove(i);
@@ -251,6 +270,7 @@ public final class BiobuzzMatch {
                 at.count--;
                 held++;
                 collected++;
+                if (world != null) world.addHeldPiece("pollen", POLLEN_RADIUS_IN);
             }
         } else {
             flowerTimer = 0;
@@ -267,7 +287,7 @@ public final class BiobuzzMatch {
                 launched++;
                 if (world != null) {
                     double[] l = ShotModel.pollenLaunch(x, y, h, sim.pollenShooterRpm(), vx, vy);
-                    int id = world.addHeldPiece("pollen", POLLEN_RADIUS_IN);
+                    int id = world.nextHeldPieceId();
                     world.launch(id, "shot", l[0], l[1], l[2], l[3], l[4], l[5]);
                     shots.add(new double[] {id, time, 0});
                 } else if (time - lastTipS <= TIP_CATCH_S && legalInto(x, y, h, !upIsNorth)) {
@@ -500,7 +520,9 @@ public final class BiobuzzMatch {
             pieces.add(AdvantageScopeFrame.piece(x + fwd * Math.cos(h), y + fwd * Math.sin(h), HELD_Z_IN));
         }
         if (world != null) {
-            for (GamePiece p : shotPieces()) {
+            // Every real ball not aboard: on the floor, in flight, in a hive cell.
+            for (GamePiece p : world.getPieces()) {
+                if (p.isHeld() || !p.isVisibleOnField()) continue;
                 pieces.add(AdvantageScopeFrame.piece(p.getFieldXInches(), p.getFieldYInches(), p.getFieldZInches()));
             }
             Logger.recordOutput("Field/Pollen", pieces.toArray(new Pose3d[0]));
