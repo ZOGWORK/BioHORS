@@ -281,8 +281,16 @@ the hive. The team's earlier "8 pollen per tip, whatever the nectar" rule is the
 ## 11. Seeing the real robot in AdvantageScope
 
 `advantagescope/Robot_BioHORS/` is an AdvantageScope custom robot built from the team's Onshape
-STEP (`33950 Robot.step`): the chassis as `model.glb`, and the pollen and nectar flywheels (Rhino
-wheel, steel flywheel, hub and shaft) as `model_0.glb` and `model_1.glb`, so they can spin.
+STEP (`33950 Robot.step`): the chassis as `model.glb`; the pollen and nectar flywheels (Rhino
+wheel, steel flywheel, hub and shaft) as `model_0.glb` and `model_1.glb`; the intake's four spinning
+axles front to back (1st stage roller, 2nd stage roller, transfer roller, gecko wheels) as
+`model_2.glb` to `model_5.glb`; and the flower bar (plates, bar and both servo hubs) as
+`model_6.glb`. The flywheels spin at the shooters' true rpm, the intake axles turn with the intake
+motors (1:1 with a 1150 rpm Yellow Jacket, PLACEHOLDER: the CAD has no belts to read a ratio from),
+and the flower bar swings with its servos: the CAD has it DOWN; STOWED is drawn 90 deg up and other
+positions in proportion (PLACEHOLDER, drawing only). `MechanismsDemoTest` writes
+`TeamCode/build/sim/mechanisms-demo.rlog`: the robot standing still while the bar goes stowed,
+down, shooting, stowed and the intake runs, and checks both from the log.
 
 **Install it once (AdvantageScope 26):**
 1. In AdvantageScope, **Help > Show Assets Folder**.
@@ -296,7 +304,11 @@ wheel, steel flywheel, hub and shaft) as `model_0.glb` and `model_1.glb`, so the
 3. Drag `RealOutputs/Field/Robot` in as a **Robot**, and choose **BioHORS** as its model.
 4. Drag `RealOutputs/Field/RobotComponents` onto that robot as **Components**: the flywheels spin at
    the shooters' true rpm. Without it they are drawn still, in place.
-5. Add `RealOutputs/Field/Pollen` as game pieces and `RealOutputs/Field/Hive` as before.
+5. Add `RealOutputs/Field/Pollen` as game pieces, and `RealOutputs/Field/UpCell` as a **Cone** (not a
+   Ghost: a ghost robot there hides the cell and the balls going in).
+6. Paths: add `RealOutputs/Auto/PlannedRoute` and `RealOutputs/Auto/DrivenPath` and set each one's type
+   to **Trajectory** (dropped in, a Pose2d array becomes a ghost robot at every point). Give the driven
+   path another colour (Orange): planned against driven. Both autos log both.
 
 The model's origin is the drive centre on the floor, the same point `Field/Robot` logs
 (`docs/ROBOT_CAD.md` has the CAD-to-robot transform). Screws, nuts and other parts under 0.45 in
@@ -313,9 +325,16 @@ drawing only and changes no physics.
 whole planned route; `RealOutputs/Auto/State` shows which state the auto is in at each moment.
 
 
-**Hives in AdvantageScope:** the field model's hives are fixed and never tip; after the first tip
-the robot shoots the north cell, which is up in the game but still drawn down. Add
-`RealOutputs/Field/UpCell` (as Axes or a Cone) to see which cell is really up at each moment.
+**Hives that tip:** AdvantageScope's field model has fixed hives. `advantagescope/tools/build_hive_assets.py`
+(Python with numpy; run it once, and again after AdvantageScope updates its field) builds three local
+assets from AdvantageScope's own downloaded 2026-2027 field, straight into its assets folder (they
+are AdvantageScope's model, so they are not committed): the field with both hives removed,
+"2026-2027 Field (tipping hive)", and each hive alone as a robot model, "Hive (Red)" and
+"Hive (Blue)", pivoted on its CAD axle (the bearings, 43.95 in up). Restart AdvantageScope, pick the
+tipping-hive field, add `RealOutputs/Field/HiveModel` as a **Robot** and choose your alliance's hive
+model. In a physics run it is the physics hive's real angle; in a rule-based run it swings to the
+new stop over 4 s (APPROX, DSim) after each tip. `RealOutputs/Field/UpCell` still marks the cell
+that is up. (The physics hive turns about 42.77 in, APPROX; the CAD axle is 1.2 in higher.)
 AdvantageScope's FTC fields use the Center/Rotated frame (its docs, "Coordinate Systems"): +X to the
 right as seen from the red alliance wall, so `AdvantageScopeFrame` turns our field frame by 90 deg;
 `AdvantageScopeFrameTest` checks our field file against the field model.
@@ -328,8 +347,15 @@ python advantagescope/tools/step_to_glb.py "<path>/33950 Robot.step" advantagesc
 python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model.glb 3
 python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_0.glb 1.5
 python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_1.glb 1.5
+python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_2.glb 3
+python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_3.glb 3
+python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_4.glb 3
+python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_5.glb 3
+python advantagescope/tools/decimate_glb.py advantagescope/Robot_BioHORS/model_6.glb 3
 ```
 
-`step_to_glb.py` prints each flywheel's axle in the robot frame. If a shooter moved, put those
-numbers in `config.json` (`zeroedPosition` is minus the axle, in metres) and in `BiobuzzMatch`'s
-`*_AXLE_*_IN` constants; `AdvantageScopeFrameTest` fails until the two agree.
+`step_to_glb.py` prints every component's joint (each flywheel's axle, each intake axle, the flower
+bar's servo axis) in the robot frame. If one moved, put those numbers in `config.json`
+(`zeroedPosition` is minus the joint, in metres) and in `BiobuzzMatch`'s `*_AXLE_*_IN`,
+`INTAKE_AXLES_IN` and `FLOWER_BAR_PIVOT_*_IN` constants; `AdvantageScopeFrameTest` fails until the
+two agree. After any rebuild, copy the folder into AdvantageScope's assets folder again and restart it.

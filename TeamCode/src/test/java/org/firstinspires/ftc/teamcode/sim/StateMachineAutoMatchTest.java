@@ -170,13 +170,13 @@ class StateMachineAutoMatchTest {
                 {AutoPoses.START, AutoPoses.SCORE_SOUTH},
                 bezier(AutoPoses.SCORE_SOUTH, AutoPoses.TO_OTHER_SIDE, AutoPoses.FLOWER_NORTH_APPROACH),
                 {AutoPoses.FLOWER_NORTH_APPROACH, AutoPoses.FLOWER_NORTH_PICKUP},
-                {AutoPoses.FLOWER_NORTH_PICKUP, AutoPoses.FLOWER_NORTH_APPROACH},
-                bezier(AutoPoses.FLOWER_NORTH_APPROACH, AutoPoses.TO_SCORE_NORTH, AutoPoses.SCORE_NORTH),
+                bezier(AutoPoses.FLOWER_NORTH_PICKUP, AutoPoses.TO_SCORE_NORTH, AutoPoses.SCORE_NORTH),
                 bezier(AutoPoses.SCORE_NORTH, AutoPoses.TO_GARDEN, AutoPoses.ABOVE_GARDEN_LANE),
                 {AutoPoses.ABOVE_GARDEN_LANE, AutoPoses.GARDEN_SWEEP_START},
                 {AutoPoses.GARDEN_SWEEP_START, AutoPoses.GARDEN_SWEEP_END},
                 {AutoPoses.GARDEN_SWEEP_END, AutoPoses.OFF_GARDEN_LANE},
-                bezier(AutoPoses.OFF_GARDEN_LANE, AutoPoses.DRIVE_BACK, AutoPoses.SCORE_NORTH)};
+                bezier(AutoPoses.OFF_GARDEN_LANE, AutoPoses.DRIVE_BACK, AutoPoses.SCORE_NORTH),
+                {AutoPoses.SCORE_NORTH, AutoPoses.PARK}};
         List<Pose2d> out = new ArrayList<>();
         for (com.pedropathing.math.Pose[] leg : legs) {
             com.pedropathing.math.Pose[] p = new com.pedropathing.math.Pose[leg.length];

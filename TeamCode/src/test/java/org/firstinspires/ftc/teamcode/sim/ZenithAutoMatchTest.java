@@ -98,7 +98,8 @@ class ZenithAutoMatchTest {
 
         // ---- AdvantageScope: the robot, its belief and every pollen are in the log as poses ----
         java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(red2.rlog);
-        for (String k : new String[] {"Field/Robot", "Field/RobotBelief", "Field/Pollen"}) {
+        for (String k : new String[] {"Field/Robot", "Field/RobotBelief", "Field/Pollen", "Field/HiveModel",
+                "Auto/PlannedRoute", "Auto/DrivenPath"}) {
             assertTrue(keys.stream().anyMatch(x -> x.endsWith(k)), "RLOG has no " + k + "; keys: " + keys);
         }
         System.out.println("AdvantageScope keys: " + keys.stream().filter(x -> x.contains("Field/")).sorted()
@@ -226,6 +227,11 @@ class ZenithAutoMatchTest {
         OpMode.blackboard.put(TracedZenithAuto.TICK_S, TICK_S);
         OpMode.blackboard.put(TracedZenithAuto.DRIVE_PLANT, sim.drivePlant);
 
+        // For AdvantageScope: the planned route once, as a trajectory. Both autos drive the same route
+        // (AutoPosesTest keeps AutoPoses equal to this draft).
+        org.psilynx.psikit.core.wpi.math.Pose2d[] route = StateMachineAutoMatchTest.plannedRoute(
+                red ? org.firstinspires.ftc.teamcode.aim.Alliance.RED : org.firstinspires.ftc.teamcode.aim.Alliance.BLUE);
+        boolean[] routeLogged = {false};
         OpModeRunResult result = OpModeRunner.forTeamClass(TracedZenithAuto.class, sim.hardwareMap)
                 // Robot code, SolversLib, Pedro and Zenith's runtime all read the sim clock; Zenith's
                 // runtime has to share SolversLib's loader because its classes extend SolversLib's.
@@ -239,6 +245,11 @@ class ZenithAutoMatchTest {
                 .eachTick(dt -> {
                     sim.step(dt);
                     match.step(dt);
+                    if (!routeLogged[0]) {
+                        org.psilynx.psikit.core.Logger.recordOutput("Auto/PlannedRoute",
+                                org.psilynx.psikit.core.wpi.math.Pose2d.struct, route);
+                        routeLogged[0] = true;
+                    }
                 })
                 .runLogged(BioHorsSim.ROBOT_CONFIG, rlog);
 
