@@ -86,7 +86,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": 1.5708,
-              "toRad": 2.3725
+              "toRad": 2.2316
             }
           },
           {
@@ -94,8 +94,8 @@
             "endT": 0.3038,
             "heading": {
               "mode": "linear",
-              "fromRad": 2.3725,
-              "toRad": 1.968
+              "fromRad": 2.2316,
+              "toRad": 1.9476
             }
           },
           {
@@ -103,8 +103,8 @@
             "endT": 0.4038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.968,
-              "toRad": 1.7484
+              "fromRad": 1.9476,
+              "toRad": 1.7628
             }
           },
           {
@@ -112,8 +112,8 @@
             "endT": 0.5038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.7484,
-              "toRad": 1.5973
+              "fromRad": 1.7628,
+              "toRad": 1.6217
             }
           },
           {
@@ -121,8 +121,8 @@
             "endT": 0.6038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.5973,
-              "toRad": 1.4676
+              "fromRad": 1.6217,
+              "toRad": 1.4946
             }
           },
           {
@@ -130,8 +130,8 @@
             "endT": 0.7038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.4676,
-              "toRad": 1.3318
+              "fromRad": 1.4946,
+              "toRad": 1.3587
             }
           },
           {
@@ -139,8 +139,8 @@
             "endT": 0.8038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.3318,
-              "toRad": 1.159
+              "fromRad": 1.3587,
+              "toRad": 1.1845
             }
           },
           {
@@ -148,8 +148,8 @@
             "endT": 0.8679,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.159,
-              "toRad": 1.0042
+              "fromRad": 1.1845,
+              "toRad": 1.0273
             }
           },
           {
@@ -157,7 +157,7 @@
             "endT": 1.0,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.0042,
+              "fromRad": 1.0273,
               "toRad": 1.5708
             }
           }
@@ -333,7 +333,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": -1.5708,
-              "toRad": -2.0722
+              "toRad": -2.0558
             }
           },
           {
@@ -341,7 +341,7 @@
             "endT": 0.3186,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.0722,
+              "fromRad": -2.0558,
               "toRad": -1.8395
             }
           },
@@ -351,7 +351,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": -1.8395,
-              "toRad": -1.6956
+              "toRad": -1.7005
             }
           },
           {
@@ -359,8 +359,8 @@
             "endT": 0.5186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.6956,
-              "toRad": -1.5908
+              "fromRad": -1.7005,
+              "toRad": -1.5969
             }
           },
           {
@@ -368,8 +368,8 @@
             "endT": 0.6186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.5908,
-              "toRad": -1.5055
+              "fromRad": -1.5969,
+              "toRad": -1.5113
             }
           },
           {
@@ -377,8 +377,8 @@
             "endT": 0.7186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.5055,
-              "toRad": -1.4308
+              "fromRad": -1.5113,
+              "toRad": -1.4357
             }
           },
           {
@@ -386,8 +386,8 @@
             "endT": 0.8186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.4308,
-              "toRad": -1.3661
+              "fromRad": -1.4357,
+              "toRad": -1.3693
             }
           },
           {
@@ -395,8 +395,8 @@
             "endT": 0.9186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.3661,
-              "toRad": -1.3489
+              "fromRad": -1.3693,
+              "toRad": -1.348
             }
           },
           {
@@ -404,7 +404,7 @@
             "endT": 1.0,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.3489,
+              "fromRad": -1.348,
               "toRad": -3.1416
             }
           }
@@ -453,12 +453,12 @@
         "mode": "constant",
         "headingRad": 3.1416
       },
-      "speedFraction": 0.3,
+      "speedFraction": 0.2,
       "expect": {
         "collectFrom": "gardenRed",
         "count": 4
       },
-      "notes": "The starter's sweep west along the RED garden line, intake toward the red alliance wall, taking the pollen in a line. It always runs to its end: cut short when full, the robot rolls on into the west wall."
+      "notes": "The starter's sweep west along the RED garden line, intake toward the red alliance wall, taking the pollen in a line. It always runs to its end: cut short when full, the robot rolls on into the west wall. Slower than the starter's 0.3 (0.2, SET BY HAND, the team's call): every pollen in the row has time to go in."
     },
     {
       "id": "gardenWaitFull",
@@ -535,7 +535,7 @@
                 "heading": {
                   "mode": "linear",
                   "fromRad": 3.1416,
-                  "toRad": 4.7008
+                  "toRad": 4.7009
                 }
               },
               {
@@ -543,8 +543,8 @@
                 "endT": 0.2612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.7008,
-                  "toRad": 4.6557
+                  "fromRad": 4.7009,
+                  "toRad": 4.656
                 }
               },
               {
@@ -552,8 +552,8 @@
                 "endT": 0.3612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.6557,
-                  "toRad": 4.6022
+                  "fromRad": 4.656,
+                  "toRad": 4.6031
                 }
               },
               {
@@ -561,8 +561,8 @@
                 "endT": 0.4612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.6022,
-                  "toRad": 4.5358
+                  "fromRad": 4.6031,
+                  "toRad": 4.5376
                 }
               },
               {
@@ -570,8 +570,8 @@
                 "endT": 0.5612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.5358,
-                  "toRad": 4.4474
+                  "fromRad": 4.5376,
+                  "toRad": 4.4518
                 }
               },
               {
@@ -579,8 +579,8 @@
                 "endT": 0.6612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.4474,
-                  "toRad": 4.3192
+                  "fromRad": 4.4518,
+                  "toRad": 4.3299
                 }
               },
               {
@@ -588,8 +588,8 @@
                 "endT": 0.707,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.3192,
-                  "toRad": 4.2367
+                  "fromRad": 4.3299,
+                  "toRad": 4.2536
                 }
               },
               {
@@ -597,7 +597,7 @@
                 "endT": 0.8242,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.2367,
+                  "fromRad": 4.2536,
                   "toRad": 4.7124
                 }
               },

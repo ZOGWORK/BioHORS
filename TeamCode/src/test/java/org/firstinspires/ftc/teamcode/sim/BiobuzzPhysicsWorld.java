@@ -38,12 +38,18 @@ public final class BiobuzzPhysicsWorld {
     /** APPROX (CAD footprint numbers, robot.json): the flower mech's side plates beside the mouth stand
      *  this tall: what a rolling pollen meets beside the mouth. */
     static final double PLATE_HEIGHT_IN = 6.0;
+    /** MEASURED FROM CAD (AdvantageScope's field model, am-5852 Nectar: 3.6 in across every way). */
+    static final double NECTAR_RADIUS_IN = 1.8;
+    /** CALIBRATED in StagedNectarTest (pollen = 1): the middle of 1.20-1.50, where the 3 nectar staged
+     *  in an up cell make 3 shot pollen tip it, as the season's tip table says. Not a weighed nectar. */
+    static double NECTAR_MASS = 1.35;
 
     private BiobuzzPhysicsWorld() {
     }
 
     public static GamePiecePhysicsConfig physics() {
-        return GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).maxSubstepSeconds(SUBSTEP_S).build();
+        return GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).pieceMass("nectar", NECTAR_MASS)
+                .maxSubstepSeconds(SUBSTEP_S).build();
     }
 
     /** The field: walls, both hives, both hive frames, the flower feet. */
@@ -72,6 +78,24 @@ public final class BiobuzzPhysicsWorld {
         b.kinematicBody(frame("hiveFrameRed", frameRed));
         b.kinematicBody(frame("hiveFrameBlue", frameBlue));
         return b.build();
+    }
+
+    /**
+     * The 3 nectar staged in a hive's up cell at kickoff (field file: each hive holds 3), set down
+     * spread across the cell's width at its open end, to settle at the back as the field is set.
+     */
+    /** Returns the 3 nectar's piece ids. */
+    public static int[] stageNectar(org.horizon36596.simloop.field.GamePieceTracker t, boolean red, boolean north) {
+        String hive = BiobuzzHive.bodyName(red);
+        double y = (north ? 1 : -1) * (BiobuzzHive.OUTER_FACE_Y_IN - NECTAR_RADIUS_IN - 0.5);
+        double[] f = new double[3];
+        int[] ids = new int[3];
+        for (int i = 0; i < 3; i++) {
+            double x = -6.0 + 6.0 * i;
+            t.getWorld().getKinematicBody(hive).toField(t.getBodyAngleRad(hive), x, y, NECTAR_RADIUS_IN + 0.3, f);
+            ids[i] = t.addPieceAt("nectar", f[0], f[1], f[2], NECTAR_RADIUS_IN);
+        }
+        return ids;
     }
 
     /** A static body (no hinge, never turned): pieces bounce off its shapes, nothing moves it. */
@@ -104,6 +128,14 @@ public final class BiobuzzPhysicsWorld {
      * else the robot pushes it.
      */
     public static RobotShape robotShape(Json robot) {
+        return robotShape(robot, false);
+    }
+
+    /**
+     * As robotShape(robot), with the flower bar stowed: the bar and its side plates fold back inside
+     * the frame (MechanismConstants.FLOWER_BAR_STOWED), so only the chassis is left to meet a pollen.
+     */
+    public static RobotShape robotShape(Json robot, boolean barStowed) {
         Json fp = robot.get("footprint").get("expandedIn");
         double length = fp.num("lengthIn"), width = fp.num("widthIn"), height = robot.get("heightIn").num("value");
         Json mouth = robot.get("mouths").at(0);
@@ -114,6 +146,9 @@ public final class BiobuzzPhysicsWorld {
         double plateWidth = (width - mouthWidth) / 2.0;
         double plateY = mouthWidth / 2.0 + plateWidth / 2.0;
         double plateX = (frameFront + front) / 2.0, plateHalfX = (front - frameFront) / 2.0;
+        OrientedBox chassis = OrientedBox.axisAligned("chassis", (back + frameFront) / 2.0, 0, height / 2.0,
+                (frameFront - back) / 2.0, width / 2.0, height / 2.0);
+        if (barStowed) return new RobotShape(Collections.singletonList(chassis));
         return new RobotShape(Arrays.asList(
                 OrientedBox.axisAligned("chassis", (back + frameFront) / 2.0, 0, height / 2.0,
                         (frameFront - back) / 2.0, width / 2.0, height / 2.0),

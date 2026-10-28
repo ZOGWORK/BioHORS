@@ -49,6 +49,14 @@ public final class MechanismConstants {
     /** Pollen shooter. Used in auto and teleop. */
     public static final ShooterController.Config POLLEN_SHOOTER = new ShooterController.Config();
 
+    /**
+     * The pollen flywheel's speed in AUTO, from the scoring spots 48 in from the hive axle. PLACEHOLDER,
+     * SET FROM SIM: the middle of the 1650-1850 rpm that seat a pollen from there in the sim's physics,
+     * under the WHAT-IF shot (70 deg exit at 0.8 of the rim speed; the shot is not measured). Film a
+     * shot, measure its exit angle and speed, then re-run ShotSweepTest and set this from it.
+     */
+    public static double AUTO_POLLEN_RPM = 1750.0;
+
     /** Nectar shooter. Teleop / endgame only. Runs at its own (different) speed. */
     public static final ShooterController.Config NECTAR_SHOOTER = new ShooterController.Config();
 
@@ -104,7 +112,8 @@ public final class MechanismConstants {
     // PLACEHOLDER: arbitrary until set on the robot. STOWED folds the bar up (the robot at its
     // shortest, as it starts the match); DOWN puts it out and low for a flower's opening;
     // SHOOTING is DOWN raised slightly, so shots clear it.
-    public static double FLOWER_BAR_STOWED = 0.15;   // PLACEHOLDER
+    public static double FLOWER_BAR_STOWED = 0.05;   // PLACEHOLDER: folded well back, so the bar and its side plates sit
+                                                     // inside the frame and clear of the wall when the robot runs close to it
     public static double FLOWER_BAR_DOWN = 0.80;     // PLACEHOLDER
     public static double FLOWER_BAR_SHOOTING = 0.65; // PLACEHOLDER
     // ===== Pollen count from the intake's speed (IntakeLoadSensor) =====

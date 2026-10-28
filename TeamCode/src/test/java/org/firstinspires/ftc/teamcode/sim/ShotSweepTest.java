@@ -109,6 +109,20 @@ class ShotSweepTest {
         });
     }
 
+    /** Under the what-if shot: which rpms seat from 48 in out (the scoring spots), for choosing the auto's. */
+    @Test
+    void rpmWindowFromTheScoreSpotsIsPrinted() {
+        withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+            for (double y : new double[] {-46, -48, -50}) {
+                StringBuilder row = new StringBuilder(String.format(Locale.ROOT, "WINDOW y %.0f:", y));
+                for (int rpm = 1500; rpm <= 2600; rpm += 50) {
+                    if (BiobuzzHive.cellName(true, false).equals(fire(y, rpm))) row.append(' ').append(rpm);
+                }
+                System.out.println(row);
+            }
+        });
+    }
+
     @Test
     void aBallLeavesAtTheModelledSpeedAndAngle() {
         GamePieceTracker tracker = BiobuzzHiveTest.tracker(BiobuzzHive.body(true));
