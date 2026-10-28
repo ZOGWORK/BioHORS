@@ -44,6 +44,8 @@ class ZenithAutoMatchTest {
 
     static final double AUTO_PERIOD_S = 30.0;
     static final double TICK_S = OpModeRunner.DEFAULT_TICK_SECONDS;
+    /** SET BY HAND: physics runs tick at 100 Hz, so a replay has a pose every 10 ms (smooth playback). */
+    static final double PHYSICS_TICK_S = 0.01;
     /** INIT to PLAY: long enough for the Pinpoint to calibrate. */
     static final int INIT_LOOP_TICKS = 25;
     static final String AUTO_NAME = "two-tip";
@@ -141,6 +143,7 @@ class ZenithAutoMatchTest {
      */
     static final double WHAT_IF_PITCH_DEG = 70.0;
     static final double WHAT_IF_GRIP = 0.8;
+    static final int PRELOAD_PHYSICS = 4;   // SET BY HAND: the auto's start holds (two-tip.auto.json)
 
     @Test
     void theAutoWithRealBallsInPhysics() throws IOException {
@@ -155,12 +158,26 @@ class ZenithAutoMatchTest {
                     + b.report);
 
             // Every pollen the robot held left it, and each launch is accounted for: seated or missed.
-            assertEquals(EXPECTED_SCORED, b.match.launched(), "pollen launched\n" + b.report);
+            // Every pollen that came aboard (the preloads, and each one the intake took, a stray that
+            // rolled back under it included) left the robot.
+            assertEquals(PRELOAD_PHYSICS + b.match.collected(), b.match.launched(), "pollen launched\n" + b.report);
+            assertTrue(b.match.collected() >= 8, "the flower's 4 and the garden's 4 come aboard\n" + b.report);
             assertEquals(b.match.launched(), b.match.scored() + b.match.missed(),
                     "a launch neither seated nor missed\n" + b.report);
             for (org.horizon36596.simloop.field.GamePiece p : b.match.shotPieces()) {
                 assertTrue(Math.abs(p.getFieldXInches()) <= 70.674 && Math.abs(p.getFieldYInches()) <= 70.674,
                         "a ball left the field: " + p);
+            }
+            // One source of truth: every ball the physics has on the field (not aboard) is drawn exactly
+            // where the physics has it, in the last frame of the log.
+            List<double[]> logged = BiobuzzMatch.lastLoggedPollenIn(b.rlog);
+            for (org.horizon36596.simloop.field.GamePiece p : b.match.fieldPieces()) {
+                double best = Double.MAX_VALUE;
+                for (double[] q : logged) {
+                    best = Math.min(best, Math.hypot(Math.hypot(q[0] - p.getFieldXInches(), q[1] - p.getFieldYInches()),
+                            q[2] - p.getFieldZInches()));
+                }
+                assertTrue(best < 1e-3, "physics ball " + p + " is not drawn where it is (nearest drawn " + best + " in)");
             }
             // The hive and the balls are in the log for AdvantageScope's 3D field.
             java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(b.rlog);
@@ -224,7 +241,8 @@ class ZenithAutoMatchTest {
         OpMode.blackboard.put(TracedZenithAuto.AUTO, auto);
         OpMode.blackboard.put(TracedZenithAuto.SOURCE_DIR, assets.getPath());
         OpMode.blackboard.put(TracedZenithAuto.TRACE_FILE, traceFile.getPath());
-        OpMode.blackboard.put(TracedZenithAuto.TICK_S, TICK_S);
+        double tick = physics ? PHYSICS_TICK_S : TICK_S;
+        OpMode.blackboard.put(TracedZenithAuto.TICK_S, tick);
         OpMode.blackboard.put(TracedZenithAuto.DRIVE_PLANT, sim.drivePlant);
 
         // For AdvantageScope: the planned route once, as a trajectory. Both autos drive the same route
@@ -238,10 +256,10 @@ class ZenithAutoMatchTest {
                 .teamPackages("org.firstinspires.ftc.teamcode.", "com.seattlesolvers.solverslib.",
                         SimClockLoader.PEDRO_PATHING, "org.horizon36596.zenith.")
                 .keepBlackboard(true)
-                .tickSeconds(TICK_S)
+                .tickSeconds(tick)
                 .initLoopTicks(INIT_LOOP_TICKS)
                 // The field stops the OpMode at 30 s: exactly the AUTO period, no margin.
-                .activeTicks((int) Math.round(AUTO_PERIOD_S / TICK_S))
+                .activeTicks((int) Math.round(AUTO_PERIOD_S / tick))
                 .eachTick(dt -> {
                     sim.step(dt);
                     match.step(dt);
