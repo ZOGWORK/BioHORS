@@ -498,6 +498,12 @@ public final class BiobuzzMatch {
         return otherTipTimes;
     }
 
+    /** For a focused test: a loose pollen on the floor at (x, y), in either mode. Call before the first step. */
+    void addLoosePollen(double x, double y) {
+        if (world != null) world.addLoosePiece("pollen", x, y, POLLEN_RADIUS_IN);
+        else loosePollen.add(new double[] {x, y, POLLEN_RADIUS_IN});
+    }
+
     /** Physics mode: every piece SimLoop tracks (pollen and nectar, aboard or not). */
     public List<GamePiece> allPieces() {
         return world == null ? new ArrayList<>() : new ArrayList<>(world.getPieces());
