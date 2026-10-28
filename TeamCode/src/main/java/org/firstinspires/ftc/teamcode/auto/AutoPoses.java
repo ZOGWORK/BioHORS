@@ -20,23 +20,23 @@ public final class AutoPoses {
     }
 
     // ---- named waypoints (autos/waypoints.json) ----
-    public static final Pose START = new Pose(-13.0, -64.2, Math.PI / 2);
+    public static final Pose START = new Pose(-13.0, -62.87, Math.PI / 2);
     public static final Pose SCORE_SOUTH = new Pose(-13.0, -36.0, Math.PI / 2);
     public static final Pose SCORE_NORTH = new Pose(-13.0, 44.0, -Math.PI / 2);
     public static final Pose FLOWER_NORTH_APPROACH = new Pose(-24.0, 42.0, Math.PI / 2);
     public static final Pose FLOWER_NORTH_PICKUP = new Pose(-24.0, 52.4, Math.PI / 2);
-    public static final Pose ABOVE_GARDEN_LANE = new Pose(-36.0, -56.0, Math.PI);
-    public static final Pose GARDEN_SWEEP_START = new Pose(-40.0, -62.5, Math.PI);
-    public static final Pose GARDEN_SWEEP_END = new Pose(-56.0, -62.85, Math.PI);
+    public static final Pose ABOVE_GARDEN_LANE = new Pose(-36.0, -54.7, Math.PI);
+    public static final Pose GARDEN_SWEEP_START = new Pose(-40.0, -61.17, Math.PI);
+    public static final Pose GARDEN_SWEEP_END = new Pose(-54.6, -61.62, Math.PI);
     public static final Pose OFF_GARDEN_LANE = new Pose(-50.0, -50.0, Math.PI);
-    public static final Pose PARK = new Pose(-56.0, 36.0, Math.PI);
+    public static final Pose PARK = new Pose(-54.7, 36.0, Math.PI);
 
     // ---- Bezier control points ----
     public static final Pose[] TO_OTHER_SIDE = {
             new Pose(-46.0, -50.0), new Pose(-50.0, 4.79), new Pose(-40.0, 34.0)};
     public static final Pose[] TO_SCORE_NORTH = {new Pose(-24.0, 46.0), new Pose(-13.0, 60.0)};
     public static final Pose[] TO_GARDEN = {
-            new Pose(-48.0, 50.0), new Pose(-50.0, -30.0), new Pose(-26.0, -56.0)};
+            new Pose(-48.0, 50.0), new Pose(-50.0, -30.0), new Pose(-26.0, -54.7)};
     public static final Pose[] DRIVE_BACK = {
             new Pose(-50.0, -40.0), new Pose(-58.0, 62.0), new Pose(-13.0, 56.0)};
 
@@ -55,11 +55,11 @@ public final class AutoPoses {
             HeadingPiece.constant(0.2041, 1.5708), HeadingPiece.linear(0.3742, 1.5708, 3.1416),
             HeadingPiece.linear(0.5442, 3.1416, 4.7124), HeadingPiece.constant(1.0, -1.5708)};
     public static final HeadingPiece[] TO_GARDEN_HEADING = {
-            HeadingPiece.linear(0.2186, -1.5708, -2.0638), HeadingPiece.linear(0.3186, -2.0638, -1.8331),
-            HeadingPiece.linear(0.4186, -1.8331, -1.6909), HeadingPiece.linear(0.5186, -1.6909, -1.5875),
-            HeadingPiece.linear(0.6186, -1.5875, -1.5037), HeadingPiece.linear(0.7186, -1.5037, -1.4309),
-            HeadingPiece.linear(0.8186, -1.4309, -1.3688), HeadingPiece.linear(0.9186, -1.3688, -1.3558),
-            HeadingPiece.linear(1.0, -1.3558, -3.1416)};
+            HeadingPiece.linear(0.2186, -1.5708, -2.0722), HeadingPiece.linear(0.3186, -2.0722, -1.8395),
+            HeadingPiece.linear(0.4186, -1.8395, -1.6956), HeadingPiece.linear(0.5186, -1.6956, -1.5908),
+            HeadingPiece.linear(0.6186, -1.5908, -1.5055), HeadingPiece.linear(0.7186, -1.5055, -1.4308),
+            HeadingPiece.linear(0.8186, -1.4308, -1.3661), HeadingPiece.linear(0.9186, -1.3661, -1.3489),
+            HeadingPiece.linear(1.0, -1.3489, -3.1416)};
     public static final HeadingPiece[] DRIVE_BACK_HEADING = {
             HeadingPiece.linear(0.1612, 3.1416, 4.7008), HeadingPiece.linear(0.2612, 4.7008, 4.6557),
             HeadingPiece.linear(0.3612, 4.6557, 4.6022), HeadingPiece.linear(0.4612, 4.6022, 4.5358),

@@ -4,9 +4,9 @@
   "waypoints": {
     "start": {
       "xIn": -13.0,
-      "yIn": -64.2,
+      "yIn": -62.87,
       "headingRad": 1.5708,
-      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), start x; tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); back on the south wall (the drive centre 7.8 in off it). NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), start x; tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); back on the south wall (the drive centre 7.8 in off it), the wall at FIRST's CAD y = -70.674. NEEDS MEASUREMENT on the real field."
     },
     "scoreSouth": {
       "xIn": -13.0,
@@ -34,21 +34,21 @@
     },
     "aboveGardenLane": {
       "xIn": -36.0,
-      "yIn": -56.0,
+      "yIn": -54.7,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), garden approach, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); heading west above the garden lane, clear of the south wall (the 22 in robot cannot turn next to it). NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), garden approach, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); heading west above the garden lane, clear of the south wall (the 22 in robot cannot turn next to it). NEEDS MEASUREMENT on the real field. Moved 1.3 in north with FIRST's CAD south wall (y = -70.674), so the robot's corner stays inside it as the turn onto the lane heading finishes."
     },
     "gardenSweepStart": {
       "xIn": -40.0,
-      "yIn": -62.5,
+      "yIn": -61.17,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepStart, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); just above the lane heading west (0.35 in short: a slide ends a few tenths past its target, and the slow sweep eases down onto the lane, y = -62.85, before the first pollen). y = -62.85: heading west, the 13.2 in mouth reaches a pollen against the south wall only with the centre between y = -63.08 (the side on the wall) and -62.6. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepStart, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); just above the lane heading west (0.35 in short: a slide ends a few tenths past its target, and the slow sweep eases down onto the lane, y = -61.52, before the first pollen). Against FIRST's CAD wall (y = -70.674) and garden (pollen at y = -69.27), heading west the 13.2 in mouth reaches a pollen against the south wall only with the centre between y = -61.75 (the side on the wall) and -61.27. NEEDS MEASUREMENT on the real field."
     },
     "gardenSweepEnd": {
-      "xIn": -56.0,
-      "yIn": -62.85,
+      "xIn": -54.6,
+      "yIn": -61.62,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepEnd, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); the flower bar 1.8 in short of the west wall (the robot rolls on about 1.3 in past the end of a sweep), past the last pollen. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepEnd, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide). y = -61.62: the side 0.13 in off FIRST's CAD south wall (y = -70.674), so the 13.2 in mouth overlaps the wall-side pollen by 0.23 in. x = -54.6: the last pollen sits in the corner (FIRST's CAD -69.27, -69.27), so the mouth's corner has to reach it: 1.17 in from its centre, inside its 1.4 in radius; the bar tip stops 1.9 in short of the west wall (x = -70.674), about 0.6 in after the robot rolls on. NEEDS MEASUREMENT on the real field."
     },
     "offGardenLane": {
       "xIn": -50.0,
@@ -57,10 +57,10 @@
       "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), garden exit, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); up off the lane still facing west, where a 16.8 in turning circle clears both walls. NEEDS MEASUREMENT on the real field."
     },
     "park": {
-      "xIn": -56,
+      "xIn": -54.7,
       "yIn": 36,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: planning choice (the earlier 2-tip draft's park), RED side (BLUE is the point mirror); partly inside RED's loading zone (x -72..-61, y 24..48), an open spot to finish in, clear of flower1 and the hive frame. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: planning choice (the earlier 2-tip draft's park), RED side (BLUE is the point mirror); partly inside RED's loading zone (x -72..-61, y 24..48), an open spot to finish in, clear of flower1 and the hive frame. NEEDS MEASUREMENT on the real field. Moved 1.3 in east with FIRST's CAD west wall (x = -70.674): facing west, the bar tip stops 1.8 in short of it."
     }
   }
 }

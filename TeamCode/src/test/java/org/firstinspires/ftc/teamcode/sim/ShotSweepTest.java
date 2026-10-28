@@ -86,7 +86,7 @@ class ShotSweepTest {
     }
 
     /** The farthest south the robot's centre can be, facing north: its back 7.8 in behind (CAD). */
-    static final double FARTHEST_Y_IN = -72 + 7.8;
+    static final double FARTHEST_Y_IN = -70.674 + 7.8;
 
     @Test
     void atTheCadReadingNoSpotTheRobotCanReachScores() {
