@@ -9,6 +9,7 @@ import org.horizon36596.zenith.Json;
 import org.psilynx.psikit.core.Logger;
 import org.psilynx.psikit.core.wpi.math.Pose2d;
 import org.psilynx.psikit.core.wpi.math.Pose3d;
+import org.psilynx.psikit.core.wpi.math.Translation3d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -398,8 +399,6 @@ public final class BiobuzzMatch {
         Logger.recordOutput("Shooter/pollenRpm", sim.pollenShooterRpm());
         Logger.recordOutput("Gate/pollen", sim.pollenGatePlant.getPosition());
         Logger.recordOutput("FlowerBar/position", sim.flowerLeftPlant.getPosition());
-        Logger.recordOutput("Viz/flowerBarDeg", Math.toDegrees(flowerBarAngleRad(sim.flowerLeftPlant.getPosition())));
-        Logger.recordOutput("Viz/intakeSpinDeg", Math.toDegrees(intakeSpinRad));
         Logger.recordOutput("Intake/power", sim.intakeLeft.getPower());
     }
 
@@ -440,8 +439,11 @@ public final class BiobuzzMatch {
 
     /** Every ball launched in physics mode, in flight, seated or on the floor (empty otherwise). */
     public List<GamePiece> shotPieces() {
+        // One entry per ball: a spilled ball the intake took again and fired twice is still one ball.
+        java.util.Set<Integer> ids = new java.util.LinkedHashSet<>();
+        for (double[] s : shots) ids.add((int) s[0]);
         List<GamePiece> out = new ArrayList<>();
-        if (world != null) for (double[] s : shots) out.add(world.getPiece((int) s[0]));
+        if (world != null) for (int id : ids) out.add(world.getPiece(id));
         return out;
     }
 
@@ -554,8 +556,12 @@ public final class BiobuzzMatch {
             trail.add(AdvantageScopeFrame.pose2d(x, y, h));
             Logger.recordOutput("Auto/DrivenPath", Pose2d.struct, trail.toArray(new Pose2d[0]));
         }
-        Logger.recordOutput("Field/RobotComponents", robotComponents(pollenSpinRad, nectarSpinRad, intakeSpinRad,
-                flowerBarAngleRad(sim.flowerLeftPlant.getPosition())));
+        Pose3d[] components = robotComponents(pollenSpinRad, nectarSpinRad, intakeSpinRad,
+                flowerBarAngleRad(sim.flowerLeftPlant.getPosition()));
+        Logger.recordOutput("Field/RobotComponents", components);
+        // The angles AdvantageScope is given, read back off the poses it draws (first intake axle, bar).
+        Logger.recordOutput("Viz/intakeSpinDeg", Math.toDegrees(angleAboutY(components[2])));
+        Logger.recordOutput("Viz/flowerBarDeg", Math.toDegrees(angleAboutY(components[components.length - 1])));
         List<Pose3d> pieces = new ArrayList<>();
         for (double[] p : loosePollen) pieces.add(AdvantageScopeFrame.piece(p[0], p[1], p[2]));
         for (Flower f : flowers) {
@@ -608,6 +614,12 @@ public final class BiobuzzMatch {
         out[out.length - 1] = AdvantageScopeFrame.robotFlywheel(FLOWER_BAR_PIVOT_FORWARD_IN, FLOWER_BAR_PIVOT_UP_IN,
                 flowerBarRad);
         return out;
+    }
+
+    /** A pose's turn about the robot's +y, in (-pi, pi]: where it carries the +x axis. */
+    static double angleAboutY(Pose3d pose) {
+        Translation3d x = new Translation3d(1, 0, 0).rotateBy(pose.getRotation());
+        return Math.atan2(-x.getZ(), x.getX());
     }
 
     /**
