@@ -17,7 +17,9 @@ for dp, _, fs in os.walk(root):
             if t.startswith(('//', '/*', '*')):
                 above += ' ' + t
                 continue
-            assigns = ('=' in t and not t.startswith(('if', 'for', 'while', 'return'))) or '.set(' in t
+            # A value is set by an assignment, a .set(...), or a continuation line of a longer call
+            # (pedro/Constants' .put(...) gains): any code line that carries a number.
+            assigns = ('=' in t and not t.startswith(('if', 'for', 'while', 'return'))) or '.set(' in t                 or bool(re.search(r'\d', t.split('//')[0]))
             if assigns and (pat.search(t) or pat.search(above)):
                 label = '' if pat.search(t) else '   [' + pat.search(above).group(0) + ', in the comment above]'
                 rows.append((p.replace(root + '/', ''), i, t[:160] + label))
