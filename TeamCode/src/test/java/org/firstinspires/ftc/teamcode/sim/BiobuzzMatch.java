@@ -46,8 +46,10 @@ import java.util.List;
  *
  * For AdvantageScope (2026-2027 Field, 2D or 3D Field tab) it logs the robot's true pose as
  * Field/Robot and every pollen as Field/Pollen: the garden line, the flower columns, the ones
- * aboard, each launch in flight (a 0.45 s arc), the ones in the hive cells, and a tipped cell's
- * spill on the floor (drawn only; the spill is not modelled as collectable). With the custom robot
+ * aboard (in a line on the robot's floor), each launch flying a gravity arc that drops into the
+ * cell, the ones in the hive cells, misses, and a tipped cell's load falling out of the cell and
+ * bouncing to rest on the floor (drawn only: the flights and the spill are not modelled as
+ * collectable, and scoring is the rule above). With the custom robot
  * model (advantagescope/Robot_BioHORS) it also logs Field/RobotComponents: the pollen and nectar
  * flywheels, spinning at their true rpm.
  */
@@ -105,11 +107,20 @@ public final class BiobuzzMatch {
     private double time;
 
     // ---- drawing only (AdvantageScope) ----
-    static final double FLIGHT_S = 0.45;          // how long a drawn launch takes to arrive
+    static final double FLIGHT_S = 0.7;           // PLACEHOLDER: how long a drawn launch takes to drop into the cell
     static final double LAUNCH_HEIGHT_IN = 16.0;  // PLACEHOLDER: where the pollen leaves the robot
     static final double CELL_AIM_Z_IN = 59.5;     // SPEC: middle of the up-cell opening (field file)
-    private final List<double[]> flights = new ArrayList<>(); // {t0, x0, y0, x1, y1, z1, cell(-1 = loose)}
-    private final List<double[]> spilled = new ArrayList<>(); // {x, y}
+    static final double GRAVITY_IN_PER_S2 = 386.09; // SPEC: g in in/s^2
+    static final double BOUNCE = 0.45;            // PLACEHOLDER: drawn pollen keep this much speed off the floor
+    static final double ROLL_DECAY_PER_S = 3.0;   // PLACEHOLDER: how fast a drawn pollen stops rolling
+    static final double MISS_SPEED_IN_PER_S = 60.0; // PLACEHOLDER: a drawn miss's speed across the floor
+    static final double MISS_RISE_IN_PER_S = 120.0; // PLACEHOLDER: a drawn miss's speed upward at launch
+    static final double SPILL_SPEED_IN_PER_S = 25.0; // PLACEHOLDER: how fast a tipped cell throws its load out
+    // Where the pollen aboard are drawn, robot frame: a line on the robot's floor from just behind
+    // the intake back toward the shooter. PLACEHOLDER (drawing only): the hopper is not in the CAD
+    // footprint numbers yet.
+    static final double HELD_FIRST_FORWARD_IN = 3.0, HELD_SPACING_IN = 2.9, HELD_Z_IN = 3.5;
+    private final List<Ball> balls = new ArrayList<>();
 
     // ---- physics mode ----
     static final double POLLEN_RADIUS_IN = 1.4;   // SPEC (field file)
@@ -268,7 +279,7 @@ public final class BiobuzzMatch {
                 } else if (launchIsLegal(x, y, h)) {
                     int up = upIsNorth ? 1 : 0;
                     double cellY = (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0;
-                    flights.add(new double[] {time, x, y, hiveX, cellY, CELL_AIM_Z_IN, up});
+                    balls.add(Ball.toCell(time, x, y, hiveX, cellY, up));
                     cellPollen[up]++;
                     scored++;
                     int need = tipTable[Math.min(cellNectar[up], tipTable.length - 1)];
@@ -283,7 +294,8 @@ public final class BiobuzzMatch {
                     }
                 } else {
                     missed++;
-                    flights.add(new double[] {time, x, y, x + 40 * Math.cos(h), y + 40 * Math.sin(h), 1.4, -1});
+                    balls.add(Ball.loose(x, y, LAUNCH_HEIGHT_IN, MISS_SPEED_IN_PER_S * Math.cos(h),
+                            MISS_SPEED_IN_PER_S * Math.sin(h), MISS_RISE_IN_PER_S));
                     missLog.add(String.format(java.util.Locale.ROOT, "t=%.2f x=%.1f y=%.1f h=%.1fdeg (%s)",
                             time, x, y, Math.toDegrees(h), missReason(x, y, h)));
                 }
@@ -293,6 +305,8 @@ public final class BiobuzzMatch {
         }
 
         if (world != null) stepPhysics(dt);
+        for (Ball b : balls) b.advance(dt, time);
+        balls.removeIf(b -> b.cell >= 0 && time - b.t0 >= FLIGHT_S);
 
         pollenSpinRad = (pollenSpinRad + sim.pollenShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
         nectarSpinRad = (nectarSpinRad + sim.nectarShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
@@ -386,16 +400,78 @@ public final class BiobuzzMatch {
                 + String.format(java.util.Locale.ROOT, "%.1f deg off the cell", off);
     }
 
-    /** A tipped cell's load, drawn on the floor outboard of it on its own side. */
+    /** A tipped cell's load falls out of it, outboard on its own side, and bounces to rest. */
     private void spill(int cell, int count) {
-        // The pollen still flying into this cell is part of the load that tips: it is drawn in the
-        // spill from now on, not in the air as well.
-        flights.removeIf(f -> f[6] == cell);
+        // The pollen still flying into this cell is part of the load that tips: it falls with the
+        // rest from now on, not in the air as well.
+        balls.removeIf(b -> b.cell == cell);
         double side = cell == 1 ? 1 : -1;
+        double cy = side * FieldFace.OUTER_FACE_IN / 2.0;
         for (int i = 0; i < count; i++) {
             double a = (i - (count - 1) / 2.0) * 0.18;
-            double r = 26 + 5 * (i % 3);
-            spilled.add(new double[] {hiveX + r * Math.sin(a), side * (r * Math.cos(a))});
+            double speed = SPILL_SPEED_IN_PER_S * (1 + 0.2 * (i % 3));
+            balls.add(Ball.loose(hiveX + ((i % 2) * 3.0 - 1.5), cy + ((i / 2 % 2) * 3.0 - 1.5),
+                    CELL_AIM_Z_IN - 4 + 3.0 * (i / 4), speed * Math.sin(a), side * speed * Math.cos(a), 10.0));
+        }
+    }
+
+    /**
+     * A drawn pollen: one flying into a cell (cell >= 0, gone once it arrives, when the cell draws
+     * it), or a loose one (a miss or a spill) under gravity, bouncing off the floor and rolling to a
+     * stop inside the walls. Drawing only.
+     */
+    private static final class Ball {
+        double t0, x, y, z, vx, vy, vz;
+        int cell = -1;
+
+        static Ball loose(double x, double y, double z, double vx, double vy, double vz) {
+            Ball b = new Ball();
+            b.x = x;
+            b.y = y;
+            b.z = z;
+            b.vx = vx;
+            b.vy = vy;
+            b.vz = vz;
+            return b;
+        }
+
+        /** A launch from (x, y) that drops into the cell opening at (x1, y1) after FLIGHT_S. */
+        static Ball toCell(double t0, double x, double y, double x1, double y1, int cell) {
+            double t = FLIGHT_S;
+            Ball b = loose(x, y, LAUNCH_HEIGHT_IN, (x1 - x) / t, (y1 - y) / t,
+                    (CELL_AIM_Z_IN - LAUNCH_HEIGHT_IN + 0.5 * GRAVITY_IN_PER_S2 * t * t) / t);
+            b.t0 = t0;
+            b.cell = cell;
+            return b;
+        }
+
+        void advance(double dt, double time) {
+            double r = POLLEN_RADIUS_IN, wall = 72 - r;
+            if (z > r || vz > 0) {
+                vz -= GRAVITY_IN_PER_S2 * dt;
+                z += vz * dt;
+            }
+            x += vx * dt;
+            y += vy * dt;
+            if (cell >= 0) return;
+            if (z <= r) {
+                z = r;
+                if (vz < 0) {
+                    vz = -vz * BOUNCE;
+                    if (vz < 20) vz = 0;
+                }
+                double keep = Math.exp(-ROLL_DECAY_PER_S * dt);
+                vx *= keep;
+                vy *= keep;
+            }
+            if (Math.abs(x) > wall) {
+                x = Math.copySign(wall, x);
+                vx = -vx * BOUNCE;
+            }
+            if (Math.abs(y) > wall) {
+                y = Math.copySign(wall, y);
+                vy = -vy * BOUNCE;
+            }
         }
     }
 
@@ -412,7 +488,10 @@ public final class BiobuzzMatch {
         for (Flower f : flowers) {
             for (int i = 0; i < f.count; i++) pieces.add(AdvantageScopeFrame.piece(f.x, f.y, 1.6 + 2.9 * i));
         }
-        for (int i = 0; i < held; i++) pieces.add(AdvantageScopeFrame.piece(x, y, 8.0 + 3.0 * i));
+        for (int i = 0; i < held; i++) {
+            double fwd = HELD_FIRST_FORWARD_IN - HELD_SPACING_IN * i;
+            pieces.add(AdvantageScopeFrame.piece(x + fwd * Math.cos(h), y + fwd * Math.sin(h), HELD_Z_IN));
+        }
         if (world != null) {
             for (GamePiece p : shotPieces()) {
                 pieces.add(AdvantageScopeFrame.piece(p.getFieldXInches(), p.getFieldYInches(), p.getFieldZInches()));
@@ -421,19 +500,9 @@ public final class BiobuzzMatch {
             return;
         }
         int[] arriving = new int[2];
-        for (int i = flights.size() - 1; i >= 0; i--) {
-            double[] f = flights.get(i);
-            double u = (time - f[0]) / FLIGHT_S;
-            if (u >= 1) {
-                if (f[6] < 0) spilled.add(new double[] {f[3], f[4]});
-                flights.remove(i);
-                continue;
-            }
-            if (f[6] >= 0) arriving[(int) f[6]]++;
-            double px = f[1] + u * (f[3] - f[1]);
-            double py = f[2] + u * (f[4] - f[2]);
-            double pz = LAUNCH_HEIGHT_IN + u * (f[5] - LAUNCH_HEIGHT_IN) + 4 * 14.0 * u * (1 - u);
-            pieces.add(AdvantageScopeFrame.piece(px, py, pz));
+        for (Ball b : balls) {
+            if (b.cell >= 0) arriving[b.cell]++;
+            pieces.add(AdvantageScopeFrame.piece(b.x, b.y, b.z));
         }
         for (int c = 0; c < 2; c++) {
             double cy = (c == 1 ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0;
@@ -443,7 +512,6 @@ public final class BiobuzzMatch {
                         CELL_AIM_Z_IN - 4 + 3.0 * (i / 4)));
             }
         }
-        for (double[] p : spilled) pieces.add(AdvantageScopeFrame.piece(p[0], p[1], 1.4));
         Logger.recordOutput("Field/Pollen", pieces.toArray(new Pose3d[0]));
     }
 
@@ -567,6 +635,31 @@ public final class BiobuzzMatch {
     }
 
     // ------------------------------------------------------------------ results
+
+    /**
+     * The robot's true pose at the end of a run, read back from its log ({x, y} inches, field
+     * frame): the last frame that holds RealOutputs/Truth/xIn and yIn.
+     */
+    static double[] finalTruthXY(java.nio.file.Path rlog) throws java.io.IOException {
+        List<java.util.Map<String, String>> frames = org.horizon36596.simloop.sim.RlogDecodedCompare.decode(rlog);
+        for (int i = frames.size() - 1; i >= 0; i--) {
+            String x = null, y = null;
+            for (java.util.Map.Entry<String, String> e : frames.get(i).entrySet()) {
+                if (e.getKey().endsWith("RealOutputs/Truth/xIn")) x = e.getValue();
+                if (e.getKey().endsWith("RealOutputs/Truth/yIn")) y = e.getValue();
+            }
+            if (x != null && y != null) return new double[] {Double.parseDouble(x), Double.parseDouble(y)};
+        }
+        throw new IllegalStateException("no RealOutputs/Truth/xIn and yIn in " + rlog);
+    }
+
+    /** How far (inches) the run ended from the RED park spot, as seen by the alliance. */
+    static double inchesFromPark(java.nio.file.Path rlog, boolean red) throws java.io.IOException {
+        double[] xy = finalTruthXY(rlog);
+        com.pedropathing.math.Pose park = org.firstinspires.ftc.teamcode.auto.AutoPoses.PARK;
+        double s = red ? 1 : -1;
+        return Math.hypot(xy[0] - s * park.x(), xy[1] - s * park.y());
+    }
 
     public int held() { return held; }
     public int launched() { return launched; }

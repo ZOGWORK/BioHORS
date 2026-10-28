@@ -29,6 +29,7 @@ public final class AutoPoses {
     public static final Pose GARDEN_SWEEP_START = new Pose(-40.0, -62.5, Math.PI);
     public static final Pose GARDEN_SWEEP_END = new Pose(-56.0, -62.85, Math.PI);
     public static final Pose OFF_GARDEN_LANE = new Pose(-50.0, -50.0, Math.PI);
+    public static final Pose PARK = new Pose(-56.0, 36.0, Math.PI);
 
     // ---- Bezier control points ----
     public static final Pose[] TO_OTHER_SIDE = {
@@ -40,17 +41,31 @@ public final class AutoPoses {
             new Pose(-50.0, -40.0), new Pose(-58.0, 62.0), new Pose(-13.0, 56.0)};
 
     // ---- headings along the curves, piece by piece (radians, RED), as in the draft ----
+    // Written by tools/zenith_headings.py: Pedro reads a piece's end as a fraction of the
+    // path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are
+    // linear pieces between the curve's true direction, each starting where the last ended.
+    // AutoPosesTest checks there is no jump.
     public static final HeadingPiece[] TO_OTHER_SIDE_HEADING = {
-            HeadingPiece.linear(0.2038, 1.5708, 2.3722), HeadingPiece.tangent(0.8679),
-            HeadingPiece.linear(1.0, 1.0385, 1.5708)};
+            HeadingPiece.linear(0.2038, 1.5708, 2.3725), HeadingPiece.linear(0.3038, 2.3725, 1.968),
+            HeadingPiece.linear(0.4038, 1.968, 1.7484), HeadingPiece.linear(0.5038, 1.7484, 1.5973),
+            HeadingPiece.linear(0.6038, 1.5973, 1.4676), HeadingPiece.linear(0.7038, 1.4676, 1.3318),
+            HeadingPiece.linear(0.8038, 1.3318, 1.159), HeadingPiece.linear(0.8679, 1.159, 1.0042),
+            HeadingPiece.linear(1.0, 1.0042, 1.5708)};
     public static final HeadingPiece[] TO_SCORE_NORTH_HEADING = {
-            HeadingPiece.tangentReversed(0.2041), HeadingPiece.linear(0.5442, 2.8274, 4.7124),
-            HeadingPiece.constant(1.0, -1.5708)};
+            HeadingPiece.constant(0.2041, 1.5708), HeadingPiece.linear(0.3742, 1.5708, 3.1416),
+            HeadingPiece.linear(0.5442, 3.1416, 4.7124), HeadingPiece.constant(1.0, -1.5708)};
     public static final HeadingPiece[] TO_GARDEN_HEADING = {
-            HeadingPiece.linear(0.2186, -1.5708, -2.0354), HeadingPiece.tangent(1.0)};
+            HeadingPiece.linear(0.2186, -1.5708, -2.0638), HeadingPiece.linear(0.3186, -2.0638, -1.8331),
+            HeadingPiece.linear(0.4186, -1.8331, -1.6909), HeadingPiece.linear(0.5186, -1.6909, -1.5875),
+            HeadingPiece.linear(0.6186, -1.5875, -1.5037), HeadingPiece.linear(0.7186, -1.5037, -1.4309),
+            HeadingPiece.linear(0.8186, -1.4309, -1.3688), HeadingPiece.linear(0.9186, -1.3688, -1.3558),
+            HeadingPiece.linear(1.0, -1.3558, -3.1416)};
     public static final HeadingPiece[] DRIVE_BACK_HEADING = {
-            HeadingPiece.linear(0.1612, -3.1416, -1.7852), HeadingPiece.tangentReversed(0.707),
-            HeadingPiece.linear(0.8242, -2.0008, -1.5708), HeadingPiece.constant(1.0, -1.5708)};
+            HeadingPiece.linear(0.1612, 3.1416, 4.7008), HeadingPiece.linear(0.2612, 4.7008, 4.6557),
+            HeadingPiece.linear(0.3612, 4.6557, 4.6022), HeadingPiece.linear(0.4612, 4.6022, 4.5358),
+            HeadingPiece.linear(0.5612, 4.5358, 4.4474), HeadingPiece.linear(0.6612, 4.4474, 4.3192),
+            HeadingPiece.linear(0.707, 4.3192, 4.2367), HeadingPiece.linear(0.8242, 4.2367, 4.7124),
+            HeadingPiece.constant(1.0, -1.5708)};
 
     /** One piece of a path's heading, up to {@code endT} of the path: Zenith's piecewise modes. */
     public static final class HeadingPiece {

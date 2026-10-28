@@ -43,6 +43,8 @@ class StateMachineAutoMatchTest {
         OpMode.blackboard.clear();
     }
 
+    static final double PARKED_WITHIN_IN = 2.0;   // SET BY HAND: the follower's end tolerance, with margin
+
     static final class Run {
         BiobuzzMatch match;
         Path rlog;
@@ -72,6 +74,10 @@ class StateMachineAutoMatchTest {
         for (TwoTipStateMachineAuto.State s : TwoTipStateMachineAuto.State.values()) expected.add(s.name());
         assertEquals(expected, red.states, "every state ran, in order\n" + red.report);
         assertTrue(red.doneAt() < AUTO_PERIOD_S, "parked at " + red.doneAt() + " s\n" + red.report);
+        assertTrue(BiobuzzMatch.inchesFromPark(red.rlog, true) < PARKED_WITHIN_IN,
+                "RED ended " + BiobuzzMatch.inchesFromPark(red.rlog, true) + " in from the park spot\n" + red.report);
+        assertTrue(BiobuzzMatch.inchesFromPark(blue.rlog, false) < PARKED_WITHIN_IN,
+                "BLUE ended " + BiobuzzMatch.inchesFromPark(blue.rlog, false) + " in from the park spot\n" + blue.report);
 
         assertTrue(red.match.unintendedContacts().isEmpty(), "contact: " + red.match.unintendedContacts() + "\n" + red.report);
         // Zenith's starter route turns while it drives, and the 22 in robot slides square to the

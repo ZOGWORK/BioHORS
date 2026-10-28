@@ -39,6 +39,7 @@ class AutoPosesTest {
         named.put("gardenSweepStart", AutoPoses.GARDEN_SWEEP_START);
         named.put("gardenSweepEnd", AutoPoses.GARDEN_SWEEP_END);
         named.put("offGardenLane", AutoPoses.OFF_GARDEN_LANE);
+        named.put("park", AutoPoses.PARK);
         for (Map.Entry<String, Pose> e : named.entrySet()) {
             Json j = w.get(e.getKey());
             assertNotNull(j, "the draft has no waypoint " + e.getKey());
@@ -103,11 +104,52 @@ class AutoPosesTest {
         }
     }
 
+    /**
+     * No heading jump anywhere on a curve, and no tangent piece (Pedro misreads one inside a
+     * piecewise heading): each piece starts on the heading the one before it ends
+     * on (or, for the first, the heading the robot has where the leg starts), and the last ends on
+     * the heading the next step holds. A jump is the robot spinning round on the spot mid-path.
+     */
+    @Test
+    void curveHeadingsNeverJump() {
+        check("toOtherSide", AutoPoses.SCORE_SOUTH.heading(), AutoPoses.TO_OTHER_SIDE_HEADING, AutoPoses.FACING_NORTH);
+        check("toScoreNorth", AutoPoses.FLOWER_NORTH_PICKUP.heading(), AutoPoses.TO_SCORE_NORTH_HEADING,
+                AutoPoses.SCORE_NORTH.heading());
+        check("toGarden", AutoPoses.SCORE_NORTH.heading(), AutoPoses.TO_GARDEN_HEADING, AutoPoses.FACING_WEST);
+        check("driveBack", AutoPoses.OFF_GARDEN_LANE.heading(), AutoPoses.DRIVE_BACK_HEADING,
+                AutoPoses.SCORE_NORTH.heading());
+    }
+
+    private static void check(String leg, double startHeading, AutoPoses.HeadingPiece[] pieces, double endHeading) {
+        double before = startHeading;
+        double startT = 0;
+        for (int i = 0; i < pieces.length; i++) {
+            AutoPoses.HeadingPiece p = pieces[i];
+            assertEquals(0.0, Math.toDegrees(angleBetween(before, pieceAt(p, true))), 2.0,
+                    leg + " jumps at t = " + startT + " (piece " + i + ")");
+            before = pieceAt(p, false);
+            startT = p.endT;
+        }
+        assertEquals(0.0, Math.toDegrees(angleBetween(before, endHeading)), 2.0, leg + " ends off the next heading");
+    }
+
+    /** A piece's heading where it starts ({@code start}) or ends. */
+    private static double pieceAt(AutoPoses.HeadingPiece p, boolean start) {
+        switch (p.mode) {
+            case "linear": return start ? p.from : p.to;
+            case "constant": return p.from;
+            default:
+                // Pedro 3's piecewise heading hands each piece its own 0..1 t, so a tangent piece
+                // reads the direction of the wrong part of the curve: write it as linear pieces
+                // (tools/zenith_headings.py).
+                throw new AssertionError("a " + p.mode + " piece inside a piecewise heading: Pedro misreads it");
+        }
+    }
+
     @Test
     void heldHeadingsMatchTheZenithDraft() throws IOException {
         Map<String, Double> held = new LinkedHashMap<>();
         held.put("collectFlower", AutoPoses.FACING_NORTH);
-        held.put("backOffFlower", AutoPoses.FACING_NORTH);
         held.put("slideOntoLane", AutoPoses.FACING_WEST);
         held.put("sweepGarden", AutoPoses.FACING_WEST);
         held.put("offGardenLane", AutoPoses.FACING_WEST);

@@ -55,6 +55,12 @@
       "yIn": -50.0,
       "headingRad": 3.1416,
       "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), garden exit, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); up off the lane still facing west, where a 16.8 in turning circle clears both walls. NEEDS MEASUREMENT on the real field."
+    },
+    "park": {
+      "xIn": -56,
+      "yIn": 36,
+      "headingRad": 3.1416,
+      "provenance": "SET BY HAND: planning choice (the earlier 2-tip draft's park), RED side (BLUE is the point mirror); partly inside RED's loading zone (x -72..-61, y 24..48), an open spot to finish in, clear of flower1 and the hive frame. NEEDS MEASUREMENT on the real field."
     }
   }
 }
