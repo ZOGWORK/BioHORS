@@ -69,7 +69,8 @@ class ZenithAutoMatchTest {
         String auto = System.getProperty("zenith.auto", AUTO_NAME);
         Result red1 = runMatch(auto, "RED", "run1");
         Result red2 = runMatch(auto, "RED", "");
-        Result blue = runMatch(auto, "BLUE", "");
+        // BLUE runs its own file: autos/<auto>-blue.auto.json, Zenith's mirror of the RED one.
+        Result blue = runMatch(auto + "-blue", "BLUE", "");
 
         System.out.print(red2.report + blue.report);
 
@@ -196,6 +197,14 @@ class ZenithAutoMatchTest {
             }
             List<RlogDecodedCompare.Mismatch> diff = RlogDecodedCompare.compare(a.rlog, b.rlog);
             assertTrue(diff.isEmpty(), "two physics runs logged differently: " + RlogDecodedCompare.summarise(diff));
+
+            // BLUE, its own (mirrored) file, with real balls: the same score and tips as RED.
+            Result c = runMatch(auto + "-blue", "BLUE", "physics", true);
+            System.out.print("PHYSICS BLUE" + c.report);
+            assertEquals(b.match.scored(), c.match.scored(), "BLUE real shots seated\n" + c.report);
+            assertEquals(b.match.tips(), c.match.tips(), "BLUE tips in physics\n" + c.report);
+            assertEquals(PRELOAD_PHYSICS + c.match.collected(), c.match.launched(), "BLUE pollen launched\n" + c.report);
+            assertTrue(c.match.unintendedContacts().isEmpty(), "BLUE structure contact: " + c.match.unintendedContacts());
         } finally {
             ShotModel.POLLEN_PITCH_DEG = savedPitch;
             ShotModel.GRIP_EFFICIENCY = savedGrip;
@@ -239,7 +248,8 @@ class ZenithAutoMatchTest {
         }
         sim.placeAt(sx, sy, sh);
 
-        String tag = auto + "-" + alliance.toLowerCase(Locale.ROOT) + (suffix.isEmpty() ? "" : "-" + suffix);
+        String side = "-" + alliance.toLowerCase(Locale.ROOT);
+        String tag = (auto.endsWith(side) ? auto : auto + side) + (suffix.isEmpty() ? "" : "-" + suffix);
         File traceFile = new File(root, "TeamCode/build/sim/"
                 + (red && suffix.isEmpty() ? auto : tag) + ".trace.json");
         Path rlog = new File(root, "TeamCode/build/sim/" + tag + ".rlog").toPath();
