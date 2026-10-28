@@ -169,12 +169,12 @@ def img(name, width_frac=1.0, caption=None, max_h=4.2 * inch):
     return KeepTogether(parts)
 
 
-def two_imgs(a, b, cap_a, cap_b):
+def two_imgs(a, b, cap_a, cap_b, frac=0.485):
     from reportlab.lib.utils import ImageReader
     cells = []
     for name, cap in ((a, cap_a), (b, cap_b)):
         iw, ih = ImageReader(os.path.join(IMG, name)).getSize()
-        w = BODY_W * 0.485
+        w = BODY_W * frac
         cells.append([Image(os.path.join(IMG, name), width=w, height=w * ih / iw), P(cap, 'cap')])
     t = Table([[cells[0], cells[1]]], colWidths=[BODY_W * 0.5, BODY_W * 0.5])
     t.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP'), ('LEFTPADDING', (0, 0), (-1, -1), 2),
@@ -315,11 +315,16 @@ def build():
 
     # ---- 1 status
     story += [bar(1), Spacer(1, 10),
-              P('Two autos run the same route, and both pass every sim test on both alliances:'),
+              P('Two autos run the same route, and both pass every sim test on both alliances. <b>Pick the auto for '
+                'your alliance</b>: the Zenith auto has one OpMode per alliance; the state-machine auto uses the '
+                '<b>Choose Alliance</b> OpMode (run it before INIT; RED if never set).'),
               table([['OpMode name', 'What it is', 'File'],
-                     ['<b>Two tip</b> (group Generated)', 'Zenith auto: the route lives in '
+                     ['<b>Two tip</b> (group Generated)', 'Zenith auto, <b>RED</b>: the route lives in '
                       + mono('autos/two-tip.auto.json') + ', run by the SolversLib command runner.',
-                      f('TeamCode/src/main/java/org/firstinspires/ftc/teamcode/zenith/BioHorsZenithRobot.java')],
+                      f('autos/two-tip.auto.json')],
+                     ['<b>Two tip (BLUE)</b> (group Generated)', 'Zenith auto, <b>BLUE</b>: Zenith\'s mirror of the RED '
+                      'file, written by ' + mono('tools/mirror_auto.mjs') + '. Never edit it by hand.',
+                      f('autos/two-tip-blue.auto.json')],
                      ['<b>Two Tip (state machine)</b> (group BioHORS)', 'Hand-written: Pedro paths and one '
                       'explicit state machine per mechanism. Easier to read and change by hand.',
                       f('TeamCode/src/main/java/org/firstinspires/ftc/teamcode/auto/TwoTipStateMachineAuto.java')],
@@ -332,12 +337,12 @@ def build():
                 '<i>scoreNorth</i>, come back down and sweep the garden row along the south wall with the bar stowed, '
                 'drive back round the hive and score the third volley from <i>scoreNorth</i>, then park. In the sim it scores <b>12 of 12</b> pollen and tips the hive <b>twice</b>, '
                 'touches nothing, and finishes in about <b>27.6 s</b> of the 30.'),
-              img('route-red.png', 0.78, 'Zenith render of the RED route (zenith render two-tip). Green dots are '
-                  'waypoints; the numbers are the steps.', max_h=3.35 * inch),
               Callout('warn', '<b>All of this is simulated.</b> No number on this robot is tuned yet. The poses come '
                       'from FIRST\'s field CAD and the robot CAD, not a real field. The shot (exit angle and speed) is '
                       'a what-if; the scoring spots and the auto rpm (1750) were picked in the sim to make that what-if '
                       'shot land. <b>Filming one real shot is the most important measurement left</b> (Section 5d).'),
+              two_imgs('route-red.png', 'route-blue.png', 'RED: zenith render two-tip.',
+                       'BLUE: zenith render two-tip-blue, the same route turned 180 deg about the field centre.', frac=0.4),
               PageBreak(),
               P('What it looks like in AdvantageScope (frames from the physics run; the robot is the CAD model, the '
                 'green line is the planned route, the orange line the driven path):', 'body'),
@@ -367,10 +372,15 @@ def build():
                 'appear under the names in Section 1.'),
               P('<b>4. Install the AdvantageScope assets</b> (once per laptop). Open AdvantageScope once and pick the '
                 '2026-2027 FTC field so it downloads the field model, close it, then run (Python with numpy):'),
-              code('python advantagescope/tools/build_hive_assets.py'),
+              code('# Windows\npython advantagescope/tools/build_hive_assets.py\n\n'
+                   '# macOS (the script looks under APPDATA, so point it at the Mac folder)\n'
+                   'APPDATA="$HOME/Library/Application Support" python3 advantagescope/tools/build_hive_assets.py\n\n'
+                   '# Linux\nAPPDATA="$HOME/.config" python3 advantagescope/tools/build_hive_assets.py'),
               P('That writes <i>2026-2027 Field (tipping hive)</i>, <i>Hive (Red)</i> and <i>Hive (Blue)</i> into '
-                + mono('%APPDATA%/AdvantageScope/userAssets') + '. Copy the folder ' + mono('advantagescope/Robot_BioHORS')
-                + ' (the robot CAD model) into the same folder by hand, then restart AdvantageScope.'),
+                'AdvantageScope\'s ' + mono('userAssets') + ' folder (on Windows ' + mono('%APPDATA%/AdvantageScope/userAssets')
+                + '; AdvantageScope\'s <b>Show Assets Folder</b> menu item opens it on any system). Copy the folder '
+                + mono('advantagescope/Robot_BioHORS') + ' (the robot CAD model) into the same folder by hand, then '
+                'restart AdvantageScope.'),
               P('<b>5. Open a log.</b> Drag any ' + mono('.rlog') + ' from ' + mono('TeamCode/build/sim/')
                 + ' (or from the attached zip) onto AdvantageScope. Add a <b>3D Field</b> tab, pick the field '
                 '<i>2026-2027 Field (tipping hive)</i>, and drag these keys in:'),
@@ -472,7 +482,7 @@ def build():
               P('<b>5b. Target rpm</b> (field test)', 'h2'),
               P('Teleop pollen target is 1600 rpm (the team\'s test value); the auto uses ' + mono('AUTO_POLLEN_RPM')
                 + ' = 1750 (picked in the sim). Shoot from the auto\'s spots and trim in the teleop: '
-                '<b>dpad left/right</b> trims pollen, <b>X / A</b> trims nectar, 50 rpm a press. Write the rpm that lands '
+                '<b>dpad left/right</b> trims pollen, <b>left bumper / A</b> trims nectar, 50 rpm a press. Write the rpm that lands '
                 '10 of 10 back into the file.'),
               P('<b>5c. Gates, flower bar, intake</b> (sections 4, 4b, 4c)', 'h2'),
               table([['What', 'How to find it', 'Values'],
@@ -513,7 +523,8 @@ def build():
                      ['Heading', 'Radians, counter-clockwise from +X. 90 deg = pi/2 = 1.5708 faces +Y (north); 180 deg = '
                       'pi = 3.1416 faces -X (west); -90 deg faces south'],
                      ['Units', 'Inches. The walls are at x, y = +/-70.674 (FIRST CAD)'],
-                     ['Alliances', 'Write RED only. BLUE is the point mirror: (x, y, h) -> (-x, -y, h + pi), done in code']],
+                     ['Alliances', 'Write RED only. BLUE is the point mirror: (x, y, h) -> (-x, -y, h + pi). The state-machine '
+                      'auto mirrors in code; the Zenith BLUE file is written by ' + mono('tools/mirror_auto.mjs')]],
                     [0.15, 0.85], c6),
               P('<b>The waypoints today (RED)</b>', 'h2'),
               table([['Waypoint', 'x in', 'y in', 'heading', 'What it is'],
@@ -537,10 +548,16 @@ def build():
                       'point, save. Or edit the JSON by hand.', f('autos/waypoints.json')],
                      ['2', 'Check it: no wall, hive or flower in the way, and it fits in 30 s.',
                       mono('npx zenith validate') + '<br/>' + mono('npx zenith estimate autos/two-tip.auto.json')],
-                     ['3', 'Copy it to the robot and refresh the generated Java.',
-                      mono('npx zenith deploy') + '<br/>' + mono('npx zenith codegen autos/two-tip.auto.json')],
+                     ['3', 'Write the BLUE auto again (Zenith\'s mirror of the RED one), copy both to the robot and '
+                      'refresh the generated Java. BlueAutoMirrorTest fails if you skip this.',
+                      mono('node tools/mirror_auto.mjs') + '<br/>' + mono('npx zenith deploy') + '<br/>'
+                      + mono('npx zenith codegen two-tip') + '<br/>' + mono('npx zenith codegen two-tip-blue')],
                      ['4', 'Copy the same number into the state-machine auto\'s pose (named in CAPITALS, e.g. '
                       + mono('GARDEN_SWEEP_END') + ').', f('TeamCode/src/main/java/org/firstinspires/ftc/teamcode/auto/AutoPoses.java')],
+                     ['4b', 'Changed <i>start</i>? Also set the teleop\'s fallback start, used when the teleop runs without '
+                      'an auto before it: ' + mono('DEFAULT_START_X_IN') + ', ' + mono('DEFAULT_START_Y_IN') + ', '
+                      + mono('DEFAULT_START_HEADING_RAD') + '. Otherwise aim works from the old spot.',
+                      f('TeamCode/src/main/java/org/firstinspires/ftc/teamcode/teleop/MainHorsTeleOp.java')],
                      ['5', 'Run the tests. AutoPosesTest checks the two copies are equal; the match tests check both autos '
                       'still score, tip, avoid contact and finish on time on both alliances.', mono('.\\gradlew.bat :TeamCode:testDebugUnitTest')],
                      ['6', 'Open ' + mono('TeamCode/build/sim/two-tip-red.rlog') + ' in AdvantageScope and watch it.', 'Section 2'],
@@ -644,16 +661,18 @@ def build():
     # ---- 9 attached files
     c9 = SECTION_COLOURS[8]
     story += [bar(9), Spacer(1, 10),
-              P('The zip <b>BioHORS_team_packet.zip</b> that comes with this PDF holds everything needed to see what the '
-                'sim saw, without building anything. The code itself is on GitHub (Section 2).'),
+              P('The zip <b>BioHORS_team_packet.zip</b> holds everything needed to see what the sim saw, without '
+                'building anything. It is too big for git, so it is shared alongside this PDF; to build a fresh one '
+                'from your own checkout (after running the tests, Section 2), run:'),
+              code('python docs/packet/make_zip.py      # writes build/BioHORS_team_packet.zip'),
               table([['Folder in the zip', 'What', 'Use it to'],
                      ['BioHORS_Team_Packet.pdf', 'This packet', 'Read'],
-                     ['logs/*.rlog', 'Every sim run: two-tip-red / blue (Zenith auto), two-tip-red-physics (real ball '
-                      'physics), state-machine-red / blue, physics-tip-demo(-blue), mechanisms-demo, teleop-aim, ...',
+                     ['logs/*.rlog', 'Every sim run: two-tip-red / two-tip-blue (Zenith autos), two-tip-red-physics / '
+                      'two-tip-blue-physics (real ball physics), state-machine-red / blue, physics-tip-demo(-blue), mechanisms-demo, teleop-aim, ...',
                       'Drag onto AdvantageScope (Section 2, step 5)'],
                      ['logs/*.trace.json', 'Per-step timing traces of the Zenith auto', 'npx zenith sim / calibrate'],
                      ['videos/*.mp4', 'Screen recordings of the auto in AdvantageScope', 'Show the team'],
-                     ['autos/', 'robot.json, waypoints.json, two-tip.auto.json, the field file, zenith.json',
+                     ['autos/', 'robot.json, waypoints.json, two-tip.auto.json, two-tip-blue.auto.json, the field file, zenith.json',
                       'Open in the Zenith app; the source of the route'],
                      ['advantagescope/', 'Robot_BioHORS model + config, the hive asset tools', 'Install the 3D assets'],
                      ['docs/', 'TUNING.md (the long tuning brief), ROBOT_CAD.md, two-tip.png', 'Detail behind Sections 4-5'],
@@ -666,7 +685,8 @@ def build():
               P('<b>Which test writes which log</b>', 'h2'),
               table([['Log', 'Test', 'What it proves'],
                      ['two-tip-red / blue', 'ZenithAutoMatchTest', '12 scored, 2 tips, no contact, under 30 s, both alliances'],
-                     ['two-tip-red-physics', 'ZenithAutoMatchTest (physics)', 'The same with real ball flight and landing'],
+                     ['two-tip-red / blue-physics', 'ZenithAutoMatchTest (physics)', 'The same with real ball flight and landing'],
+                     ['(no log)', 'BlueAutoMirrorTest', 'The BLUE Zenith file is the mirror of the RED one'],
                      ['state-machine-red / blue', 'StateMachineAutoMatchTest', 'The hand-written auto does the same'],
                      ['physics-tip-demo', 'PhysicsTipDemoTest', 'The hive tips when the balls land, not before'],
                      ['mechanisms-demo', 'MechanismsDemoTest', 'Intake spins, flower bar moves'],
