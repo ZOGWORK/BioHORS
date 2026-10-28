@@ -39,6 +39,7 @@ class AutoPosesTest {
         named.put("gardenSweepStart", AutoPoses.GARDEN_SWEEP_START);
         named.put("gardenSweepEnd", AutoPoses.GARDEN_SWEEP_END);
         named.put("offGardenLane", AutoPoses.OFF_GARDEN_LANE);
+        named.put("parkLane", AutoPoses.PARK_LANE);
         named.put("park", AutoPoses.PARK);
         for (Map.Entry<String, Pose> e : named.entrySet()) {
             Json j = w.get(e.getKey());
@@ -56,6 +57,7 @@ class AutoPosesTest {
         byStep.put("toScoreNorth", AutoPoses.TO_SCORE_NORTH);
         byStep.put("toGarden", AutoPoses.TO_GARDEN);
         byStep.put("driveBack", AutoPoses.DRIVE_BACK);
+        byStep.put("toParkLane", AutoPoses.TO_PARK_LANE);
         Map<String, Json> steps = steps();
         for (Map.Entry<String, Pose[]> e : byStep.entrySet()) {
             Json step = steps.get(e.getKey());

@@ -54,7 +54,9 @@ class ZenithAutoMatchTest {
     static final int EXPECTED_SCORED = 12;
     static final double PARKED_WITHIN_IN = 2.0;   // SET BY HAND: the follower's end tolerance, with margin
     static final int EXPECTED_TIPS = 2;
-    static final double MAX_STRAFE_FRACTION = 0.30;
+    // SET BY HAND: the route strafes 29 % without the park slide; the team's park (2026-10-28) slides
+    // 18 in south into the spot facing west on purpose, which makes it 33 %.
+    static final double MAX_STRAFE_FRACTION = 0.35;
 
     private final File root = projectRoot();
     private final File assets = new File(root, "TeamCode/src/main/assets/autos");

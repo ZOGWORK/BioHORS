@@ -335,8 +335,8 @@ def build():
               P('<b>The route (RED; BLUE is the point mirror).</b> Start on the south wall with 4 pollen, score them '
                 'from <i>scoreSouth</i>, drive north and take pollen from the flower with the bar down, score from '
                 '<i>scoreNorth</i>, come back down and sweep the garden row along the south wall with the bar stowed, '
-                'drive back round the hive and score the third volley from <i>scoreNorth</i>, then park. In the sim it scores <b>12 of 12</b> pollen and tips the hive <b>twice</b>, '
-                'touches nothing, and finishes in about <b>27.6 s</b> of the 30.'),
+                'drive back round the hive and score the third volley from <i>scoreNorth</i>, then run west along the north wall and slide south into the park spot, facing west. In the sim it scores <b>12 of 12</b> pollen and tips the hive <b>twice</b>, '
+                'touches nothing, and finishes in about <b>28.8 s</b> of the 30 by the Zenith estimate, parked by 22.5 s in the sim.'),
               Callout('warn', '<b>All of this is simulated.</b> No number on this robot is tuned yet. The poses come '
                       'from FIRST\'s field CAD and the robot CAD, not a real field. The shot (exit angle and speed) is '
                       'a what-if; the scoring spots and the auto rpm (1750) were picked in the sim to make that what-if '
@@ -537,6 +537,7 @@ def build():
                      ['gardenSweepStart', '-40', '-61.17', '180 deg', 'Start of the sweep, by the south wall'],
                      ['gardenSweepEnd', '-59.6', '-61.62', '180 deg', 'Front roller over the corner pollen'],
                      ['offGardenLane', '-50', '-50', '180 deg', 'Back off the wall after the sweep'],
+                     ['parkLane', '-54.7', '54', '180 deg', 'Straight north of park: the robot slides south from here'],
                      ['park', '-54.7', '36', '180 deg', 'End of the auto']],
                     [0.22, 0.09, 0.09, 0.11, 0.49], c6),
               PageBreak(),
@@ -616,7 +617,7 @@ def build():
     c8 = SECTION_COLOURS[7]
     M = 'MechanismConstants'
     rows = [['Group', 'Value (file)', 'Now', 'Label', 'How to measure'],
-            ['Field', 'All 10 waypoints (waypoints.json + AutoPoses)', 'Section 6', 'SET BY HAND / SET FROM SIM', 'Drive there on a real field, read the Pinpoint'],
+            ['Field', 'All 11 waypoints (waypoints.json + AutoPoses)', 'Section 6', 'SET BY HAND / SET FROM SIM', 'Drive there on a real field, read the Pinpoint'],
             ['Field', 'Teleop start pose (MainHorsTeleOp DEFAULT_START_X/Y)', '-13, -62.87', 'NEEDS MEASUREMENT', 'Same as the auto start'],
             ['Pinpoint', 'yPodOffset (pedro/Constants)', '0', 'PLACEHOLDER', 'Pinpoint Tuner'],
             ['Pinpoint', 'xPodOffset', '-2.84', 'MEASURED FROM CAD', 'Pinpoint Tuner: compare'],

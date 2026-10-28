@@ -76,7 +76,8 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         OFF_GARDEN_LANE,        // up off the lane still facing west
         DRIVE_BACK,             // round to the north score spot, spinning up on the way
         SHOOT_GARDEN,           // tip 2
-        PARK,                   // west to the park spot, partly in RED's loading zone
+        TO_PARK_LANE,           // out toward the north wall and west along it, turning to face west
+        PARK,                   // slide south into the park spot, partly in RED's loading zone
         DONE
     }
 
@@ -261,11 +262,15 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 go(curve(DRIVE_BACK, SCORE_NORTH).heading(pieces(DRIVE_BACK_HEADING)), DEFAULT_SPEED);
                 break;
 
-            case PARK:
+            case TO_PARK_LANE:
                 mech.stopAll();
                 // A quarter turn clockwise, from facing the hive to facing west, on the way.
-                go(Paths.line(here(), p(PARK)).heading(Interpolator.linear(h(FACING_SOUTH), h(FACING_WEST))),
+                go(curve(TO_PARK_LANE, PARK_LANE).heading(Interpolator.linear(h(FACING_SOUTH), h(FACING_WEST))),
                         DEFAULT_SPEED);
+                break;
+            case PARK:
+                // Slide south (the robot's left) into the spot, still facing west.
+                go(Paths.line(here(), p(PARK)).constant(h(FACING_WEST)), DEFAULT_SPEED);
                 break;
 
             case DONE:
