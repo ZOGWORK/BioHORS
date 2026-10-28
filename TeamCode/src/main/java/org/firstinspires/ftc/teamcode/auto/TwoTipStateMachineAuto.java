@@ -66,8 +66,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         TO_OTHER_SIDE,          // round the west of the hive to below flower1
         COLLECT_FLOWER,         // bar down, intake on, slowly in; ends at the opening or when full
         WAIT_FLOWER_FULL,
-        BACK_OFF_FLOWER,        // straight back, still facing the flower, bar up
-        TO_SCORE_NORTH,
+        TO_SCORE_NORTH,         // the starter's leg: backs off the flower facing it, bar up, turns round
         SHOOT_FLOWER,
         TO_GARDEN,              // back round the west of the hive, ending heading west above the lane
         SLIDE_ONTO_LANE,        // down onto the lane, square to the south wall
@@ -76,6 +75,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         OFF_GARDEN_LANE,        // up off the lane still facing west
         DRIVE_BACK,             // round to the north score spot, spinning up on the way
         SHOOT_GARDEN,           // tip 2
+        PARK,                   // west to the park spot, partly in RED's loading zone
         DONE
     }
 
@@ -231,12 +231,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
             case WAIT_GARDEN_FULL:
                 mech.waitingForPollen();   // at the pickup now: the no-progress clock starts here
                 break;
-            case BACK_OFF_FLOWER:
+            case TO_SCORE_NORTH:
                 mech.intakeOff();
                 mech.flowerBarStow();
-                go(Paths.line(here(), p(FLOWER_NORTH_APPROACH)).constant(h(FACING_NORTH)), DEFAULT_SPEED);
-                break;
-            case TO_SCORE_NORTH:
                 go(curve(TO_SCORE_NORTH, SCORE_NORTH).heading(pieces(TO_SCORE_NORTH_HEADING)), DEFAULT_SPEED);
                 break;
 
@@ -261,6 +258,13 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
             case DRIVE_BACK:
                 spunUpOnTheWay = false;
                 go(curve(DRIVE_BACK, SCORE_NORTH).heading(pieces(DRIVE_BACK_HEADING)), DEFAULT_SPEED);
+                break;
+
+            case PARK:
+                mech.stopAll();
+                // A quarter turn clockwise, from facing the hive to facing west, on the way.
+                go(Paths.line(here(), p(PARK)).heading(Interpolator.linear(h(FACING_SOUTH), h(FACING_WEST))),
+                        DEFAULT_SPEED);
                 break;
 
             case DONE:

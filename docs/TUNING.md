@@ -181,7 +181,7 @@ Pinpoint pose (after setting the start pose), and replace the number and its pro
 | `flowerWestApproach` / `Pickup` | (-44, -24) / (-52.4, -24), 180 deg | flower0 (near the garden): the flower bar stops 0.5 in short of the foot |
 | `scoreNorth` | (-24, 44, -72 deg) | Volleys 3-4, north cell, facing it |
 | `flowerNorthPickup` | (-24, 52.4, 90 deg) | flower1 (near the tipped hive): the bar stops 0.5 in short of the foot |
-| `park` | (-55, 36, 180 deg) | Partly in RED's loading zone |
+| `park` | (-56, 36, 180 deg) | Partly in RED's loading zone; the last step of the auto (both runtimes) |
 
 **Flower pickups:** the flower bar is built to slide *into* the retrieval opening, but the field
 file's foot is solid, so Zenith (and the sim) stop the bar 0.5 in short. On a real field, drive in

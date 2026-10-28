@@ -81,33 +81,89 @@
         "mode": "piecewise",
         "ranges": [
           {
-            "startT": 0,
+            "startT": 0.0,
             "endT": 0.2038,
             "heading": {
               "mode": "linear",
               "fromRad": 1.5708,
-              "toRad": 2.3722
+              "toRad": 2.3725
             }
           },
           {
             "startT": 0.2038,
+            "endT": 0.3038,
+            "heading": {
+              "mode": "linear",
+              "fromRad": 2.3725,
+              "toRad": 1.968
+            }
+          },
+          {
+            "startT": 0.3038,
+            "endT": 0.4038,
+            "heading": {
+              "mode": "linear",
+              "fromRad": 1.968,
+              "toRad": 1.7484
+            }
+          },
+          {
+            "startT": 0.4038,
+            "endT": 0.5038,
+            "heading": {
+              "mode": "linear",
+              "fromRad": 1.7484,
+              "toRad": 1.5973
+            }
+          },
+          {
+            "startT": 0.5038,
+            "endT": 0.6038,
+            "heading": {
+              "mode": "linear",
+              "fromRad": 1.5973,
+              "toRad": 1.4676
+            }
+          },
+          {
+            "startT": 0.6038,
+            "endT": 0.7038,
+            "heading": {
+              "mode": "linear",
+              "fromRad": 1.4676,
+              "toRad": 1.3318
+            }
+          },
+          {
+            "startT": 0.7038,
+            "endT": 0.8038,
+            "heading": {
+              "mode": "linear",
+              "fromRad": 1.3318,
+              "toRad": 1.159
+            }
+          },
+          {
+            "startT": 0.8038,
             "endT": 0.8679,
             "heading": {
-              "mode": "tangent"
+              "mode": "linear",
+              "fromRad": 1.159,
+              "toRad": 1.0042
             }
           },
           {
             "startT": 0.8679,
-            "endT": 1,
+            "endT": 1.0,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.0385,
+              "fromRad": 1.0042,
               "toRad": 1.5708
             }
           }
         ]
       },
-      "notes": "After the tip the up cell faces north, and a launch only scores from the up cell's own quarter of the field, so the robot goes to the other side of the hive. It goes around the west of the hive frame, not under it: the frame's west legs keep an 18 in robot's centre east of about x = -9, and its footprint is 18 in wide, so under the hive it would cross the centre line into BLUE's side (G402). It keeps facing north while it leaves the scoring spot, turns to drive nose-first once its footprint is clear of the centre line, and turns back to face north for the flower."
+      "notes": "After the tip the up cell faces north, and a launch only scores from the up cell's own quarter of the field, so the robot goes to the other side of the hive. It goes around the west of the hive frame, not under it: the frame's west legs keep an 18 in robot's centre east of about x = -9, and its footprint is 18 in wide, so under the hive it would cross the centre line into BLUE's side (G402). It keeps facing north while it leaves the scoring spot, turns to drive nose-first once its footprint is clear of the centre line, and turns back to face north for the flower. Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot."
     },
     {
       "id": "intakeOnFlower",
@@ -166,24 +222,6 @@
       "notes": "Folds the flower bar up before backing off."
     },
     {
-      "id": "backOffFlower",
-      "kind": "path",
-      "segments": [
-        {
-          "kind": "line",
-          "from": "current",
-          "to": {
-            "ref": "flowerNorthApproach"
-          }
-        }
-      ],
-      "heading": {
-        "mode": "constant",
-        "headingRad": 1.5708
-      },
-      "notes": "Backs straight off flower1 still facing it, before the starter's curve turns the robot: turning next to the flower's foot swings the 22 in robot's corner into it."
-    },
-    {
       "id": "toScoreNorth",
       "kind": "path",
       "segments": [
@@ -211,24 +249,34 @@
         "mode": "piecewise",
         "ranges": [
           {
-            "startT": 0,
+            "startT": 0.0,
             "endT": 0.2041,
             "heading": {
-              "mode": "tangentReversed"
+              "mode": "constant",
+              "headingRad": 1.5708
             }
           },
           {
             "startT": 0.2041,
+            "endT": 0.3742,
+            "heading": {
+              "mode": "linear",
+              "fromRad": 1.5708,
+              "toRad": 3.1416
+            }
+          },
+          {
+            "startT": 0.3742,
             "endT": 0.5442,
             "heading": {
               "mode": "linear",
-              "fromRad": 2.8274,
+              "fromRad": 3.1416,
               "toRad": 4.7124
             }
           },
           {
             "startT": 0.5442,
-            "endT": 1,
+            "endT": 1.0,
             "heading": {
               "mode": "constant",
               "headingRad": -1.5708
@@ -236,7 +284,7 @@
           }
         ]
       },
-      "notes": "Backs off the flower, turns around and comes in to the scoring spot north of the hive from the north, so the launcher faces the up cell when it gets there. It does the turn while it is still west of x = -13, so its footprint stays on RED's side of the centre line."
+      "notes": "The starter's leg: backs straight off flower1 still facing it for the first fifth (turning at once swings a corner into the flower's foot), then turns round through west and comes in to the scoring spot north of the hive facing south, the launcher toward the up cell. Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot."
     },
     {
       "id": "scoreFlowerPollen",
@@ -280,24 +328,89 @@
         "mode": "piecewise",
         "ranges": [
           {
-            "startT": 0,
+            "startT": 0.0,
             "endT": 0.2186,
             "heading": {
               "mode": "linear",
               "fromRad": -1.5708,
-              "toRad": -2.0354
+              "toRad": -2.0638
             }
           },
           {
             "startT": 0.2186,
-            "endT": 1,
+            "endT": 0.3186,
             "heading": {
-              "mode": "tangent"
+              "mode": "linear",
+              "fromRad": -2.0638,
+              "toRad": -1.8331
+            }
+          },
+          {
+            "startT": 0.3186,
+            "endT": 0.4186,
+            "heading": {
+              "mode": "linear",
+              "fromRad": -1.8331,
+              "toRad": -1.6909
+            }
+          },
+          {
+            "startT": 0.4186,
+            "endT": 0.5186,
+            "heading": {
+              "mode": "linear",
+              "fromRad": -1.6909,
+              "toRad": -1.5875
+            }
+          },
+          {
+            "startT": 0.5186,
+            "endT": 0.6186,
+            "heading": {
+              "mode": "linear",
+              "fromRad": -1.5875,
+              "toRad": -1.5037
+            }
+          },
+          {
+            "startT": 0.6186,
+            "endT": 0.7186,
+            "heading": {
+              "mode": "linear",
+              "fromRad": -1.5037,
+              "toRad": -1.4309
+            }
+          },
+          {
+            "startT": 0.7186,
+            "endT": 0.8186,
+            "heading": {
+              "mode": "linear",
+              "fromRad": -1.4309,
+              "toRad": -1.3688
+            }
+          },
+          {
+            "startT": 0.8186,
+            "endT": 0.9186,
+            "heading": {
+              "mode": "linear",
+              "fromRad": -1.3688,
+              "toRad": -1.3558
+            }
+          },
+          {
+            "startT": 0.9186,
+            "endT": 1.0,
+            "heading": {
+              "mode": "linear",
+              "fromRad": -1.3558,
+              "toRad": -3.1416
             }
           }
         ]
       },
-      "notes": "The starter's curve back south round the west of the hive, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); ending heading west above the garden lane instead of turning to west on it."
+      "notes": "The starter's curve back south round the west of the hive, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); ending heading west above the garden lane instead of turning to west on it. Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot."
     },
     {
       "id": "slideOntoLane",
@@ -417,19 +530,66 @@
             "mode": "piecewise",
             "ranges": [
               {
-                "startT": 0,
+                "startT": 0.0,
                 "endT": 0.1612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": -3.1416,
-                  "toRad": -1.7852
+                  "fromRad": 3.1416,
+                  "toRad": 4.7008
                 }
               },
               {
                 "startT": 0.1612,
+                "endT": 0.2612,
+                "heading": {
+                  "mode": "linear",
+                  "fromRad": 4.7008,
+                  "toRad": 4.6557
+                }
+              },
+              {
+                "startT": 0.2612,
+                "endT": 0.3612,
+                "heading": {
+                  "mode": "linear",
+                  "fromRad": 4.6557,
+                  "toRad": 4.6022
+                }
+              },
+              {
+                "startT": 0.3612,
+                "endT": 0.4612,
+                "heading": {
+                  "mode": "linear",
+                  "fromRad": 4.6022,
+                  "toRad": 4.5358
+                }
+              },
+              {
+                "startT": 0.4612,
+                "endT": 0.5612,
+                "heading": {
+                  "mode": "linear",
+                  "fromRad": 4.5358,
+                  "toRad": 4.4474
+                }
+              },
+              {
+                "startT": 0.5612,
+                "endT": 0.6612,
+                "heading": {
+                  "mode": "linear",
+                  "fromRad": 4.4474,
+                  "toRad": 4.3192
+                }
+              },
+              {
+                "startT": 0.6612,
                 "endT": 0.707,
                 "heading": {
-                  "mode": "tangentReversed"
+                  "mode": "linear",
+                  "fromRad": 4.3192,
+                  "toRad": 4.2367
                 }
               },
               {
@@ -437,13 +597,13 @@
                 "endT": 0.8242,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": -2.0008,
-                  "toRad": -1.5708
+                  "fromRad": 4.2367,
+                  "toRad": 4.7124
                 }
               },
               {
                 "startT": 0.8242,
-                "endT": 1,
+                "endT": 1.0,
                 "heading": {
                   "mode": "constant",
                   "headingRad": -1.5708
@@ -451,7 +611,7 @@
               }
             ]
           },
-          "notes": "North around the west of the frame, east along the north side of the hive and down to the scoring spot north of it, turning to face the up cell. It does the turn west of x = -13, and the last stretch is a straight drive south, so its footprint stays on RED's side of the centre line (G402)."
+          "notes": "North around the west of the frame, east along the north side of the hive and down to the scoring spot north of it, turning to face the up cell. It does the turn west of x = -13, and the last stretch is a straight drive south, so its footprint stays on RED's side of the centre line (G402). Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot."
         },
         {
           "id": "clearThenSpinUp",
@@ -480,6 +640,25 @@
         "count": 4
       },
       "notes": "Four more pollen into the north cell, which now holds 8, so the hive tips a second time."
+    },
+    {
+      "id": "park",
+      "kind": "path",
+      "segments": [
+        {
+          "kind": "line",
+          "from": "current",
+          "to": {
+            "ref": "park"
+          }
+        }
+      ],
+      "heading": {
+        "mode": "linear",
+        "fromRad": -1.5708,
+        "toRad": -3.1416
+      },
+      "notes": "Parks after the last volley: west to the park spot, partly in RED's loading zone, turning from facing the hive to facing west (clockwise, a quarter turn) on the way."
     }
   ]
 }

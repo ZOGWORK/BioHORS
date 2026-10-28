@@ -50,6 +50,7 @@ class ZenithAutoMatchTest {
 
     /** The starter route: 4 preloads tip the south cell (3 nectar staged in it, season tip table), 4 flower + 4 garden pollen tip the north cell: 12 pollen, 2 tips. */
     static final int EXPECTED_SCORED = 12;
+    static final double PARKED_WITHIN_IN = 2.0;   // SET BY HAND: the follower's end tolerance, with margin
     static final int EXPECTED_TIPS = 2;
     static final double MAX_STRAFE_FRACTION = 0.30;
 
@@ -82,6 +83,8 @@ class ZenithAutoMatchTest {
         assertEquals(red2.planned, red2.recorded, "the steps that ran\n" + red2.report);
         assertTrue(red2.lastEndS < AUTO_PERIOD_S, "the last step ended at " + red2.lastEndS + " s\n" + red2.report);
         assertTrue(red2.interrupted.isEmpty(), "interrupted steps: " + red2.interrupted + "\n" + red2.report);
+        assertTrue(BiobuzzMatch.inchesFromPark(red2.rlog, true) < PARKED_WITHIN_IN,
+                "RED ended " + BiobuzzMatch.inchesFromPark(red2.rlog, true) + " in from the park spot\n" + red2.report);
 
         // ---- the run is sound: no unintended contact, little strafing, belief agrees with truth ----
         assertTrue(red2.match.unintendedContacts().isEmpty(),
@@ -123,6 +126,8 @@ class ZenithAutoMatchTest {
         assertEquals(red2.match.tips(), blue.match.tips(), "BLUE should tip what RED tips\n" + blue.report);
         assertTrue(blue.match.unintendedContacts().isEmpty(), "BLUE structure contact: " + blue.match.unintendedContacts());
         assertEquals(blue.planned, blue.recorded, "BLUE steps that ran");
+        assertTrue(BiobuzzMatch.inchesFromPark(blue.rlog, false) < PARKED_WITHIN_IN,
+                "BLUE ended " + BiobuzzMatch.inchesFromPark(blue.rlog, false) + " in from the park spot\n" + blue.report);
     }
 
     // ------------------------------------------------------------------ physics
