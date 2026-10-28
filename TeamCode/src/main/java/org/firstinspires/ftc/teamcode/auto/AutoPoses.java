@@ -27,7 +27,7 @@ public final class AutoPoses {
     public static final Pose FLOWER_NORTH_PICKUP = new Pose(-24.0, 52.4, Math.PI / 2);
     public static final Pose ABOVE_GARDEN_LANE = new Pose(-36.0, -54.7, Math.PI);
     public static final Pose GARDEN_SWEEP_START = new Pose(-40.0, -61.17, Math.PI);
-    public static final Pose GARDEN_SWEEP_END = new Pose(-54.6, -61.62, Math.PI);
+    public static final Pose GARDEN_SWEEP_END = new Pose(-56.1, -61.62, Math.PI);
     public static final Pose OFF_GARDEN_LANE = new Pose(-50.0, -50.0, Math.PI);
     public static final Pose PARK = new Pose(-54.7, 36.0, Math.PI);
 

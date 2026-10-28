@@ -28,7 +28,7 @@ import java.util.Map;
  * carries the intake rollers' and the flower bar's poses (Field/RobotComponents, model_2..6).
  *
  * RLOG: TeamCode/build/sim/mechanisms-demo.rlog. Checked from the log: the bar sits at its CAD pose
- * (down) while DOWN, swings up FLOWER_BAR_STOWED_RAD when STOWED, a little when SHOOTING; the rollers
+ * (down) while DOWN, folds back past upright when STOWED, a little up when SHOOTING; the rollers
  * turn while the intake runs and stop when it stops.
  */
 class MechanismsDemoTest {
@@ -112,7 +112,9 @@ class MechanismsDemoTest {
             assertTrue(intakeOn ? turned > 360 : turned < 1, name + ": rollers turned " + turned + " deg");
             if (name.startsWith("DOWN")) assertEquals(0.0, endBar, 1.0, "DOWN is the CAD pose");
             if (name.startsWith("STOWED")) {
-                assertEquals(-Math.toDegrees(BiobuzzMatch.FLOWER_BAR_STOWED_RAD), endBar, 1.0, name + " bar");
+                assertEquals(Math.toDegrees(BiobuzzMatch.flowerBarAngleRad(
+                        org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_STOWED)), endBar, 1.0, name + " bar");
+                assertTrue(endBar < -95, "STOWED folds the bar back past upright: " + endBar);
             }
             if (name.startsWith("SHOOTING")) assertTrue(endBar < -5 && endBar > -45, "SHOOTING lifts it a little: " + endBar);
         }

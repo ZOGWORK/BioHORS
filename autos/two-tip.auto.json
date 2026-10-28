@@ -453,12 +453,12 @@
         "mode": "constant",
         "headingRad": 3.1416
       },
-      "speedFraction": 0.3,
+      "speedFraction": 0.2,
       "expect": {
         "collectFrom": "gardenRed",
         "count": 4
       },
-      "notes": "The starter's sweep west along the RED garden line, intake toward the red alliance wall, taking the pollen in a line. It always runs to its end: cut short when full, the robot rolls on into the west wall."
+      "notes": "The starter's sweep west along the RED garden line, intake toward the red alliance wall, taking the pollen in a line. It always runs to its end: cut short when full, the robot rolls on into the west wall. Slower than the starter's 0.3 (0.2, SET BY HAND, the team's call): every pollen in the row has time to go in."
     },
     {
       "id": "gardenWaitFull",

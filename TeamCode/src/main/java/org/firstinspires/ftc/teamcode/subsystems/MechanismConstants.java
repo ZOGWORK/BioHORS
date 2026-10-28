@@ -112,7 +112,8 @@ public final class MechanismConstants {
     // PLACEHOLDER: arbitrary until set on the robot. STOWED folds the bar up (the robot at its
     // shortest, as it starts the match); DOWN puts it out and low for a flower's opening;
     // SHOOTING is DOWN raised slightly, so shots clear it.
-    public static double FLOWER_BAR_STOWED = 0.15;   // PLACEHOLDER
+    public static double FLOWER_BAR_STOWED = 0.05;   // PLACEHOLDER: folded well back, so the bar and its side plates sit
+                                                     // inside the frame and clear of the wall when the robot runs close to it
     public static double FLOWER_BAR_DOWN = 0.80;     // PLACEHOLDER
     public static double FLOWER_BAR_SHOOTING = 0.65; // PLACEHOLDER
     // ===== Pollen count from the intake's speed (IntakeLoadSensor) =====

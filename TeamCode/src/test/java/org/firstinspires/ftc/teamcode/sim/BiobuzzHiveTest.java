@@ -111,8 +111,12 @@ class BiobuzzHiveTest {
                     run(tracker, 0.3);
                     // Settle before the next shot counts: a tip shows within a couple of seconds.
                     if (n >= (nectar ? 1 : 6)) {
-                        run(tracker, 2.0);
-                        if (tracker.getBodyAngleRad(hive) > -BiobuzzHive.TILT_RAD + Math.toRadians(5)) out[0] = n;
+                        // A tip is the hive reaching its other stop (as the match counts it), given time
+                        // to swing; moving off its stop and settling back is not one.
+                        for (double t = 0; t < 8.0 && out[0] < 0; t += 0.02) {
+                            tracker.advance(0.02);
+                            if (tracker.getBodyAngleRad(hive) >= BiobuzzHive.TILT_RAD - Math.toRadians(1)) out[0] = n;
+                        }
                     }
                 }
             });
@@ -126,9 +130,9 @@ class BiobuzzHiveTest {
     void shotSweepIsPrinted() {
         double savedI = BiobuzzHive.INERTIA;
         try {
-            for (double inertia : new double[] {14000, 18000, 22000}) {
+            for (double inertia : new double[] {22000}) {
                 BiobuzzHive.INERTIA = inertia;
-                for (double com = 5.0; com <= 6.61; com += 0.2) {
+                for (double com = 5.0; com <= 7.01; com += 0.2) {
                     double savedC = BiobuzzHive.COM_HEIGHT_IN;
                     BiobuzzHive.COM_HEIGHT_IN = com;
                     double swing;

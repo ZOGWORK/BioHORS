@@ -50,7 +50,8 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     /** Fraction of top speed for paths with no stated speed (as the Zenith project's default). */
     public static double DEFAULT_SPEED = 0.8;   // SET BY HAND
-    public static double PICKUP_SPEED = 0.3;    // the starter's: slow into the flower and along the garden row
+    public static double PICKUP_SPEED = 0.3;    // the starter's: slow into the flower
+    public static double GARDEN_SWEEP_SPEED = 0.2;   // SET BY HAND (team): slower along the garden row, so every pollen goes in
     public static double SLIDE_SPEED = 0.3;     // SET BY HAND: slow sideways onto the garden lane, so it stops on time
     public static double OFF_LANE_SPEED = 0.6;  // SET BY HAND: up off the garden lane, sideways and back
     public static double SWEEP_TIMEOUT_S = 3.0;       // SET BY HAND: a stuck sweep gives up after this
@@ -249,7 +250,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 mech.collect();
                 // West along the row, intake toward the red alliance wall, heading held square to the
                 // south wall: the pollen come in one after another.
-                go(Paths.line(here(), p(GARDEN_SWEEP_END)).constant(h(FACING_WEST)), PICKUP_SPEED);
+                go(Paths.line(here(), p(GARDEN_SWEEP_END)).constant(h(FACING_WEST)), GARDEN_SWEEP_SPEED);
                 break;
             case OFF_GARDEN_LANE:
                 mech.intakeOff();

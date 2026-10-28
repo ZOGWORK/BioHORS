@@ -128,6 +128,14 @@ public final class BiobuzzPhysicsWorld {
      * else the robot pushes it.
      */
     public static RobotShape robotShape(Json robot) {
+        return robotShape(robot, false);
+    }
+
+    /**
+     * As robotShape(robot), with the flower bar stowed: the bar and its side plates fold back inside
+     * the frame (MechanismConstants.FLOWER_BAR_STOWED), so only the chassis is left to meet a pollen.
+     */
+    public static RobotShape robotShape(Json robot, boolean barStowed) {
         Json fp = robot.get("footprint").get("expandedIn");
         double length = fp.num("lengthIn"), width = fp.num("widthIn"), height = robot.get("heightIn").num("value");
         Json mouth = robot.get("mouths").at(0);
@@ -138,6 +146,9 @@ public final class BiobuzzPhysicsWorld {
         double plateWidth = (width - mouthWidth) / 2.0;
         double plateY = mouthWidth / 2.0 + plateWidth / 2.0;
         double plateX = (frameFront + front) / 2.0, plateHalfX = (front - frameFront) / 2.0;
+        OrientedBox chassis = OrientedBox.axisAligned("chassis", (back + frameFront) / 2.0, 0, height / 2.0,
+                (frameFront - back) / 2.0, width / 2.0, height / 2.0);
+        if (barStowed) return new RobotShape(Collections.singletonList(chassis));
         return new RobotShape(Arrays.asList(
                 OrientedBox.axisAligned("chassis", (back + frameFront) / 2.0, 0, height / 2.0,
                         (frameFront - back) / 2.0, width / 2.0, height / 2.0),

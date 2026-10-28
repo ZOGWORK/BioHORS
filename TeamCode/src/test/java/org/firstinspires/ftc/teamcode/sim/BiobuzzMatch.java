@@ -79,9 +79,10 @@ public final class BiobuzzMatch {
     // per output rev (SPEC for that motor; 2800 ticks/s free is its 1158 rpm). PLACEHOLDER: every
     // roller turns 1:1 with it (the CAD has no belts or gears to read a ratio from).
     static final double INTAKE_TICKS_PER_REV = 145.1;
-    // Drawing only. The CAD has the bar DOWN (collect). PLACEHOLDER: the servo's STOWED position is
-    // drawn as the bar swung up 90 deg, and other positions in proportion (SHOOTING is then 21 deg up).
-    static final double FLOWER_BAR_STOWED_RAD = Math.toRadians(90.0);
+    // Drawing only. The CAD has the bar DOWN (collect). PLACEHOLDER: the bar turns 90 deg for every
+    // 0.65 of servo travel (the first placeholder STOWED, 0.15, drawn 90 deg up); so SHOOTING (0.65)
+    // is 21 deg up and STOWED (0.05) 104 deg up, folded back with its tip inside the frame.
+    static final double FLOWER_BAR_RAD_PER_UNIT = Math.toRadians(90.0) / 0.65;
     static final double NECTAR_AXLE_FORWARD_IN = -5.6115, NECTAR_AXLE_UP_IN = 11.5365;
     // APPROX: the ball rides under the wheel toward the front, so the wheel's underside moves
     // forward: positive rpm turns it negatively about the robot's left (+y) axis. Drawing only.
@@ -163,6 +164,8 @@ public final class BiobuzzMatch {
     static final double MISS_AFTER_S = 2.5;       // a shot not seated this long after launch has missed
     private GamePieceTracker world;               // null: the rule-based launch above
     private TriggerVolume intakeMouth;            // physics mode: robot.json's mouth, robot frame
+    private boolean barStowedShape;               // physics mode: the robot's solid shape has the bar stowed
+    private boolean barStowedNow;                 // both servos near STOWED this tick (the bar folded inside the frame)
     private final java.util.Set<Integer> redNectar = new java.util.HashSet<>(), blueNectar = new java.util.HashSet<>();
     private static final java.util.Collection<String> POLLEN_ONLY = java.util.Collections.singletonList("pollen");
     private final List<double[]> shots = new ArrayList<>(); // {id, launch time, state: 0 flying, 1 scored, 2 missed}
@@ -245,7 +248,7 @@ public final class BiobuzzMatch {
     public BiobuzzMatch usePhysics() {
         // Capacity: the hopper's 4, or more for a demo that starts with more aboard.
         world = new GamePieceTracker(Math.max(HOPPER_CAPACITY, held), BiobuzzPhysicsWorld.world(field));
-        world.setRobotShape(BiobuzzPhysicsWorld.robotShape(robotJson));
+        world.setRobotShape(BiobuzzPhysicsWorld.robotShape(robotJson, barStowedShape));
         world.setBodyMotion(BiobuzzHive.bodyName(red), BiobuzzHive.angleWithUp(upIsNorth), 0.0);
         world.setBodyMotion(BiobuzzHive.bodyName(!red), BiobuzzHive.angleWithUp(otherUpIsNorth), 0.0);
         // Each hive's 3 staged nectar, in its up cell, before any pollen: with them the first tip takes
@@ -280,8 +283,18 @@ public final class BiobuzzMatch {
         driveIn += Math.hypot(sim.drivePlant.getForwardVelocity(), sim.drivePlant.getLateralVelocity()) * dt;
         strafeIn += Math.abs(sim.drivePlant.getLateralVelocity()) * dt;
 
+        // The bar and its side plates fold inside the frame when stowed (both servos near STOWED):
+        // the contact footprint and, in physics, the robot's solid shape follow.
+        double stowedPos = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_STOWED;
+        barStowedNow = Math.abs(sim.flowerLeftPlant.getPosition() - stowedPos) < 0.05
+                && Math.abs(sim.flowerRightPlant.getPosition() - (1.0 - stowedPos)) < 0.05;
+
         // ---- intake: garden pollen under the mouth ----
         if (world != null) {
+            if (barStowedNow != barStowedShape) {
+                barStowedShape = barStowedNow;
+                world.setRobotShape(BiobuzzPhysicsWorld.robotShape(robotJson, barStowedShape));
+            }
             world.updateRobotPose(x, y, h);
             // AUTO is pollen only: a spilled nectar under the mouth is left where it is.
             int took = world.tryAcquire(intakeMouth, intakeIn && held < HOPPER_CAPACITY, POLLEN_ONLY);
@@ -736,12 +749,11 @@ public final class BiobuzzMatch {
 
     /**
      * The flower bar's angle from its CAD (down) pose, about the robot's +y: 0 at the servo's DOWN
-     * position, negative raising it (the tip moves up), FLOWER_BAR_STOWED_RAD up at STOWED.
+     * position, negative raising it (the tip moves up), FLOWER_BAR_RAD_PER_UNIT a unit of servo travel.
      */
     static double flowerBarAngleRad(double servoPosition) {
         double down = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN;
-        double stowed = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_STOWED;
-        return -FLOWER_BAR_STOWED_RAD * (servoPosition - down) / (stowed - down);
+        return (servoPosition - down) * FLOWER_BAR_RAD_PER_UNIT;
     }
 
     private boolean launchIsLegal(double x, double y, double h) {
@@ -817,12 +829,23 @@ public final class BiobuzzMatch {
 
     private double lastContactTime = -1;
 
+    /**
+     * How far the solid robot reaches ahead of the drive centre now: the flower bar's tip with the bar
+     * out (robot.json's 22 in box), the frame front with it stowed (folded back inside the frame).
+     */
+    private double frontIn() {
+        double boxFront = -corForward + robotLength / 2;
+        return barStowedNow ? mouthOffsetX - mouthHalfDepth : boxFront;
+    }
+
     private double[][] corners(double x, double y, double h) {
-        double hl = robotLength / 2, hw = robotWidth / 2;
+        double back = -corForward - robotLength / 2, front = frontIn();
+        double hl = (front - back) / 2, hw = robotWidth / 2;
         double c = Math.cos(h), s = Math.sin(h);
-        // The box centre is the pose minus the turning centre's offset inside the box (as Zenith does).
-        x -= corForward * c - corLeft * s;
-        y -= corForward * s + corLeft * c;
+        // The box centre: the pose (the turning centre) moved to the middle of the solid robot.
+        double mid = (front + back) / 2;
+        x += mid * c + corLeft * s;
+        y += mid * s - corLeft * c;
         double[][] out = new double[4][];
         int i = 0;
         for (int sx = -1; sx <= 1; sx += 2) {
@@ -835,12 +858,11 @@ public final class BiobuzzMatch {
     }
 
     private boolean pointInFootprint(double px, double py, double x, double y, double h, double grow) {
-        x -= corForward * Math.cos(h) - corLeft * Math.sin(h);
-        y -= corForward * Math.sin(h) + corLeft * Math.cos(h);
+        double back = -corForward - robotLength / 2, front = frontIn();
         double dx = px - x, dy = py - y;
         double fwd = dx * Math.cos(h) + dy * Math.sin(h);
-        double left = -dx * Math.sin(h) + dy * Math.cos(h);
-        return Math.abs(fwd) <= robotLength / 2 + grow && Math.abs(left) <= robotWidth / 2 + grow;
+        double left = -dx * Math.sin(h) + dy * Math.cos(h) + corLeft;
+        return fwd >= back - grow && fwd <= front + grow && Math.abs(left) <= robotWidth / 2 + grow;
     }
 
     /** Separating-axis test between the robot's footprint and an axis-aligned box, with tolerance. */
