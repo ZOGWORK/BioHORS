@@ -17,8 +17,9 @@
     }
   },
   "sizeIn": {
-    "xIn": 144,
-    "yIn": 144
+    "xIn": 141.348,
+    "yIn": 141.348,
+    "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below). It was 144 (the nominal 12 ft field); a robot planned against 144 drives 1.3 in into the real walls."
   },
   "periods": {
     "autoS": 30,
@@ -194,24 +195,24 @@
     {
       "id": "loadingZoneRed",
       "kind": "rect",
-      "minXIn": -72,
-      "maxXIn": -61,
-      "minYIn": 24,
-      "maxYIn": 48,
+      "minXIn": -70.674,
+      "maxXIn": -59.101,
+      "minYIn": 23.907,
+      "maxYIn": 46.599,
       "rule": "G304: no start here",
       "ledger": "loadingZone",
-      "provenance": "APPROX (BIOBUZZ Competition Manual V1 §9.3, Figs 9-2 and 9-3; FIRST's Event Field Setup Guide §8.3): 11 in deep off the x = -72 wall, between the y = +24 and y = +48 tile seams, tape included. FIRST's BIOBUZZ field CAD (STEP v26-27.2), on its 23.528 in tile pitch, puts it at x in [-70.674, -59.101], y in [23.907, 46.599], see TRANSCRIPTION.md. The ledger counts it as this alliance's LOADING ZONE (ledger: loadingZone): SPEC, Competition Manual TU01 §9.3 and G427, humans enter NECTAR only through the LOADING ZONE."
+      "provenance": "MEASURED FROM CAD (FIRST's BIOBUZZ field CAD, STEP v26-27.2): x in [-70.674, -59.101], y in [23.907, 46.599] (was the APPROX 11 in x 24 in box off a 72 in wall). The ledger counts it as this alliance's LOADING ZONE (ledger: loadingZone): SPEC, Competition Manual TU01 9.3 and G427, humans enter NECTAR only through the LOADING ZONE."
     },
     {
       "id": "loadingZoneBlue",
       "kind": "rect",
-      "minXIn": 61,
-      "maxXIn": 72,
-      "minYIn": -48,
-      "maxYIn": -24,
+      "minXIn": 59.101,
+      "maxXIn": 70.674,
+      "minYIn": -46.599,
+      "maxYIn": -23.907,
       "rule": "G304: no start here",
       "ledger": "loadingZone",
-      "provenance": "APPROX, inherited from loadingZoneRed: its point mirror, x in [+61, +72], y in [-48, -24] (Fig 9-2). The ledger counts it as this alliance's LOADING ZONE (ledger: loadingZone): SPEC, Competition Manual TU01 §9.3 and G427, humans enter NECTAR only through the LOADING ZONE."
+      "provenance": "MEASURED FROM CAD: the point mirror of loadingZoneRed."
     }
   ],
   "elements": [
@@ -219,73 +220,73 @@
       "id": "gardenRed0",
       "kind": "pollen",
       "container": null,
-      "xIn": -70.6,
-      "yIn": -70.6,
+      "xIn": -69.27,
+      "yIn": -69.27,
       "radiusIn": 1.4,
-      "provenance": "APPROX (BIOBUZZ Competition Manual V1 §10.3.1, Fig 10-2): the red garden's four pollen lie in a line along the audience wall starting in the red corner, each touching the next. Pollen are 2.8 in across (§9.8), so ball i sits at x = -(72 - 1.4 - 2.8 i), y = -(72 - 1.4)."
+      "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below): the red garden's four pollen in a line along the audience wall from the red corner, each touching the wall (1.4 in radius) and 2.89 in apart."
     },
     {
       "id": "gardenRed1",
       "kind": "pollen",
       "container": null,
-      "xIn": -67.8,
-      "yIn": -70.6,
+      "xIn": -66.38,
+      "yIn": -69.27,
       "radiusIn": 1.4,
-      "provenance": "APPROX (same source and construction as gardenRed0, i = 1)."
+      "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below): the red garden's four pollen in a line along the audience wall from the red corner, each touching the wall (1.4 in radius) and 2.89 in apart."
     },
     {
       "id": "gardenRed2",
       "kind": "pollen",
       "container": null,
-      "xIn": -65,
-      "yIn": -70.6,
+      "xIn": -63.49,
+      "yIn": -69.27,
       "radiusIn": 1.4,
-      "provenance": "APPROX (same source and construction as gardenRed0, i = 2)."
+      "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below): the red garden's four pollen in a line along the audience wall from the red corner, each touching the wall (1.4 in radius) and 2.89 in apart."
     },
     {
       "id": "gardenRed3",
       "kind": "pollen",
       "container": null,
-      "xIn": -62.2,
-      "yIn": -70.6,
+      "xIn": -60.6,
+      "yIn": -69.27,
       "radiusIn": 1.4,
-      "provenance": "APPROX (same source and construction as gardenRed0, i = 3)."
+      "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below): the red garden's four pollen in a line along the audience wall from the red corner, each touching the wall (1.4 in radius) and 2.89 in apart."
     },
     {
       "id": "gardenBlue0",
       "kind": "pollen",
       "container": null,
-      "xIn": 70.6,
-      "yIn": 70.6,
+      "xIn": 69.27,
+      "yIn": 69.27,
       "radiusIn": 1.4,
-      "provenance": "APPROX (point mirror of gardenRed0: the blue garden runs along the rear wall from the blue corner, Fig 10-2)."
+      "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below): the blue garden's four pollen in a line along the audience wall from the blue corner, each touching the wall (1.4 in radius) and 2.89 in apart (the point mirror of the red garden)."
     },
     {
       "id": "gardenBlue1",
       "kind": "pollen",
       "container": null,
-      "xIn": 67.8,
-      "yIn": 70.6,
+      "xIn": 66.38,
+      "yIn": 69.27,
       "radiusIn": 1.4,
-      "provenance": "APPROX (point mirror of gardenRed1)."
+      "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below): the blue garden's four pollen in a line along the audience wall from the blue corner, each touching the wall (1.4 in radius) and 2.89 in apart (the point mirror of the red garden)."
     },
     {
       "id": "gardenBlue2",
       "kind": "pollen",
       "container": null,
-      "xIn": 65,
-      "yIn": 70.6,
+      "xIn": 63.49,
+      "yIn": 69.27,
       "radiusIn": 1.4,
-      "provenance": "APPROX (point mirror of gardenRed2)."
+      "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below): the blue garden's four pollen in a line along the audience wall from the blue corner, each touching the wall (1.4 in radius) and 2.89 in apart (the point mirror of the red garden)."
     },
     {
       "id": "gardenBlue3",
       "kind": "pollen",
       "container": null,
-      "xIn": 62.2,
-      "yIn": 70.6,
+      "xIn": 60.6,
+      "yIn": 69.27,
       "radiusIn": 1.4,
-      "provenance": "APPROX (point mirror of gardenRed3)."
+      "provenance": "MEASURED FROM CAD (AdvantageScope's 2026-2027 field model, built from FIRST's BIOBUZZ field CAD: the perimeter's inside faces at +/-70.674 in, the same tile pitch as the loading zones below): the blue garden's four pollen in a line along the audience wall from the blue corner, each touching the wall (1.4 in radius) and 2.89 in apart (the point mirror of the red garden)."
     },
     {
       "id": "flower0",

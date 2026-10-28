@@ -315,8 +315,8 @@
             },
             {
               "xIn": -26.0,
-              "yIn": -56.0,
-              "provenance": "SET BY HAND: the starter example's last control point moved east of the end point, tuned to BioHORS: the curve then arrives heading west, square to the south wall"
+              "yIn": -54.7,
+              "provenance": "SET BY HAND: the starter example's last control point moved down the west side and toward the lane, tuned to BioHORS, then 1.3 in north with FIRST's CAD south wall (y = -70.674): the 22 in robot's corner stays inside the wall as it turns onto the lane heading."
             }
           ],
           "to": {
@@ -333,7 +333,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": -1.5708,
-              "toRad": -2.0638
+              "toRad": -2.0722
             }
           },
           {
@@ -341,8 +341,8 @@
             "endT": 0.3186,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.0638,
-              "toRad": -1.8331
+              "fromRad": -2.0722,
+              "toRad": -1.8395
             }
           },
           {
@@ -350,8 +350,8 @@
             "endT": 0.4186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.8331,
-              "toRad": -1.6909
+              "fromRad": -1.8395,
+              "toRad": -1.6956
             }
           },
           {
@@ -359,8 +359,8 @@
             "endT": 0.5186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.6909,
-              "toRad": -1.5875
+              "fromRad": -1.6956,
+              "toRad": -1.5908
             }
           },
           {
@@ -368,8 +368,8 @@
             "endT": 0.6186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.5875,
-              "toRad": -1.5037
+              "fromRad": -1.5908,
+              "toRad": -1.5055
             }
           },
           {
@@ -377,8 +377,8 @@
             "endT": 0.7186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.5037,
-              "toRad": -1.4309
+              "fromRad": -1.5055,
+              "toRad": -1.4308
             }
           },
           {
@@ -386,8 +386,8 @@
             "endT": 0.8186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.4309,
-              "toRad": -1.3688
+              "fromRad": -1.4308,
+              "toRad": -1.3661
             }
           },
           {
@@ -395,8 +395,8 @@
             "endT": 0.9186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.3688,
-              "toRad": -1.3558
+              "fromRad": -1.3661,
+              "toRad": -1.3489
             }
           },
           {
@@ -404,7 +404,7 @@
             "endT": 1.0,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.3558,
+              "fromRad": -1.3489,
               "toRad": -3.1416
             }
           }

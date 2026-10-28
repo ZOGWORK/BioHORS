@@ -159,7 +159,7 @@ class ZenithAutoMatchTest {
             assertEquals(b.match.launched(), b.match.scored() + b.match.missed(),
                     "a launch neither seated nor missed\n" + b.report);
             for (org.horizon36596.simloop.field.GamePiece p : b.match.shotPieces()) {
-                assertTrue(Math.abs(p.getFieldXInches()) <= 72 && Math.abs(p.getFieldYInches()) <= 72,
+                assertTrue(Math.abs(p.getFieldXInches()) <= 70.674 && Math.abs(p.getFieldYInches()) <= 70.674,
                         "a ball left the field: " + p);
             }
             // The hive and the balls are in the log for AdvantageScope's 3D field.

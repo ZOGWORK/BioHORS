@@ -30,12 +30,13 @@ import java.util.List;
  *    down position), pulls one pollen from the bottom every FLOWER_S_PER_PIECE.
  *  - Launch: with the pollen gate really open, the intake feeding and the pollen flywheel at
  *    least LAUNCH_MIN_RPM, one pollen leaves every LAUNCH_S_PER_PIECE.
- *  - A launch scores in the alliance's up cell only from that cell's floor quarter, outboard of
- *    its outer face, facing the cell within LAUNCH_CONE_DEG. Otherwise it lands loose.
- *  - Tip: a cell tips when its pollen reaches the field file's tip table entry for the nectar in
- *    it (rules.tipTable; this project's copy says 8). The cell empties and the other comes up.
- *    The 4 s swing is not modelled, except that for TIP_CATCH_S after a tip a launch still goes into
- *    the cell that tipped (and spills with it); after that, shots go to the new up cell.
+ *  - A launch flies to the alliance's up cell only from that cell's floor quarter, outboard of its
+ *    outer face, facing the cell within LAUNCH_CONE_DEG. Otherwise it lands loose (a miss). It
+ *    scores when it lands in the cell, FLIGHT_S later, not when it leaves the robot.
+ *  - Tip: a cell tips when the pollen that has landed in it reaches the field file's tip table
+ *    entry for the nectar in it (rules.tipTable, the season's [8, 7, 6, 3, 1, 0]). The cell empties
+ *    and the other comes up. A pollen that lands in the cell within TIP_CATCH_S after it tipped
+ *    still goes in (the cell is only starting to swing) and spills with the load; later, it misses.
  *  - Physics mode (usePhysics): every pollen is a real ball in SimLoop's game-piece physics. The
  *    garden's lie loose on the floor and the intake takes one when its mouth (robot.json, a
  *    TriggerVolume) is over it while both intake motors run inward; the preloads and a flower's
@@ -91,8 +92,8 @@ public final class BiobuzzMatch {
      *  PLACEHOLDER: 0.07, so a full robot reads clearly below MAINHORS26's 2100 ticks/s loaded
      *  threshold (1960) as its loaded robot did, and 1-3 pollen still read as 1-3. */
     static final double INTAKE_LOAD_PER_PIECE = 0.07;
-    /** For this long after a tip, a launch still goes into the cell that tipped (it has only just started
-     *  to swing) and spills with it. PLACEHOLDER: the hive swings for about 4 s (DSim). */
+    /** For this long after a tip, a pollen landing in the cell that tipped still goes in (it has only
+     *  just started to swing) and spills with it. PLACEHOLDER: the hive swings for about 4 s (DSim). */
     static final double TIP_CATCH_S = 0.5;
     /** Drawing only (rule mode): a tip swings the drawn hive from one stop to the other in this long.
      *  APPROX: DSim's swing, about 4 s. */
@@ -118,6 +119,7 @@ public final class BiobuzzMatch {
 
     private final double hiveX;
     private boolean upIsNorth;
+    private final double fieldHalfIn;     // the walls' inside faces, from the field file's sizeIn
     private double drawnHiveRad = Double.NaN;   // rule mode: the hive as drawn, swinging toward its stop
     /** Drawing only: how often the driven path (Auto/DrivenPath) gains a point. SET BY HAND. */
     static final double TRAIL_EVERY_S = 0.25;
@@ -129,6 +131,7 @@ public final class BiobuzzMatch {
     private int held;
     private int launched, scored, missed, collected, tips;
     private double lastTipS = Double.NEGATIVE_INFINITY;
+    private int lastTipCell = -1;
     private final List<Double> tipTimes = new ArrayList<>();
     private final List<String> contacts = new ArrayList<>();
     private double launchTimer, flowerTimer;
@@ -150,6 +153,8 @@ public final class BiobuzzMatch {
     // footprint numbers yet.
     static final double HELD_FIRST_FORWARD_IN = 3.0, HELD_SPACING_IN = 2.9, HELD_Z_IN = 3.5;
     private final List<Ball> balls = new ArrayList<>();
+    /** Drawing only: where the drawn balls bounce off the walls (the field file's, set per match). */
+    static double WALL_IN = 70.674;
 
     // ---- physics mode ----
     static final double POLLEN_RADIUS_IN = 1.4;   // SPEC (field file)
@@ -201,6 +206,8 @@ public final class BiobuzzMatch {
             }
         }
         hiveX = pivotX;
+        fieldHalfIn = field.get("sizeIn").num("xIn") / 2.0;
+        WALL_IN = fieldHalfIn;
 
         for (Json o : field.get("obstacles").items()) {
             String id = o.str("id");
@@ -229,7 +236,7 @@ public final class BiobuzzMatch {
     public BiobuzzMatch usePhysics() {
         GamePiecePhysicsConfig physics = GamePiecePhysicsConfig.builder().pieceMass("pollen", 1.0).build();
         // Capacity: the hopper's 4, or more for a demo that starts with more aboard.
-        world = new GamePieceTracker(Math.max(HOPPER_CAPACITY, held), FieldWorld.builder().perimeter(72, 72)
+        world = new GamePieceTracker(Math.max(HOPPER_CAPACITY, held), FieldWorld.builder().perimeter(fieldHalfIn, fieldHalfIn)
                 .physics(physics).kinematicBody(BiobuzzHive.body(red)).build());
         world.setBodyMotion(BiobuzzHive.bodyName(red), BiobuzzHive.angleWithUp(upIsNorth), 0.0);
         stop = upIsNorth ? 1 : -1;
@@ -315,28 +322,11 @@ public final class BiobuzzMatch {
                     int id = world.nextHeldPieceId();
                     world.launch(id, "shot", l[0], l[1], l[2], l[3], l[4], l[5]);
                     shots.add(new double[] {id, time, 0});
-                } else if (time - lastTipS <= TIP_CATCH_S && legalInto(x, y, h, !upIsNorth)) {
-                    // The cell that just tipped is only starting to swing: a shot right behind the
-                    // tipping one still goes in, and spills with the rest of its load.
-                    int cell = upIsNorth ? 0 : 1;
-                    scored++;
-                    spill(cell, 1);
                 } else if (launchIsLegal(x, y, h)) {
+                    // On its way to the up cell; it counts when it lands (landed(), FLIGHT_S later).
                     int up = upIsNorth ? 1 : 0;
                     double cellY = (upIsNorth ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0;
                     balls.add(Ball.toCell(time, x, y, hiveX, cellY, up));
-                    cellPollen[up]++;
-                    scored++;
-                    int need = tipTable[Math.min(cellNectar[up], tipTable.length - 1)];
-                    if (cellPollen[up] >= need) {
-                        tips++;
-                        tipTimes.add(time);
-                        lastTipS = time;
-                        spill(up, cellPollen[up]);
-                        cellPollen[up] = 0;
-                        cellNectar[up] = 0;
-                        upIsNorth = !upIsNorth;
-                    }
                 } else {
                     missed++;
                     balls.add(Ball.loose(x, y, LAUNCH_HEIGHT_IN, MISS_SPEED_IN_PER_S * Math.cos(h),
@@ -351,7 +341,13 @@ public final class BiobuzzMatch {
 
         if (world != null) stepPhysics(dt);
         for (Ball b : balls) b.advance(dt, time);
-        balls.removeIf(b -> b.cell >= 0 && time - b.t0 >= FLIGHT_S);
+        for (int i = 0; i < balls.size(); i++) {
+            Ball b = balls.get(i);
+            if (b.cell >= 0 && time - b.t0 >= FLIGHT_S) {
+                balls.remove(i--);
+                landed(b.cell);
+            }
+        }
 
         pollenSpinRad = (pollenSpinRad + sim.pollenShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
         nectarSpinRad = (nectarSpinRad + sim.nectarShooterRpm() * 2 * Math.PI / 60.0 * dt) % (2 * Math.PI);
@@ -466,11 +462,40 @@ public final class BiobuzzMatch {
                 + String.format(java.util.Locale.ROOT, "%.1f deg off the cell", off);
     }
 
+    /**
+     * A pollen launched at a cell lands in it. In the up cell it counts, and the cell tips once its
+     * load reaches the tip table's entry. In a cell that tipped within TIP_CATCH_S it still goes in
+     * and spills with the load; otherwise the cell has swung away and it misses.
+     */
+    private void landed(int cell) {
+        int up = upIsNorth ? 1 : 0;
+        if (cell == up) {
+            cellPollen[up]++;
+            scored++;
+            int need = tipTable[Math.min(cellNectar[up], tipTable.length - 1)];
+            if (cellPollen[up] >= need) {
+                tips++;
+                tipTimes.add(time);
+                lastTipS = time;
+                lastTipCell = up;
+                spill(up, cellPollen[up]);
+                cellPollen[up] = 0;
+                cellNectar[up] = 0;
+                upIsNorth = !upIsNorth;
+            }
+        } else if (cell == lastTipCell && time - lastTipS <= TIP_CATCH_S) {
+            scored++;
+            spill(cell, 1);
+        } else {
+            missed++;
+            missLog.add(String.format(java.util.Locale.ROOT, "t=%.2f landed in the %s cell after it swung away",
+                    time, cell == 1 ? "north" : "south"));
+            spill(cell, 1);
+        }
+    }
+
     /** A tipped cell's load falls out of it, outboard on its own side, and bounces to rest. */
     private void spill(int cell, int count) {
-        // The pollen still flying into this cell is part of the load that tips: it falls with the
-        // rest from now on, not in the air as well.
-        balls.removeIf(b -> b.cell == cell);
         double side = cell == 1 ? 1 : -1;
         double cy = side * FieldFace.OUTER_FACE_IN / 2.0;
         for (int i = 0; i < count; i++) {
@@ -517,7 +542,7 @@ public final class BiobuzzMatch {
                 fresh = false;
                 return;
             }
-            double r = POLLEN_RADIUS_IN, wall = 72 - r;
+            double r = POLLEN_RADIUS_IN, wall = WALL_IN - r;
             if (z > r || vz > 0) {
                 // Exact for constant gravity over the tick, so a launch reaches the cell opening
                 // after FLIGHT_S as toCell solved it.
@@ -580,14 +605,10 @@ public final class BiobuzzMatch {
             Logger.recordOutput("Field/Pollen", pieces.toArray(new Pose3d[0]));
             return;
         }
-        int[] arriving = new int[2];
-        for (Ball b : balls) {
-            if (b.cell >= 0) arriving[b.cell]++;
-            pieces.add(AdvantageScopeFrame.piece(b.x, b.y, b.z));
-        }
+        for (Ball b : balls) pieces.add(AdvantageScopeFrame.piece(b.x, b.y, b.z));
         for (int c = 0; c < 2; c++) {
             double cy = (c == 1 ? 1 : -1) * FieldFace.OUTER_FACE_IN / 2.0;
-            int shown = Math.max(0, cellPollen[c] - arriving[c]);
+            int shown = cellPollen[c];
             for (int i = 0; i < shown; i++) {
                 pieces.add(AdvantageScopeFrame.piece(hiveX + ((i % 2) * 3.0 - 1.5), cy + ((i / 2 % 2) * 3.0 - 1.5),
                         CELL_AIM_Z_IN - 4 + 3.0 * (i / 4)));
@@ -651,8 +672,11 @@ public final class BiobuzzMatch {
         double dx = p[0] - x, dy = p[1] - y;
         double fwd = dx * Math.cos(h) + dy * Math.sin(h);
         double left = -dx * Math.sin(h) + dy * Math.cos(h);
-        return Math.abs(fwd - mouthOffsetX) <= mouthHalfDepth + p[2]
-                && Math.abs(left - mouthOffsetY) <= mouthHalfWidth + p[2];
+        // A circle against the mouth's rectangle, as SimLoop's TriggerVolume tests it: a ball in a
+        // corner must reach the mouth's corner, not just each of its sides.
+        double outFwd = Math.max(0, Math.abs(fwd - mouthOffsetX) - mouthHalfDepth);
+        double outLeft = Math.max(0, Math.abs(left - mouthOffsetY) - mouthHalfWidth);
+        return Math.hypot(outFwd, outLeft) <= p[2];
     }
 
     // ------------------------------------------------------------------ contact
@@ -660,7 +684,7 @@ public final class BiobuzzMatch {
     private void checkContacts(double x, double y, double h, boolean intakeIn) {
         double[][] c = corners(x, y, h);
         for (double[] p : c) {
-            if (Math.abs(p[0]) > 72.0 + CONTACT_TOLERANCE_IN || Math.abs(p[1]) > 72.0 + CONTACT_TOLERANCE_IN) {
+            if (Math.abs(p[0]) > fieldHalfIn + CONTACT_TOLERANCE_IN || Math.abs(p[1]) > fieldHalfIn + CONTACT_TOLERANCE_IN) {
                 note("wall");
                 break;
             }

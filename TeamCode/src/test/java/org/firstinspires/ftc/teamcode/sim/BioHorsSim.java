@@ -75,8 +75,9 @@ public final class BioHorsSim {
          * software (BioHorsRobot, pedro/Constants), so on the metal the right pair is mirrored.
          */
         @Override public double[] wheelMountingSigns() { return new double[] {1.0, -1.0, 1.0, -1.0}; }
-        @Override public double fieldHalfWidth() { return 72.0; }   // SPEC (144 in field)
-        @Override public double fieldHalfHeight() { return 72.0; }  // SPEC
+        // MEASURED FROM CAD: the perimeter's inside faces (autos/field sizeIn, FIRST's field CAD)
+        @Override public double fieldHalfWidth() { return 70.674; }
+        @Override public double fieldHalfHeight() { return 70.674; }
     };
 
     /** Gate servo: positions are servo command units, so the command map is the identity. */
