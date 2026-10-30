@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.auto.AutoPoses;
 import org.firstinspires.ftc.teamcode.auto.TwoTipStateMachineAuto;
+import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.horizon36596.simloop.opmode.OpModeRunner;
 import org.horizon36596.simloop.sim.RlogDecodedCompare;
 import org.horizon36596.simloop.simclock.SimClockLoader;
@@ -50,6 +51,8 @@ class StateMachineAutoMatchTest {
         Path rlog;
         List<String> states = new ArrayList<>();
         List<Double> stateStarts = new ArrayList<>();
+        /** The flower bar's commanded positions (flowerLeft, servo units) seen in each state. */
+        java.util.Map<String, java.util.Set<Double>> bar = new java.util.LinkedHashMap<>();
         String report;
 
         double doneAt() {
@@ -89,6 +92,17 @@ class StateMachineAutoMatchTest {
         // Zenith's runtime strafes 29 %: up to 35 % here.
         assertTrue(red.match.strafeFraction() < MAX_STRAFE_FRACTION, String.format(Locale.ROOT,
                 "strafing is %.0f %% of the driving\n%s", 100 * red.match.strafeFraction(), red.report));
+
+        // The team: the flower bar stays down from the flower all the way to the shooting spot (it
+        // used to fold up as the robot backed off), lifts to shoot, and folds after the volley.
+        for (Run run : new Run[] {red, blue}) {
+            assertEquals(java.util.Set.of(MechanismConstants.FLOWER_BAR_DOWN), run.bar.get("TO_SCORE_NORTH"),
+                    "flower bar on the drive back to the north spot (servo units)\n" + run.report);
+            assertTrue(run.bar.get("SHOOT_FLOWER").contains(MechanismConstants.FLOWER_BAR_SHOOTING),
+                    "flower bar lifted to shoot: " + run.bar.get("SHOOT_FLOWER"));
+            assertEquals(java.util.Set.of(MechanismConstants.FLOWER_BAR_STOWED), run.bar.get("TO_GARDEN"),
+                    "flower bar folded after the north volley");
+        }
 
         java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(red.rlog);
         for (String k : new String[] {"Auto/PlannedRoute", "Auto/State", "Field/Robot", "Field/Pollen"}) {
@@ -142,6 +156,7 @@ class StateMachineAutoMatchTest {
                     time[0] += dt;
                     Object s = OpMode.blackboard.get(TwoTipStateMachineAuto.STATE_KEY);
                     if (s != null) Logger.recordOutput("Auto/State", (String) s);
+                    if (s != null) r.bar.computeIfAbsent((String) s, k -> new java.util.TreeSet<>()).add(sim.flowerLeft.getPosition());
                     if (s != null && (r.states.isEmpty() || !r.states.get(r.states.size() - 1).equals(s))) {
                         r.states.add((String) s);
                         r.stateStarts.add(time[0]);

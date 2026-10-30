@@ -234,12 +234,6 @@
       "name": "intakeOff"
     },
     {
-      "id": "flowerBarStowFlower",
-      "kind": "command",
-      "name": "flowerBarStow",
-      "notes": "Folds the flower bar up before backing off."
-    },
-    {
       "id": "toScoreNorth",
       "kind": "path",
       "segments": [
@@ -314,7 +308,13 @@
       "args": {
         "count": 4
       },
-      "notes": "Volley 2: four flower pollen into the north cell (up after tip 1)."
+      "notes": "Volley 2: four flower pollen into the north cell (up after tip 1). The flower bar stays down the whole drive back; the volley lifts it to its shooting position."
+    },
+    {
+      "id": "flowerBarStowFlower",
+      "kind": "command",
+      "name": "flowerBarStow",
+      "notes": "Folds the flower bar up after the volley, for the rest of the route (the team: down until the shooting spot, then up to shoot)."
     },
     {
       "id": "toGarden",
