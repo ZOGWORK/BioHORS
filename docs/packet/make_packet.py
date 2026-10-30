@@ -512,7 +512,7 @@ def build():
                 'moves it.'),
               P('<b>5f. Teleop controls</b> (MainHORS TeleOp; gamepad 2 mirrors the mechanism buttons)', 'h2'),
               table([['Button', 'Does'],
-                     ['Left stick / right stick X', 'Drive and strafe (field-centric) / turn'],
+                     ['Left stick / right stick X', 'Drive and strafe (robot-centric: forward is the robot front) / turn'],
                      ['Left trigger (hold)', 'AIM: turn onto our hive cell on this half of the field, leading the shot '
                       'while moving (lead is 0 until the ball speed is measured)'],
                      ['Right bumper (hold)', 'Slow mode'],
