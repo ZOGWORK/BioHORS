@@ -42,7 +42,7 @@ class ScoreCommandEstimateTest {
         PollenEstimate pollen = new PollenEstimate(n);
         ZenithSubsystems.Intake intake = new ZenithSubsystems.Intake(robot, pollen);
         ZenithSubsystems.Launcher launcher = new ZenithSubsystems.Launcher(robot);
-        ScoreCommand score = new ScoreCommand(launcher, intake, pollen, n);
+        ScoreCommand score = new ScoreCommand(launcher, intake, pollen, n, () -> true);
 
         score.initialize();
         long deadline = System.nanoTime() + 10_000_000_000L;
@@ -60,5 +60,32 @@ class ScoreCommandEstimateTest {
         assertEquals(0, pollen.held(), "a volley of " + n + " from " + n + " leaves none");
         assertTrue(pollen.empty());
         assertFalse(pollen.full());
+    }
+
+    @org.junit.jupiter.api.Test
+    void offAScoringSpotTheGateStaysShutAndTheVolleyIsSkipped() throws InterruptedException {
+        double savedWait = org.firstinspires.ftc.teamcode.auto.ShootingPose.WAIT_FOR_POSE_S;
+        org.firstinspires.ftc.teamcode.auto.ShootingPose.WAIT_FOR_POSE_S = 0.05;
+        try {
+            BioHorsSim sim = new BioHorsSim();
+            BioHorsRobot robot = new BioHorsRobot(sim.hardwareMap, null);
+            PollenEstimate pollen = new PollenEstimate(4);
+            ZenithSubsystems.Intake intake = new ZenithSubsystems.Intake(robot, pollen);
+            ZenithSubsystems.Launcher launcher = new ZenithSubsystems.Launcher(robot);
+            ScoreCommand score = new ScoreCommand(launcher, intake, pollen, 4, () -> false);
+            score.initialize();
+            long deadline = System.nanoTime() + 3_000_000_000L;
+            while (!score.isFinished() && System.nanoTime() < deadline) {
+                score.execute();
+                intake.periodic();
+                assertTrue(robot.pollenGate.isClosed(), "the gate opened off a scoring spot");
+                Thread.sleep(5);
+            }
+            score.end(false);
+            assertTrue(score.isFinished(), "the volley should give up");
+            assertEquals(4, pollen.held(), "the pollen stay aboard");
+        } finally {
+            org.firstinspires.ftc.teamcode.auto.ShootingPose.WAIT_FOR_POSE_S = savedWait;
+        }
     }
 }

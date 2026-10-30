@@ -7,6 +7,8 @@ import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.zenith.PollenEstimate;
 import org.firstinspires.ftc.teamcode.zenith.ScoreCommand;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * Every mechanism on the robot during AUTO, each as its own small state machine. The auto's main
  * state machine asks for things (collect, volley, spin up); {@link #update()} runs once per loop
@@ -43,6 +45,8 @@ public class AutoMechanisms {
 
     private final BioHorsRobot robot;
     private final PollenEstimate pollen;
+    private final BooleanSupplier atShootingPose;
+    private double readyAt = Double.NaN;
     private final ElapsedTime loopTimer = new ElapsedTime();
     private final ElapsedTime pollenTimer = new ElapsedTime();
     private final ElapsedTime sinceNewPollen = new ElapsedTime();
@@ -55,8 +59,10 @@ public class AutoMechanisms {
     private int volleysFired;
     private int volleysSkipped;
 
-    public AutoMechanisms(BioHorsRobot robot, int preload) {
+    /** atShootingPose: whether the robot is at a scoring spot now (ShootingPose); the gate opens only then. */
+    public AutoMechanisms(BioHorsRobot robot, int preload, BooleanSupplier atShootingPose) {
         this.robot = robot;
+        this.atShootingPose = atShootingPose;
         this.pollen = new PollenEstimate(preload);
         robot.pollenGate.setClosed(true);
         robot.nectarGate.setClosed(true);
@@ -133,6 +139,7 @@ public class AutoMechanisms {
         robot.flowerBar.setShooting(true);   // lift the bar clear first; feeding waits for it
         pollenShooter = PollenState.SPIN_UP;
         pollenTimer.reset();
+        readyAt = Double.NaN;
     }
 
     public boolean volleyDone() {
@@ -153,10 +160,18 @@ public class AutoMechanisms {
                 boolean atSpeed = robot.pollenShooter.isAtTarget() || pollenTimer.seconds() >= ScoreCommand.SPINUP_TIMEOUT_S;
                 boolean barClear = pollenTimer.seconds() >= MechanismConstants.FLOWER_BAR_SETTLE_S;
                 if (atSpeed && barClear) {
-                    robot.pollenGate.setClosed(false);
-                    setIntake(IntakeState.FEED);
-                    pollenShooter = PollenState.FIRING;
-                    pollenTimer.reset();
+                    if (Double.isNaN(readyAt)) readyAt = pollenTimer.seconds();
+                    if (atShootingPose.getAsBoolean()) {
+                        robot.pollenGate.setClosed(false);
+                        setIntake(IntakeState.FEED);
+                        pollenShooter = PollenState.FIRING;
+                        pollenTimer.reset();
+                    } else if (pollenTimer.seconds() - readyAt >= ShootingPose.WAIT_FOR_POSE_S) {
+                        // Never reached a scoring spot: the gate stays shut and the pollen stay aboard.
+                        robot.pollenGate.setClosed(true);
+                        volleysSkipped++;
+                        pollenShooter = PollenState.IDLE;
+                    }
                 }
                 break;
             case FIRING:

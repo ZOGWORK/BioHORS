@@ -198,7 +198,7 @@
           "from": "current",
           "to": {
             "xIn": 24,
-            "yIn": -52.75,
+            "yIn": -52.85,
             "headingRad": -1.5707926535897931,
             "provenance": "SET BY HAND: the point mirror of waypoints.json flowerNorthPickup (see its provenance there)"
           }
@@ -208,22 +208,25 @@
         "mode": "constant",
         "headingRad": -1.5707926535897931
       },
-      "speedFraction": 0.3,
-      "endCondition": {
-        "condition": "hopperFull"
-      },
+      "speedFraction": 0.2,
       "expect": {
         "collectFrom": "flower1",
         "count": 4
       },
-      "notes": "Drives slowly up to flower1 with the intake running. The marker starts the intake as the path starts, without a separate step; endCondition ends the path early once the robot is full, and expect tells the ledger it takes the flower's four pollen. Heading held square to the wall (a tangent heading turns a small sideways offset into a yaw that swings the mouth off the opening)."
+      "notes": "Drives slowly all the way in to flower1 with the intake running and the bar down (0.2, SET BY HAND, the team: slower, and in closer). It no longer stops early when the hopper reads full: it always reaches the pickup, and expect tells the ledger it takes the flower's four pollen. Heading held square to the wall (a tangent heading turns a small sideways offset into a yaw that swings the mouth off the opening)."
     },
     {
       "id": "waitForFull",
       "kind": "wait",
       "until": "hopperFull",
-      "timeoutS": 1,
-      "notes": "Gives the intake up to one more second. A wait until ends as soon as its condition is true, and timeoutS stops it waiting forever."
+      "timeoutS": 1.5,
+      "notes": "Gives the intake up to 1.5 s more (SET BY HAND, the team: longer at the flower). A wait until ends as soon as its condition is true, and timeoutS stops it waiting forever."
+    },
+    {
+      "id": "flowerDwell",
+      "kind": "wait",
+      "seconds": 0.5,
+      "notes": "SET BY HAND (the team): holds the intake running and the bar down 0.5 s more after the hopper reads full, so a last pollen still in the mouth comes in before the bar lifts."
     },
     {
       "id": "stopIntake",

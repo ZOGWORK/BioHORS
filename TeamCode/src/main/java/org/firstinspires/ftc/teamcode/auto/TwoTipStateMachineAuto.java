@@ -50,12 +50,13 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     /** Fraction of top speed for paths with no stated speed (as the Zenith project's default). */
     public static double DEFAULT_SPEED = 0.8;   // SET BY HAND
-    public static double PICKUP_SPEED = 0.3;    // the starter's: slow into the flower
+    public static double PICKUP_SPEED = 0.2;    // SET BY HAND (the team): slower into the flower
     public static double GARDEN_SWEEP_SPEED = 0.2;   // SET BY HAND (team): slower along the garden row, so every pollen goes in
     public static double SLIDE_SPEED = 0.3;     // SET BY HAND: slow sideways onto the garden lane, so it stops on time
     public static double OFF_LANE_SPEED = 0.6;  // SET BY HAND: up off the garden lane, sideways and back
     public static double SWEEP_TIMEOUT_S = 3.0;       // SET BY HAND: a stuck sweep gives up after this
-    public static double FLOWER_WAIT_S = 1.0;         // the starter's
+    public static double FLOWER_WAIT_S = 1.5;         // SET BY HAND (the team): longer at the flower
+    public static double FLOWER_DWELL_S = 0.5;        // SET BY HAND (the team): intake on, bar down, after full
     public static double GARDEN_WAIT_S = 0.8;         // SET BY HAND
     public static double SPIN_UP_AFTER_S = 0.5;       // the starter's: spin up 0.5 s into the drive back
     public static final int PRELOAD = 4;              // SET BY HAND: the robot starts full (G407 max)
@@ -67,6 +68,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         TO_OTHER_SIDE,          // round the west of the hive to below flower1
         COLLECT_FLOWER,         // bar down, intake on, slowly in; ends at the opening or when full
         WAIT_FLOWER_FULL,
+        FLOWER_DWELL,           // intake still running and the bar still down a little longer
         TO_SCORE_NORTH,         // the starter's leg: backs off the flower facing it, bar up, turns round
         SHOOT_FLOWER,
         TO_GARDEN,              // back round the west of the hive, ending heading west above the lane
@@ -117,7 +119,8 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         foresight = Constants.foresightConfig();
         follower = Constants.createFollower(hardwareMap, foresight);
         follower.setPose(p(START));
-        mech = new AutoMechanisms(robot, PRELOAD);
+        // The gate opens only at a scoring spot (ShootingPose), wherever the follower really is.
+        mech = new AutoMechanisms(robot, PRELOAD, () -> ShootingPose.at(alliance, follower.pose()));
         publish();
     }
 
@@ -169,8 +172,11 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
 
             case COLLECT_FLOWER:
-                // The starter's end condition: at the opening, or full.
-                if (!follower.isBusy() || mech.pollen().full()) next();
+                // Always all the way in to the pickup (the team: closer); the wait after it covers full.
+                if (!follower.isBusy()) next();
+                break;
+            case FLOWER_DWELL:
+                if (stateTimer.seconds() >= FLOWER_DWELL_S) next();
                 break;
             case WAIT_FLOWER_FULL:
                 if (mech.pollen().full() || mech.noNewPollenFor(MechanismConstants.COLLECT_NO_PROGRESS_S)

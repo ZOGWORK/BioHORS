@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
 import org.firstinspires.ftc.teamcode.sim.BioHorsSim;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
+import org.firstinspires.ftc.teamcode.zenith.ScoreCommand;
 import org.horizon36596.simloop.opmode.RecordingTelemetry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,7 @@ class AutoMechanismsTest {
     @Test
     void aVolleyIsSkippedWhenTheSensorReadsEmpty() {
         BioHorsRobot robot = robot();
-        AutoMechanisms mech = new AutoMechanisms(robot, 0);
+        AutoMechanisms mech = new AutoMechanisms(robot, 0, () -> true);
         robot.intakeLoad.emptied();          // the sensor has read: empty
         mech.volley(4);
         assertTrue(mech.volleyDone(), "the auto can move straight on");
@@ -43,7 +44,7 @@ class AutoMechanismsTest {
     @Test
     void anUnknownReadingStillShoots() {
         BioHorsRobot robot = robot();
-        AutoMechanisms mech = new AutoMechanisms(robot, 0);
+        AutoMechanisms mech = new AutoMechanisms(robot, 0, () -> true);
         assertFalse(robot.intakeLoad.hasReading());
         mech.volley(4);
         assertEquals(AutoMechanisms.PollenState.SPIN_UP, mech.pollenState());
@@ -54,7 +55,7 @@ class AutoMechanismsTest {
     void withTheSensorOffItStillShoots() {
         MechanismConstants.INTAKE_SENSOR_ENABLED = false;
         BioHorsRobot robot = robot();
-        AutoMechanisms mech = new AutoMechanisms(robot, 0);
+        AutoMechanisms mech = new AutoMechanisms(robot, 0, () -> true);
         robot.intakeLoad.emptied();
         mech.volley(4);
         assertEquals(AutoMechanisms.PollenState.SPIN_UP, mech.pollenState());
@@ -64,10 +65,35 @@ class AutoMechanismsTest {
     @Test
     void aLoadedRobotShoots() {
         BioHorsRobot robot = robot();
-        AutoMechanisms mech = new AutoMechanisms(robot, 4);
+        AutoMechanisms mech = new AutoMechanisms(robot, 4, () -> true);
         robot.intakeLoad.emptied();          // a reading exists, but the estimate holds 4
         mech.pollen().sensed(4);
         mech.volley(4);
         assertEquals(AutoMechanisms.PollenState.SPIN_UP, mech.pollenState());
+    }
+
+    @Test
+    void offAScoringSpotTheGateStaysShutAndTheVolleyIsSkipped() throws InterruptedException {
+        double savedWait = ShootingPose.WAIT_FOR_POSE_S, savedSpin = ScoreCommand.SPINUP_TIMEOUT_S;
+        ShootingPose.WAIT_FOR_POSE_S = 0.05;
+        ScoreCommand.SPINUP_TIMEOUT_S = 0.01;
+        try {
+            BioHorsRobot robot = robot();
+            AutoMechanisms mech = new AutoMechanisms(robot, 4, () -> false);
+            mech.pollen().sensed(4);
+            mech.volley(4);
+            long deadline = System.nanoTime() + 3_000_000_000L;
+            while (!mech.volleyDone() && System.nanoTime() < deadline) {
+                mech.update();
+                assertTrue(robot.pollenGate.isClosed(), "the gate opened off a scoring spot");
+                Thread.sleep(5);
+            }
+            assertTrue(mech.volleyDone(), "the volley should give up");
+            assertEquals(1, mech.volleysSkipped());
+            assertEquals(4, mech.pollen().held(), "the pollen stay aboard");
+        } finally {
+            ShootingPose.WAIT_FOR_POSE_S = savedWait;
+            ScoreCommand.SPINUP_TIMEOUT_S = savedSpin;
+        }
     }
 }

@@ -92,6 +92,10 @@ class ZenithAutoMatchTest {
                 "RED ended " + BiobuzzMatch.inchesFromPark(red2.rlog, true) + " in from the park spot\n" + red2.report);
 
         // ---- the run is sound: no unintended contact, little strafing, belief agrees with truth ----
+        assertTrue(red2.match.offSpotGateOpens().isEmpty(), "RED gate opened off a scoring spot: " + red2.match.offSpotGateOpens());
+        assertTrue(red2.match.offSpotLaunches().isEmpty(), "RED launched off a scoring spot: " + red2.match.offSpotLaunches());
+        assertTrue(blue.match.offSpotGateOpens().isEmpty(), "BLUE gate opened off a scoring spot: " + blue.match.offSpotGateOpens());
+        assertTrue(blue.match.offSpotLaunches().isEmpty(), "BLUE launched off a scoring spot: " + blue.match.offSpotLaunches());
         assertTrue(red2.match.unintendedContacts().isEmpty(),
                 "structure contact: " + red2.match.unintendedContacts() + "\n" + red2.report);
         // Zenith's starter route turns while it drives (its own legs warn at 22 %), and the 22 in robot
@@ -206,6 +210,10 @@ class ZenithAutoMatchTest {
             assertEquals(b.match.tips(), c.match.tips(), "BLUE tips in physics\n" + c.report);
             assertEquals(PRELOAD_PHYSICS + c.match.collected(), c.match.launched(), "BLUE pollen launched\n" + c.report);
             assertTrue(c.match.unintendedContacts().isEmpty(), "BLUE structure contact: " + c.match.unintendedContacts());
+            assertTrue(b.match.offSpotGateOpens().isEmpty(), "RED physics gate opened off a scoring spot: " + b.match.offSpotGateOpens());
+            assertTrue(b.match.offSpotLaunches().isEmpty(), "RED physics launched off a scoring spot: " + b.match.offSpotLaunches());
+            assertTrue(c.match.offSpotGateOpens().isEmpty(), "BLUE physics gate opened off a scoring spot: " + c.match.offSpotGateOpens());
+            assertTrue(c.match.offSpotLaunches().isEmpty(), "BLUE physics launched off a scoring spot: " + c.match.offSpotLaunches());
         } finally {
             ShotModel.POLLEN_PITCH_DEG = savedPitch;
             ShotModel.GRIP_EFFICIENCY = savedGrip;
