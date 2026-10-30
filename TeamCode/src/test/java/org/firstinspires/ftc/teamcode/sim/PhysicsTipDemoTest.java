@@ -88,7 +88,7 @@ class PhysicsTipDemoTest {
     private void demo(boolean red) throws IOException {
         OpMode.blackboard.clear();
         double savedPitch = ShotModel.POLLEN_PITCH_DEG, savedGrip = ShotModel.GRIP_EFFICIENCY;
-        ShotModel.POLLEN_PITCH_DEG = ZenithAutoMatchTest.WHAT_IF_PITCH_DEG;
+        ShotModel.POLLEN_PITCH_DEG = ZenithAutoMatchTest.SHOT_PITCH_DEG;
         ShotModel.GRIP_EFFICIENCY = ZenithAutoMatchTest.WHAT_IF_GRIP;
         try {
             int min = ShotSweepTest.minRpm(SPOT_Y_IN);

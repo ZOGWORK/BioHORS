@@ -221,11 +221,11 @@ within a few percent). SimLoop's `fit` package can compute the gap.
 ### 9a. The shot (the most important measurement left)
 
 The sim can fly real balls (`ShotModel` -> SimLoop physics -> the physics hive `BiobuzzHive`). How
-far and how high a pollen goes depends on two numbers nobody has measured:
+far and how high a pollen goes depends on two numbers; the angle is now read from CAD, the speed is not:
 
 | Item | Current | Where | How |
 |---|---|---|---|
-| Exit angle | 44 deg (the PS ramp's slope in CAD) | `ShotModel.POLLEN_PITCH_DEG` | Film one shot side-on at 1600 rpm (phone slow-mo, a tape on the floor for scale); measure the angle of the first few frames of flight |
+| Exit angle | **75 deg** (MEASURED FROM CAD: the hood face is 15 deg off vertical, team's Onshape sketch, Oct 30) | `ShotModel.POLLEN_PITCH_MEASURED_DEG` | Confirm on film: one shot side-on at 1750 rpm (phone slow-mo, something level in frame); the angle of the first few frames of flight |
 | Exit speed / rim speed | 0.5 (a ball rolling on a fixed hood) | `ShotModel.GRIP_EFFICIENCY` | Same video: speed over the first few frames, divided by `rpm * 2 pi / 60 * 1.42 in` |
 
 What the sim says now (`ShotSweepTest`, lowest rpm that seats a pollen in the up cell, robot on
@@ -233,20 +233,22 @@ the hive's centre line, y = distance south of the hive axle; -1 = none up to 600
 
 | grip, pitch | y -35 | -40 | -45 | -50 | -55 | -60 |
 |---|---|---|---|---|---|---|
-| 0.5, 44 deg (CAD as read) | -1 | -1 | -1 | -1 | -1 | -1 |
+| 0.5, 44 deg (an old misreading: the ramp, not the hood) | -1 | -1 | -1 | -1 | -1 | -1 |
 | 0.5, 60 deg | -1 | -1 | -1 | 3500 | 3000 | 2900 |
 | 0.5, 70 deg | -1 | 2900 | 2700 | 2600 | 2700 | 2700 |
 | 0.8, 60 deg | -1 | -1 | 5600 | 2200 | 1900 | 1800 |
 | 0.8, 70 deg | 3600 | 1800 | 1700 | 1700 | 1700 | 1700 |
+| **0.5, 75 deg (measured angle)** | 2800 | 2600 | 2600 | 2700 | 2800 | 2900 |
+| **0.8, 75 deg (measured angle)** | 1800 | 1600 | 1600 | 1700 | 1800 | 1800 |
 
 The robot's centre cannot be south of y = -64.2 facing north (its back is 7.8 in behind it).
 
 Two findings:
 
-1. **At the CAD-read 44 deg nothing practical scores**: the cell opening is about 47 in above the
-   exit, and at 44 deg a ball only gets in from y = -70, behind the south wall's reach. If the robot
-   really scores at 1600 rpm, the ball leaves steeper and faster than the CAD
-   reading suggests. The measurement above settles it.
+1. **A flat shot cannot score**: the cell opening is about 47 in above the exit, and the ball has to
+   come down into it. At 40 deg or less nothing scores from anywhere; it starts at about 50 deg and is
+   most forgiving at 65-75 deg. The hood's 75 deg is in that band: from the 48 in scoring spots
+   1650-1800 rpm seat at a 0.8 ball speed (about 2700 at 0.5). The ball speed is what is left to film.
 2. **Where the auto shoots from.** The optimized route shoots volleys 1 and 2 from the start
    (55 in from the south cell) and from `gardenTurn` (51 in), in the 45-50 in band where every
    plausible shot works. Volleys 3 and 4 still go from `scoreNorth`, 36.5 in from the north cell,
@@ -264,9 +266,9 @@ wide, and too fast overshoots the cell. **Worth checking on the real robot:** th
 plain box, so a real cell with a funnel or lip inside could change this. The full sweeps run with
 `-Dsim.sweeps=true`.
 
-`PhysicsTipDemoTest` shows the physics working: parked 50 in out under the what-if, the real
-ShooterController and gate fire 8 real balls at 1800 rpm, all 8 seat, the hive starts to tip at 5.1 s
-(3.7 s swing) and 7 spill on the south floor. Open `TeamCode/build/sim/physics-tip-demo.rlog` in AdvantageScope's 3D
+`PhysicsTipDemoTest` shows the physics working: parked 50 in out at 75 deg and the what-if ball speed, the real
+ShooterController and gate fire real balls at 1800 rpm: 7 seat, the 8th arrives as the hive starts to
+tip (2.7 s), and 8 spill on the south floor. Open `TeamCode/build/sim/physics-tip-demo.rlog` in AdvantageScope's 3D
 Field tab (Field/Robot, Field/Pollen as game pieces, Field/Hive as the hive bar's pose).
 
 ## 10. The tip rule

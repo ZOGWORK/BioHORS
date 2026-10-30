@@ -47,7 +47,7 @@ public final class BiobuzzHive {
 
     // Hold: CALIBRATED in BiobuzzHiveTest (8 pollen tip, 7 do not). Mass in pollen units.
     public static double HIVE_MASS = 20.0;          // CALIBRATED
-    public static double COM_HEIGHT_IN = 6.0;       // CALIBRATED: mid-band of 5.4..6.6 in, where the 8th real shot tips it to its other stop (BiobuzzHiveTest, at this inertia)
+    public static double COM_HEIGHT_IN = 6.5;       // CALIBRATED: mid-band of 6.25..6.75 in, where the 8th real shot of a spread volley (75 deg, MEASURED FROM CAD) tips it to its other stop (BiobuzzHiveTest, at this inertia)
     public static double INERTIA = 22000.0;         // CALIBRATED: with the hold above the swing at the tip load takes about 3 s (DSim: about 4 s, APPROX)
     public static double DAMPING_PER_S = 0.6;       // CALIBRATED
 

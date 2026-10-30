@@ -22,8 +22,12 @@ public final class ShotModel {
     public static final double POLLEN_FORWARD_IN = -0.9;
     public static final double POLLEN_LEFT_IN = -2.9;
     public static final double POLLEN_UP_IN = 12.1;
-    // MEASURED FROM CAD: the PS ramp's slope at its top edge (2.3 in rise over 2.4 in).
-    public static double POLLEN_PITCH_DEG = 44.0;
+    // MEASURED FROM CAD (the team's Onshape side-plate sketch, 2026-10-30): the pollen hood's face
+    // leans 15 deg back from vertical, so the ball leaves 90 - 15 = 75 deg above the floor. (An earlier
+    // reading of 44 deg was the slope of the ramp's top edge, not the hood the ball leaves along.)
+    public static final double POLLEN_PITCH_MEASURED_DEG = 75.0;
+    /** The angle a launch uses; tests may set it for a what-if sweep and must put it back. */
+    public static double POLLEN_PITCH_DEG = POLLEN_PITCH_MEASURED_DEG;
 
     // Nectar (left side). MEASURED FROM CAD: the nectar hood's top edge (CAD x 2.3, z 9.4).
     public static final double NECTAR_FORWARD_IN = -0.6;

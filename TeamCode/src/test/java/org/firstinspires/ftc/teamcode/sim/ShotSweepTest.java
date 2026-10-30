@@ -88,8 +88,9 @@ class ShotSweepTest {
     /** The farthest south the robot's centre can be, facing north: its back 7.8 in behind (CAD). */
     static final double FARTHEST_Y_IN = -70.674 + 7.8;
 
+    /** A flat shot cannot drop into the cell: at the ramp's 44 deg (the old misreading) nothing scores. */
     @Test
-    void atTheCadReadingNoSpotTheRobotCanReachScores() {
+    void aFlatShotScoresFromNowhereTheRobotCanReach() {
         withShot(44.0, 0.5, () -> {
             for (double y = -25; y >= FARTHEST_Y_IN; y -= 2.5) {
                 assertEquals(-1, minRpm(y), "44 deg / 0.5 grip scored from y " + y);
@@ -97,9 +98,18 @@ class ShotSweepTest {
         });
     }
 
+    /** At the measured 75 deg, even with the physics placeholder grip (0.5), the scoring spots score. */
+    @Test
+    void atTheMeasuredAngleTheScoringSpotsScore() {
+        withShot(ShotModel.POLLEN_PITCH_MEASURED_DEG, 0.5, () -> {
+            int r = minRpm(-48);
+            assertTrue(r > 0 && r <= 3500, "75 deg / 0.5 grip from 48 in out needs " + r + " rpm");
+        });
+    }
+
     @Test
     void underTheWhatIfAReachableSpotScoresNearTheTestTarget() {
-        withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+        withShot(ZenithAutoMatchTest.SHOT_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
             int best = Integer.MAX_VALUE;
             for (double y = -40; y >= FARTHEST_Y_IN; y -= 5) {
                 int r = minRpm(y);
@@ -112,7 +122,7 @@ class ShotSweepTest {
     /** Under the what-if shot: which rpms seat from 48 in out (the scoring spots), for choosing the auto's. */
     @Test
     void rpmWindowFromTheScoreSpotsIsPrinted() {
-        withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+        withShot(ZenithAutoMatchTest.SHOT_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
             for (double y : new double[] {-46, -48, -50}) {
                 StringBuilder row = new StringBuilder(String.format(Locale.ROOT, "WINDOW y %.0f:", y));
                 for (int rpm = 1500; rpm <= 2600; rpm += 50) {
@@ -132,7 +142,10 @@ class ShotSweepTest {
         tracker.advance(0.02);
         GamePiece p = tracker.getPiece(id);
         double v = Math.hypot(p.getVelocityYInchesPerSecond(), p.getVelocityZInchesPerSecond());
-        assertEquals(ShotModel.exitSpeed(3000), v, 0.03 * v);
+        // After one 0.02 s step gravity (386.09 in/s^2) has taken 7.7 in/s off the vertical speed.
+        double v0 = ShotModel.exitSpeed(3000), pitch = Math.toRadians(ShotModel.POLLEN_PITCH_DEG);
+        double expected = Math.hypot(v0 * Math.cos(pitch), v0 * Math.sin(pitch) - 386.09 * 0.02);
+        assertEquals(expected, v, 0.01 * expected);
         assertEquals(-40 + 2.9, p.getFieldXInches(), 0.5, "the pollen shooter is on the right");
     }
 }

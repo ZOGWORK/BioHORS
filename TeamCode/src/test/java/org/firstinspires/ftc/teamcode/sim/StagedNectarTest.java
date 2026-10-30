@@ -38,7 +38,7 @@ class StagedNectarTest {
 
     @Test
     void calibrationSweepIsPrinted() {
-        for (double m = 1.0; m <= 1.61; m += 0.05) {
+        for (double m = 1.3; m <= 1.91; m += 0.05) {
             double saved = BiobuzzPhysicsWorld.NECTAR_MASS;
             BiobuzzPhysicsWorld.NECTAR_MASS = m;
             try {

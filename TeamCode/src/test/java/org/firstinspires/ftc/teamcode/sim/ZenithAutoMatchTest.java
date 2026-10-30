@@ -139,19 +139,18 @@ class ZenithAutoMatchTest {
     // ------------------------------------------------------------------ physics
 
     /**
-     * WHAT-IF shot for the physics run: a steep, grippy exit (70 deg, 0.8 of the rim speed). Not
-     * measured. It is the kind of shot under which the team's 1600 rpm test target reaches the cell
-     * (ShotSweepTest prints the table). The CAD-read 44 deg cannot score from the auto's spots at any
-     * rpm. Film one real shot and put the measured angle and speed in ShotModel.
+     * The shot for the physics run. The angle is ShotModel's, MEASURED FROM CAD (75 deg). The grip is
+     * a WHAT-IF: 0.8 of the rim speed, a grippy wheel; ShotModel's physics placeholder is 0.5. Not
+     * measured: film one real shot and put its speed in ShotModel.GRIP_EFFICIENCY.
      */
-    static final double WHAT_IF_PITCH_DEG = 70.0;
+    static final double SHOT_PITCH_DEG = ShotModel.POLLEN_PITCH_MEASURED_DEG;
     static final double WHAT_IF_GRIP = 0.8;
     static final int PRELOAD_PHYSICS = 4;   // SET BY HAND: the auto's start holds (two-tip.auto.json)
 
     @Test
     void theAutoWithRealBallsInPhysics() throws IOException {
         double savedPitch = ShotModel.POLLEN_PITCH_DEG, savedGrip = ShotModel.GRIP_EFFICIENCY;
-        ShotModel.POLLEN_PITCH_DEG = WHAT_IF_PITCH_DEG;
+        ShotModel.POLLEN_PITCH_DEG = SHOT_PITCH_DEG;
         ShotModel.GRIP_EFFICIENCY = WHAT_IF_GRIP;
         try {
             String auto = System.getProperty("zenith.auto", AUTO_NAME);
@@ -163,7 +162,7 @@ class ZenithAutoMatchTest {
                 where.merge(k, 1, Integer::sum);
             }
             System.out.println("PHYSICS pieces at the end: " + where + ", hive angles " + java.util.Arrays.toString(b.match.hiveAnglesDeg()));
-            System.out.print("PHYSICS (what-if shot " + WHAT_IF_PITCH_DEG + " deg, grip " + WHAT_IF_GRIP + ")"
+            System.out.print("PHYSICS (shot " + SHOT_PITCH_DEG + " deg, what-if grip " + WHAT_IF_GRIP + ")"
                     + b.report);
 
             // Every pollen the robot held left it, and each launch is accounted for: seated or missed.

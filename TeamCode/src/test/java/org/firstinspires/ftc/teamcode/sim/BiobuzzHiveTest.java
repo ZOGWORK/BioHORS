@@ -83,7 +83,15 @@ class BiobuzzHiveTest {
     }
 
     /**
-     * How many real shots (ShotModel, the what-if exit, AUTO_POLLEN_RPM from 48 in south of RED's hive)
+     * Where each shot of a volley leaves, across the hive (inches, the robot's x). APPROX: a real volley
+     * does not land in one spot; the robot's pose and the flywheel's dip per shot move each ball an inch
+     * or two. Shot down one exact line, balls stack in a column the match never shows (in the physics
+     * match they lie in a row along the cell's inner wall), and a column tips the hive sooner.
+     */
+    static final double[] SPREAD_IN = {0.0, 1.2, -1.2, 2.4, -2.4, 0.6, -0.6, 1.8, -1.8, 0.0, 1.2, -1.2};
+
+    /**
+     * How many real shots (ShotModel at its measured angle, AUTO_POLLEN_RPM from 48 in south of RED's hive, spread as SPREAD_IN)
      * it takes to tip it from south-up, one every 0.3 s as the robot feeds; -1 if 12 did not.
      */
     static int shotsToTip(double comHeight) {
@@ -96,7 +104,7 @@ class BiobuzzHiveTest {
         BiobuzzHive.COM_HEIGHT_IN = comHeight;
         int[] out = {-1};
         try {
-            ShotSweepTest.withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+            ShotSweepTest.withShot(ZenithAutoMatchTest.SHOT_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
                 GamePieceTracker tracker = new GamePieceTracker(12, FieldWorld.builder().perimeter(72, 72)
                         .physics(BiobuzzPhysicsWorld.physics()).kinematicBody(BiobuzzHive.body(true)).build());
                 String hive = BiobuzzHive.bodyName(true);
@@ -104,7 +112,7 @@ class BiobuzzHiveTest {
                 if (nectar) BiobuzzPhysicsWorld.stageNectar(tracker, true, false);
                 run(tracker, nectar ? 3.0 : 1.0);
                 for (int n = 1; n <= 12 && out[0] < 0; n++) {
-                    double[] l = ShotModel.pollenLaunch(-13.0, -48.0, Math.PI / 2,
+                    double[] l = ShotModel.pollenLaunch(-13.0 + SPREAD_IN[(n - 1) % SPREAD_IN.length], -48.0, Math.PI / 2,
                             org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_POLLEN_RPM, 0, 0);
                     int id = tracker.addHeldPiece("pollen", R);
                     tracker.launch(id, "shot", l[0], l[1], l[2], l[3], l[4], l[5]);
@@ -132,7 +140,7 @@ class BiobuzzHiveTest {
         try {
             for (double inertia : new double[] {22000}) {
                 BiobuzzHive.INERTIA = inertia;
-                for (double com = 5.0; com <= 7.01; com += 0.2) {
+                for (double com = 5.8; com <= 7.21; com += 0.2) {
                     double savedC = BiobuzzHive.COM_HEIGHT_IN;
                     BiobuzzHive.COM_HEIGHT_IN = com;
                     double swing;

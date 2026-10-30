@@ -40,9 +40,10 @@ public final class BiobuzzPhysicsWorld {
     static final double PLATE_HEIGHT_IN = 6.0;
     /** MEASURED FROM CAD (AdvantageScope's field model, am-5852 Nectar: 3.6 in across every way). */
     static final double NECTAR_RADIUS_IN = 1.8;
-    /** CALIBRATED in StagedNectarTest (pollen = 1): the middle of 1.20-1.50, where the 3 nectar staged
-     *  in an up cell make 3 shot pollen tip it, as the season's tip table says. Not a weighed nectar. */
-    static double NECTAR_MASS = 1.35;
+    /** CALIBRATED in StagedNectarTest (pollen = 1): the middle of 1.50-1.70, where the 3 nectar staged
+     *  in an up cell make 3 shot pollen (75 deg, MEASURED FROM CAD) tip it, as the season's tip table
+     *  says. Not a weighed nectar. */
+    static double NECTAR_MASS = 1.60;
 
     private BiobuzzPhysicsWorld() {
     }
