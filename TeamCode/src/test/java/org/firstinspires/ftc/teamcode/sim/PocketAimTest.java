@@ -105,7 +105,7 @@ class PocketAimTest {
     /** The finding above, kept cheap: the worst scatter case from the centre line, 5 seeds. */
     @Test
     void aimingAtTheMiddleSeatsAtLeastAsManyAsAWallOrCorner() {
-        ShotSweepTest.withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+        ShotSweepTest.withShot(ZenithAutoMatchTest.SHOT_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
             double[] spot = {HIVE_X, -50};
             int base = minRpmFrom(spot[0], spot[1]);
             double middle = bestMean(spot, new double[] {0, MID_Y}, base);
@@ -134,7 +134,7 @@ class PocketAimTest {
     @Test
     void volleysByAimPointArePrinted() {
         sweepsOnly();
-        ShotSweepTest.withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+        ShotSweepTest.withShot(ZenithAutoMatchTest.SHOT_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
             double[][] spots = {{HIVE_X, -50}, {-30, -48}};
             for (double[] s : spots) {
                 int base = minRpmFrom(s[0], s[1]);
@@ -172,7 +172,7 @@ class PocketAimTest {
     @Test
     void realRapidFireByAimPointIsPrinted() {
         sweepsOnly();
-        ShotSweepTest.withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+        ShotSweepTest.withShot(ZenithAutoMatchTest.SHOT_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
             double[][] spots = {{HIVE_X, -50}, {-30, -48}};
             // scatter cases: {heading sigma deg, speed sigma, dip per shot}
             double[][] cases = {{1.5, 0.02, 0.05}, {3.0, 0.03, 0.08}};
@@ -203,7 +203,7 @@ class PocketAimTest {
     @Test
     void deadAndLivelyHiveWallsArePrinted() {
         sweepsOnly();
-        ShotSweepTest.withShot(ZenithAutoMatchTest.WHAT_IF_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
+        ShotSweepTest.withShot(ZenithAutoMatchTest.SHOT_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
             double[][] spots = {{HIVE_X, -50}, {-30, -48}};
             double savedE = BiobuzzHive.RESTITUTION;
             try {

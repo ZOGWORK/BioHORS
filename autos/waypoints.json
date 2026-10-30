@@ -12,13 +12,13 @@
       "xIn": -13.0,
       "yIn": -48.0,
       "headingRad": 1.5708,
-      "provenance": "SET FROM SIM: 48 in from the hive axle (y = -48), where the pollen shot seats in the up cell in SimLoop's physics (ShotSweepTest: 1650-1850 rpm all seat from 46-50 in out). Only under the WHAT-IF shot (70 deg exit at 0.8 of the rim speed): at the CAD-read 44 deg ramp no spot inside the walls scores at any rpm. The starter example's spot was 36 in out, too close for a real ball. South of the RED hive, facing the south cell. NEEDS MEASUREMENT: film a shot, then re-run ShotSweepTest and move this to where the real shot scores."
+      "provenance": "SET FROM SIM: 48 in from the hive axle (y = -48), where the pollen shot seats in the up cell in SimLoop's physics (ShotSweepTest: 1650-1800 rpm all seat from 46-50 in out). The shot leaves at the hood's 75 deg (MEASURED FROM CAD, the team's Onshape sketch: 15 deg off vertical); its speed is a WHAT-IF 0.8 of the rim speed. South of the RED hive, facing the south cell. NEEDS MEASUREMENT: film a shot, then re-run ShotSweepTest and move this to where the real shot scores."
     },
     "scoreNorth": {
       "xIn": -13.0,
       "yIn": 48.0,
       "headingRad": -1.5708,
-      "provenance": "SET FROM SIM: 48 in from the hive axle (y = 48), where the pollen shot seats in the up cell in SimLoop's physics (ShotSweepTest: 1650-1850 rpm all seat from 46-50 in out). Only under the WHAT-IF shot (70 deg exit at 0.8 of the rim speed): at the CAD-read 44 deg ramp no spot inside the walls scores at any rpm. The starter example's spot was 44 in out, too close for a real ball. North of the RED hive, facing the north cell. NEEDS MEASUREMENT: film a shot, then re-run ShotSweepTest and move this to where the real shot scores."
+      "provenance": "SET FROM SIM: 48 in from the hive axle (y = 48), where the pollen shot seats in the up cell in SimLoop's physics (ShotSweepTest: 1650-1800 rpm all seat from 46-50 in out). The shot leaves at the hood's 75 deg (MEASURED FROM CAD, the team's Onshape sketch: 15 deg off vertical); its speed is a WHAT-IF 0.8 of the rim speed. North of the RED hive, facing the north cell. NEEDS MEASUREMENT: film a shot, then re-run ShotSweepTest and move this to where the real shot scores."
     },
     "flowerNorthApproach": {
       "xIn": -24.0,

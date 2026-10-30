@@ -51,9 +51,10 @@ public final class MechanismConstants {
 
     /**
      * The pollen flywheel's speed in AUTO, from the scoring spots 48 in from the hive axle. PLACEHOLDER,
-     * SET FROM SIM: the middle of the 1650-1850 rpm that seat a pollen from there in the sim's physics,
-     * under the WHAT-IF shot (70 deg exit at 0.8 of the rim speed; the shot is not measured). Film a
-     * shot, measure its exit angle and speed, then re-run ShotSweepTest and set this from it.
+     * SET FROM SIM: the middle of the 1650-1800 rpm that seat a pollen from there in the sim's physics,
+     * at the hood's 75 deg exit (MEASURED FROM CAD) and a WHAT-IF ball speed of 0.8 of the rim speed (at
+     * the physics placeholder 0.5 it would be about 2700). Film a shot, measure its speed, then re-run
+     * ShotSweepTest and set this from it.
      */
     public static double AUTO_POLLEN_RPM = 1750.0;
 

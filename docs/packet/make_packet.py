@@ -338,9 +338,9 @@ def build():
                 'drive back round the hive and score the third volley from <i>scoreNorth</i>, then run west along the north wall and slide south into the park spot, facing west. In the sim it scores <b>12 of 12</b> pollen and tips the hive <b>twice</b>, '
                 'touches nothing, and finishes in about <b>28.8 s</b> of the 30 by the Zenith estimate, parked by 22.5 s in the sim.'),
               Callout('warn', '<b>All of this is simulated.</b> No number on this robot is tuned yet. The poses come '
-                      'from FIRST\'s field CAD and the robot CAD, not a real field. The shot (exit angle and speed) is '
-                      'a what-if; the scoring spots and the auto rpm (1750) were picked in the sim to make that what-if '
-                      'shot land. <b>Filming one real shot is the most important measurement left</b> (Section 5d).'),
+                      'from FIRST\'s field CAD and the robot CAD, not a real field. The shot leaves at the hood\'s 75 deg '
+                      '(read from CAD); its speed is still a guess, so the auto rpm (1750) and the scoring spots were picked '
+                      'in the sim. <b>Filming one real shot is the most important measurement left</b> (Section 5d).'),
               two_imgs('route-red.png', 'route-blue.png', 'RED: zenith render two-tip.',
                        'BLUE: zenith render two-tip-blue, the same route turned 180 deg about the field centre.', frac=0.4),
               PageBreak(),
@@ -496,13 +496,15 @@ def build():
                       'INTAKE_FREE_TICKS_PER_S 2800, INTAKE_LOADED_TICKS_PER_S 2100, settle 0.4 s, filter 0.3']],
                     [0.18, 0.52, 0.30], c5),
               P('<b>5d. The shot</b> (section 9a): the most important measurement left', 'h2'),
-              P('Film one pollen shot from the side at 1750 rpm, with a ruler in frame. Measure the exit angle and the '
-                'ball speed. Put them in the sim\'s ShotModel (' + mono('TeamCode/src/test/.../sim/') + '), rerun '
-                + mono('ShotSweepTest') + ', and it reports the rpm and distance that seat a pollen. Only then move the '
+              P('The exit angle is known from CAD: the pollen hood leans 15 deg off vertical, so the ball leaves at '
+                '<b>75 deg</b> above the floor. What is left is the ball speed. Film one pollen shot from the side at '
+                '1750 rpm with a ruler in frame; the speed over the first few frames divided by the rim speed goes in '
+                + mono('ShotModel.GRIP_EFFICIENCY') + ' (' + mono('TeamCode/src/test/.../sim/') + '). Rerun '
+                + mono('ShotSweepTest') + ' and it reports the rpm and distance that seat a pollen; then move the '
                 'scoring spots (Section 6) and set AUTO_POLLEN_RPM.'),
-              Callout('warn', 'With the CAD exit angle (44 deg) no spot inside the field scores at any rpm in the sim. The '
-                      'auto scores today only because of the what-if 70 deg shot. Do not trust the scoring spots until a '
-                      'shot is filmed.'),
+              Callout('warn', 'In the sim a flat shot (40 deg or less) never scores; 65-75 deg is the most forgiving. At '
+                      'the hood\'s 75 deg, the 48 in scoring spots need about 1650-1800 rpm if the ball leaves at 0.8 of '
+                      'the rim speed, or about 2700 rpm at 0.5. The film decides which.'),
               P('<b>5e. Aim</b> (section 8)', 'h2'),
               P('In ' + f('TeamCode/src/main/java/org/firstinspires/ftc/teamcode/aim/AimController.java') + ': confirm '
                 'the shooter fires out of the robot\'s front (SHOOTER_FACING_OFFSET_RAD = 0), then tune kP (1.2) until '
@@ -655,7 +657,7 @@ def build():
             ['Auto', 'DEFAULT_SPEED_FRACTION (BioHorsZenithRobot)', '0.8', 'PLACEHOLDER', 'Same as robot.json default speed'],
             ['Aim', 'MAX_TURN_RATE_RAD_PER_S (AimController)', '5.0', 'PLACEHOLDER', 'Spin at full yaw, read the Pinpoint'],
             ['Drive', 'headingDeviationTolerance (pedro/Constants)', '3 deg', 'PLACEHOLDER', 'Keep unless volleys face off the cell'],
-            ['Sim', 'ShotModel exit angle and grip (test side)', '70 deg, 0.8', 'WHAT-IF', 'Film a shot (5d)'],
+            ['Sim', 'ShotModel ball speed / rim speed (test side; the 75 deg angle is from CAD)', '0.8 in the match', 'WHAT-IF', 'Film a shot (5d)'],
             ['Sim', 'X/Y_POD_OFFSET_IN (BioHorsSim)', '0, 0', 'copy', 'Copy from the robot']]
     story += [bar(8), Spacer(1, 10),
               P('Everything below is a guess, a spec sheet number or a sim result. Work down the list roughly in this '
