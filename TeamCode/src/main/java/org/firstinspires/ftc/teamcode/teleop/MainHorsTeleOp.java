@@ -174,20 +174,12 @@ public class MainHorsTeleOp extends LinearOpMode {
         // Loop-time readout, measurement only: the period from the start of one loop to the start
         // of the next, on its own timer (loopTimer above belongs to the velocity math).
         ElapsedTime loopTimeTimer = new ElapsedTime();
-        double[] loopTimesMs = new double[LOOP_TIME_WINDOW];
-        int loopTimeCount = 0;
-        double lastLoopMs = Double.NaN;
-        double peakLoopMs = 0.0;
+        LoopTimeStats loopTimes = new LoopTimeStats(LOOP_TIME_WINDOW);
         boolean firstLoop = true;
 
         while (opModeIsActive()) {
             // The first loop has no previous start to measure from, so it records nothing.
-            if (!firstLoop) {
-                lastLoopMs = loopTimeTimer.milliseconds();
-                loopTimesMs[loopTimeCount % LOOP_TIME_WINDOW] = lastLoopMs;
-                loopTimeCount++;
-                peakLoopMs = Math.max(peakLoopMs, lastLoopMs);
-            }
+            if (!firstLoop) loopTimes.add(loopTimeTimer.milliseconds());
             loopTimeTimer.reset();
             firstLoop = false;
 
@@ -385,14 +377,11 @@ public class MainHorsTeleOp extends LinearOpMode {
                     robot.nectarGate.isClosed() ? "CLOSED" : "OPEN",
                     gatesRequested ? "yes" : "no");
             telemetry.addData("Fire", fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason);
-            if (loopTimeCount == 0) {
+            if (loopTimes.isEmpty()) {
                 telemetry.addData("Loop", "n/a (first loop)");
             } else {
-                int samples = Math.min(loopTimeCount, LOOP_TIME_WINDOW);
-                double sumMs = 0.0;
-                for (int i = 0; i < samples; i++) sumMs += loopTimesMs[i];
                 telemetry.addData("Loop", "%.1f ms (avg %.1f, max %.1f)",
-                        lastLoopMs, sumMs / samples, peakLoopMs);
+                        loopTimes.lastMs(), loopTimes.averageMs(), loopTimes.peakMs());
             }
             telemetry.update();
         }
@@ -485,5 +474,48 @@ public class MainHorsTeleOp extends LinearOpMode {
     private void addShooterTelemetry(String label, ShooterController s) {
         telemetry.addData(label + " shooter", "on=%s target=%.0f rpm current=%.0f rpm atTarget=%s",
                 s.isShooterOn(), s.getTargetRpm(), s.getCurrentRpm(), s.isAtTarget());
+    }
+
+    /**
+     * Loop times in milliseconds: the last one, the average over the last {@code window} loops,
+     * and the peak since the first one added.
+     */
+    static final class LoopTimeStats {
+        private final double[] samplesMs;
+        private int count;
+        private double lastMs = Double.NaN;
+        private double peakMs = 0.0;
+
+        LoopTimeStats(int window) {
+            samplesMs = new double[window];
+        }
+
+        void add(double ms) {
+            lastMs = ms;
+            samplesMs[count % samplesMs.length] = ms;
+            count++;
+            peakMs = Math.max(peakMs, ms);
+        }
+
+        boolean isEmpty() {
+            return count == 0;
+        }
+
+        double lastMs() {
+            return lastMs;
+        }
+
+        /** The average of the last {@code window} loops (fewer before that many have run). */
+        double averageMs() {
+            int n = Math.min(count, samplesMs.length);
+            if (n == 0) return Double.NaN;
+            double sum = 0.0;
+            for (int i = 0; i < n; i++) sum += samplesMs[i];
+            return sum / n;
+        }
+
+        double peakMs() {
+            return peakMs;
+        }
     }
 }
