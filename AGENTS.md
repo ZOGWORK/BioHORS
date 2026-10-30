@@ -207,7 +207,7 @@ the wrong reason costs the team more than a plain stop does.
 
 - **Team:** HORS (ZOGWORK org). FTC team number: not filled in yet. Season: 2026-27 BIOBUZZ.
 - **Stack:** FTC SDK 12.0.0, PedroPathing Quickstart v3.0.2 (`com.pedropathing:revhub:3.0.2`,
-  `tuning:1.0.1`), SimLoop `v0.2.0-alpha.2`. Do not downgrade the SDK: SimLoop needs 12.0.
+  `tuning:1.0.3`), SimLoop `v0.2.0-alpha.2`. Do not downgrade the SDK: SimLoop needs 12.0.
 - **Robot code lives in:** `TeamCode/src/main/java/org/firstinspires/ftc/teamcode/`
   (`subsystems/`, `teleop/`, `auto/`, `pedro/`).
 - **Robot:** mecanum drive with goBILDA Pinpoint odometry (2 pods, 4-bar). Two intake motors run

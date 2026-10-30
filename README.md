@@ -159,7 +159,7 @@ spec sheet), `PLACEHOLDER` (made up so the code runs), or
 ## Building
 
 Open in Android Studio (Narwhal 3 Feature Drop or later) and build like any
-FTC SDK project. The PedroPathing dependencies (revhub 3.0.2, tuning 1.0.1)
+FTC SDK project. The PedroPathing dependencies (revhub 3.0.2, tuning 1.0.3)
 are in `build.dependencies.gradle`.
 
 ## Horizon's tools
