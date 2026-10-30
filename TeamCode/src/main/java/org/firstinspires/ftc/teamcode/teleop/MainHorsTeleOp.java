@@ -95,6 +95,9 @@ public class MainHorsTeleOp extends LinearOpMode {
     // The pose change gives a velocity only across a loop this long, seconds (the existing guard).
     private static final double MIN_VELOCITY_DT_S = 1e-4;
     private static final double MAX_VELOCITY_DT_S = 0.25;
+    // How many loops the telemetry's loop-time average covers: the last 50 loops, about one
+    // second at a 20 ms loop. SET BY HAND.
+    private static final int LOOP_TIME_WINDOW = 50;
 
     private BioHorsRobot robot;
     private Localizer localizer;
@@ -168,7 +171,26 @@ public class MainHorsTeleOp extends LinearOpMode {
         sinceRumble.reset();
         boolean rumbledOnce = false;
 
+        // Loop-time readout, measurement only: the period from the start of one loop to the start
+        // of the next, on its own timer (loopTimer above belongs to the velocity math).
+        ElapsedTime loopTimeTimer = new ElapsedTime();
+        double[] loopTimesMs = new double[LOOP_TIME_WINDOW];
+        int loopTimeCount = 0;
+        double lastLoopMs = Double.NaN;
+        double peakLoopMs = 0.0;
+        boolean firstLoop = true;
+
         while (opModeIsActive()) {
+            // The first loop has no previous start to measure from, so it records nothing.
+            if (!firstLoop) {
+                lastLoopMs = loopTimeTimer.milliseconds();
+                loopTimesMs[loopTimeCount % LOOP_TIME_WINDOW] = lastLoopMs;
+                loopTimeCount++;
+                peakLoopMs = Math.max(peakLoopMs, lastLoopMs);
+            }
+            loopTimeTimer.reset();
+            firstLoop = false;
+
             localizer.update();
             Pose pose = localizer.pose();
             boolean poseOk = poseUsable(pose);
@@ -363,6 +385,15 @@ public class MainHorsTeleOp extends LinearOpMode {
                     robot.nectarGate.isClosed() ? "CLOSED" : "OPEN",
                     gatesRequested ? "yes" : "no");
             telemetry.addData("Fire", fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason);
+            if (loopTimeCount == 0) {
+                telemetry.addData("Loop", "n/a (first loop)");
+            } else {
+                int samples = Math.min(loopTimeCount, LOOP_TIME_WINDOW);
+                double sumMs = 0.0;
+                for (int i = 0; i < samples; i++) sumMs += loopTimesMs[i];
+                telemetry.addData("Loop", "%.1f ms (avg %.1f, max %.1f)",
+                        lastLoopMs, sumMs / samples, peakLoopMs);
+            }
             telemetry.update();
         }
 

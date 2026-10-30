@@ -537,6 +537,31 @@ class MainHorsTeleOpSimTest {
         return new double[] {Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)), Double.parseDouble(m.group(3))};
     }
 
+    // ------------------------------------------------------------------ loop time
+
+    @Test
+    void telemetryShowsTheLoopTimeOnSimTime() {
+        // SimLoop moves the teleop's ElapsedTime onto sim time, so every loop takes exactly one
+        // tick: last, average and peak must all read the tick, 20 ms.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, -40.0, 0.0);
+        OpModeRunResult result = run(sim, 60, (phase, tick, g1, g2) -> { }, null);
+
+        java.util.regex.Pattern format = java.util.regex.Pattern.compile(
+                "Loop.*?([0-9.]+) ms \\(avg ([0-9.]+), max ([0-9.]+)\\)");
+        String loopLine = null;
+        for (String line : result.telemetry().lastTransmission()) {
+            if (line.startsWith("Loop")) loopLine = line;
+        }
+        assertTrue(loopLine != null, "telemetry should have a Loop line: " + lastTelemetry(result));
+        java.util.regex.Matcher m = format.matcher(loopLine);
+        assertTrue(m.find(), "Loop line format: " + loopLine);
+        double tickMs = 20.0;
+        assertEquals(tickMs, Double.parseDouble(m.group(1)), 0.5, "last loop time: " + loopLine);
+        assertEquals(tickMs, Double.parseDouble(m.group(2)), 0.5, "average loop time: " + loopLine);
+        assertEquals(tickMs, Double.parseDouble(m.group(3)), 0.5, "peak loop time: " + loopLine);
+    }
+
     private static void startAt(BioHorsSim sim, String alliance, double x, double y, double h) {
         sim.placeAt(x, y, h);
         OpMode.blackboard.put("biohors.alliance", alliance);
