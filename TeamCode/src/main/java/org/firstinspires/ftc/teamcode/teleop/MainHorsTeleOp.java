@@ -114,12 +114,8 @@ public class MainHorsTeleOp extends LinearOpMode {
     private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast;
 
     // Loop time for the driver display: the period from the start of one loop to the start of the
-    // next, ms. Display only; nothing reads these to decide anything.
-    private final double[] loopTimesMs = new double[LOOP_TIME_WINDOW];
-    private int loopTimeCount;
-    private int loopTimeNext;
-    private double lastLoopMs = Double.NaN;
-    private double peakLoopMs = Double.NaN;
+    // next, ms. Display only; nothing reads it to decide anything.
+    private final LoopTimes loopTimes = new LoopTimes(LOOP_TIME_WINDOW);
 
     @Override
     public void runOpMode() {
@@ -182,7 +178,7 @@ public class MainHorsTeleOp extends LinearOpMode {
         while (opModeIsActive()) {
             // The first loop has no previous start to measure from; skipping it also keeps the
             // INIT-to-PLAY gap out of the peak.
-            if (!firstLoop) recordLoopTime(loopTimeTimer.milliseconds());
+            if (!firstLoop) loopTimes.record(loopTimeTimer.milliseconds());
             loopTimeTimer.reset();
             firstLoop = false;
 
@@ -434,23 +430,54 @@ public class MainHorsTeleOp extends LinearOpMode {
         telemetry.addData(label, "%.0f / %.0f rpm %s", s.getCurrentRpm(), s.getTargetRpm(), state);
     }
 
-    /** Adds one loop period (ms) to the last, the peak and the rolling window. */
-    private void recordLoopTime(double ms) {
-        lastLoopMs = ms;
-        peakLoopMs = Double.isNaN(peakLoopMs) ? ms : Math.max(peakLoopMs, ms);
-        loopTimesMs[loopTimeNext] = ms;
-        loopTimeNext = (loopTimeNext + 1) % loopTimesMs.length;
-        if (loopTimeCount < loopTimesMs.length) loopTimeCount++;
-    }
-
     /** {@code last ms (avg over the last LOOP_TIME_WINDOW loops, max since PLAY)}. */
     private void addLoopTimeTelemetry() {
-        if (loopTimeCount == 0) {
+        if (!loopTimes.hasSample()) {
             telemetry.addData("Loop", "-- ms (avg --, max --)");
             return;
         }
-        double sum = 0.0;
-        for (int i = 0; i < loopTimeCount; i++) sum += loopTimesMs[i];
-        telemetry.addData("Loop", "%.1f ms (avg %.1f, max %.1f)", lastLoopMs, sum / loopTimeCount, peakLoopMs);
+        telemetry.addData("Loop", "%.1f ms (avg %.1f, max %.1f)",
+                loopTimes.lastMs(), loopTimes.averageMs(), loopTimes.peakMs());
+    }
+
+    /** Loop periods, ms: the last one, the mean of the last {@code window}, and the peak of all. */
+    static final class LoopTimes {
+        private final double[] windowMs;
+        private int count;
+        private int next;
+        private double lastMs = Double.NaN;
+        private double peakMs = Double.NaN;
+
+        LoopTimes(int window) {
+            windowMs = new double[window];
+        }
+
+        void record(double ms) {
+            lastMs = ms;
+            peakMs = Double.isNaN(peakMs) ? ms : Math.max(peakMs, ms);
+            windowMs[next] = ms;
+            next = (next + 1) % windowMs.length;
+            if (count < windowMs.length) count++;
+        }
+
+        boolean hasSample() {
+            return count > 0;
+        }
+
+        double lastMs() {
+            return lastMs;
+        }
+
+        /** Mean of the last {@code window} periods (fewer until that many are recorded); NaN if none. */
+        double averageMs() {
+            if (count == 0) return Double.NaN;
+            double sum = 0.0;
+            for (int i = 0; i < count; i++) sum += windowMs[i];
+            return sum / count;
+        }
+
+        double peakMs() {
+            return peakMs;
+        }
     }
 }
