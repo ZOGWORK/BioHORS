@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -107,9 +106,8 @@ class MainHorsTeleOpSimTest {
 
         double expected = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
         assertAngleNear(expected, sim.drivePlant.getHeading(), 3.0, "should face the RED south cell");
-        String shown = lastTelemetry(result);
-        assertTrue(shown.contains("SOUTH"), "telemetry should name the target cell: " + shown);
-        assertTrue(shown.contains("Aiming") && shown.contains("ON"), "telemetry should show aiming ON: " + shown);
+        // Shooters off and no gate request: on target, the fire interlock is clear.
+        assertEquals("Fire : READY", line(result, "Fire"), "on the cell, the display says READY");
     }
 
     @Test
@@ -127,7 +125,6 @@ class MainHorsTeleOpSimTest {
         assertAngleNear(north, sim.drivePlant.getHeading(), 3.0, "north of the centre line it should face the north cell");
         assertTrue(Math.abs(wrap(sim.drivePlant.getHeading() - south)) > Math.toRadians(8.0),
                 "and visibly not the south one");
-        assertTrue(lastTelemetry(result).contains("NORTH"), "telemetry names the north cell");
     }
 
     @Test
@@ -136,23 +133,23 @@ class MainHorsTeleOpSimTest {
         // current (SOUTH, RED's kickoff up cell). Nothing else would overwrite a toggle here.
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -40.0, 1.0, 0.0);
-        final OpModePhase[] phaseNow = {OpModePhase.INIT};
-        final List<String> targetsShown = new ArrayList<>();
-        OpModeRunResult result = run(sim, 120, (phase, tick, g1, g2) -> {
-            phaseNow[0] = phase;
+        final double[] worstErrToSouthDeg = {0.0};
+        run(sim, 120, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.a = (tick >= 5 && tick < 9) || (tick >= 40 && tick < 44) || (tick >= 70 && tick < 74);
             g2.a = tick >= 90 && tick < 94; // the operator's A too
             g1.left_trigger = 1f;
-        }, null);
+        }, tick -> {
+            // From tick 60 on (aim settled, the first press long done), the TRUE heading must stay on
+            // the south cell through every later press: a switched target would swing it ~37 deg.
+            if (tick < 60) return;
+            double southNow = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
+            worstErrToSouthDeg[0] = Math.max(worstErrToSouthDeg[0],
+                    Math.toDegrees(Math.abs(wrap(sim.drivePlant.getHeading() - southNow))));
+        });
 
-        for (List<String> sent : result.telemetry().transmissions()) {
-            for (String line : sent) if (line.startsWith("Target")) targetsShown.add(line);
-        }
-        assertFalse(targetsShown.isEmpty(), "telemetry should show the target");
-        for (String t : targetsShown) {
-            assertTrue(t.contains("SOUTH"), "pressing A must never change the target: " + t);
-        }
+        assertTrue(worstErrToSouthDeg[0] <= 3.0, String.format(
+                "pressing A must never change the target: worst %.1f deg off the south cell", worstErrToSouthDeg[0]));
         double south = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
         assertAngleNear(south, sim.drivePlant.getHeading(), 3.0, "still aiming at the south cell");
     }
@@ -165,7 +162,7 @@ class MainHorsTeleOpSimTest {
         final OpModePhase[] phaseNow = {OpModePhase.INIT};
         final int[] tickNow = {0};
         final double[] headingWhileSouth = {Double.NaN};
-        OpModeRunResult result = OpModeRunner.forTeamClass(TELEOP, sim.hardwareMap)
+        OpModeRunner.forTeamClass(TELEOP, sim.hardwareMap)
                 .teamPackages("org.firstinspires.ftc.teamcode.", SimClockLoader.PEDRO_PATHING)
                 .keepBlackboard(true)
                 .initLoopTicks(INIT_LOOP_TICKS)
@@ -196,7 +193,6 @@ class MainHorsTeleOpSimTest {
         assertAngleNear(south0, headingWhileSouth[0], 3.0, "south of the line it holds the south cell");
         double north = Math.atan2(CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
         assertAngleNear(north, sim.drivePlant.getHeading(), 3.0, "after crossing it faces the north cell");
-        assertTrue(lastTelemetry(result).contains("NORTH"), "telemetry names the north cell");
     }
 
     @Test
@@ -265,8 +261,8 @@ class MainHorsTeleOpSimTest {
 
         assertEquals(0.0, sim.drivePlant.getHeading(), Math.toRadians(1.0),
                 "with a faulted Pinpoint the robot must not rotate on its own");
-        String shown = lastTelemetry(result);
-        assertTrue(shown.contains("POSE INVALID"), "telemetry should warn: " + shown);
+        assertEquals("Fire : BLOCKED: POSE INVALID", line(result, "Fire"), "the Fire line should warn");
+        assertTrue(line(result, "Pose").contains("INVALID"), "the Pose line flags it: " + line(result, "Pose"));
     }
 
     @Test
@@ -308,9 +304,8 @@ class MainHorsTeleOpSimTest {
 
         assertEquals(1650.0, sim.pollenShooterRpm(), 100.0, "pollen shooter should hold its trimmed target");
         assertEquals(1600.0, sim.nectarShooterRpm(), 100.0, "nectar shooter keeps its own target");
-        String shown = lastTelemetry(result);
-        assertTrue(shown.contains("target=1650"), "pollen target shown as 1650: " + shown);
-        assertTrue(shown.contains("target=1600"), "nectar target shown as 1600: " + shown);
+        assertEquals(1650.0, shownTargetRpm(result, "Pollen"), 0.5, "pollen target shown as 1650");
+        assertEquals(1600.0, shownTargetRpm(result, "Nectar"), 0.5, "nectar target shown as 1600");
     }
 
     @Test
@@ -321,10 +316,12 @@ class MainHorsTeleOpSimTest {
             // Pick BLUE in INIT and keep holding dpad right for a while after PLAY.
             g1.dpad_right = phase == OpModePhase.INIT_LOOP || (phase == OpModePhase.ACTIVE && tick < 10);
         }, null);
-        String shown = lastTelemetry(result);
-        assertTrue(shown.contains("BLUE"), "dpad right in INIT picks BLUE: " + shown);
-        assertTrue(shown.contains("target=1600"), "holding it through PLAY must not trim pollen: " + shown);
-        assertFalse(shown.contains("target=1650"), "no +50 trim: " + shown);
+        // No auto ran, so the pose is the alliance's default start: BLUE's is RED's point mirror.
+        double[] shown = shownPose(lastTelemetry(result));
+        assertEquals(-MainHorsTeleOp.DEFAULT_START_X_IN, shown[0], 1.0, "dpad right in INIT picks BLUE: x");
+        assertEquals(-MainHorsTeleOp.DEFAULT_START_Y_IN, shown[1], 1.0, "dpad right in INIT picks BLUE: y");
+        assertEquals(1600.0, shownTargetRpm(result, "Pollen"), 0.5,
+                "holding it through PLAY must not trim pollen (no +50)");
     }
 
     @Test
@@ -338,9 +335,10 @@ class MainHorsTeleOpSimTest {
             g2.left_bumper = tick >= 30 && tick < 33;                              // nectar -50 (operator)
             g1.dpad_left = tick >= 40 && tick < 43;                                // pollen -50
         }, null);
-        String shown = lastTelemetry(result);
-        assertTrue(shown.contains("Pollen shooter : on=true target=1550"), "pollen trimmed alone: " + shown);
-        assertTrue(shown.contains("Nectar shooter : on=true target=1650"), "nectar trimmed alone: " + shown);
+        assertFalse(line(result, "Pollen").endsWith("OFF"), "pollen on: " + line(result, "Pollen"));
+        assertFalse(line(result, "Nectar").endsWith("OFF"), "nectar on: " + line(result, "Nectar"));
+        assertEquals(1550.0, shownTargetRpm(result, "Pollen"), 0.5, "pollen trimmed alone");
+        assertEquals(1650.0, shownTargetRpm(result, "Nectar"), 0.5, "nectar trimmed alone");
         assertEquals(1550.0, sim.pollenShooterRpm(), 100.0, "pollen holds its own target");
         assertEquals(1650.0, sim.nectarShooterRpm(), 100.0, "nectar holds its own target");
     }
@@ -454,6 +452,57 @@ class MainHorsTeleOpSimTest {
                 })
                 .run();
         return seen;
+    }
+
+    // ------------------------------------------------------------------ driving display
+
+    static final List<String> DRIVING_CAPTIONS = List.of("Fire", "Pose", "Pollen", "Nectar", "Loop");
+
+    @Test
+    void theDrivingDisplayIsFiveLinesWithTheLoopTime() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0); // faces the RED south cell already
+        OpModeRunResult result = run(sim, 250, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.dpad_down = tick >= 2 && tick < 5; // shooters on
+        }, null);
+
+        List<List<String>> driving = new java.util.ArrayList<>();
+        for (List<String> sent : result.telemetry().transmissions()) {
+            if (!lineIn(sent, "Loop").isEmpty()) driving.add(sent);
+        }
+        assertTrue(driving.size() > 200, "every driving loop sends the display, got " + driving.size());
+
+        List<String> first = driving.get(0);
+        assertEquals(DRIVING_CAPTIONS, captions(first), "first driving screen: " + first);
+        assertTrue(lineIn(first, "Pollen").endsWith(" rpm OFF"), "shooters start OFF: " + first);
+        assertTrue(lineIn(first, "Nectar").endsWith(" rpm OFF"), "shooters start OFF: " + first);
+
+        boolean spinningUpShown = false;
+        for (List<String> sent : driving) spinningUpShown |= lineIn(sent, "Pollen").endsWith(" rpm SPINNING UP");
+        assertTrue(spinningUpShown, "between OFF and OK the pollen line says SPINNING UP");
+
+        List<String> last = result.telemetry().lastTransmission();
+        System.out.println("DRIVING DISPLAY\n  " + String.join("\n  ", last));
+        assertEquals(DRIVING_CAPTIONS, captions(last), "exactly the five lines, in order: " + last);
+        assertEquals("Fire : READY", lineIn(last, "Fire"));
+        assertTrue(lineIn(last, "Pollen").endsWith(" / 1600 rpm OK"), lineIn(last, "Pollen"));
+        assertTrue(lineIn(last, "Nectar").endsWith(" / 1600 rpm OK"), lineIn(last, "Nectar"));
+        assertFalse(lineIn(last, "Pose").contains("INVALID"), lineIn(last, "Pose"));
+
+        // The sim ticks at 20 ms, so the last loop, the average and the peak are all one tick.
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("Loop : ([0-9.]+) ms \\(avg ([0-9.]+), max ([0-9.]+)\\)").matcher(lineIn(last, "Loop"));
+        assertTrue(m.find(), "loop line format: " + lineIn(last, "Loop"));
+        double tickMs = TICK_S * 1000.0;
+        assertEquals(tickMs, Double.parseDouble(m.group(1)), 0.5, "last loop");
+        assertEquals(tickMs, Double.parseDouble(m.group(2)), 0.5, "rolling average");
+        assertEquals(tickMs, Double.parseDouble(m.group(3)), 0.5, "peak: the INIT-to-PLAY gap is not counted");
+    }
+
+    private static List<String> captions(List<String> transmission) {
+        List<String> out = new java.util.ArrayList<>();
+        for (String l : transmission) out.add(caption(l));
+        return out;
     }
 
     // ------------------------------------------------------------------ determinism + RLOG
@@ -585,6 +634,34 @@ class MainHorsTeleOpSimTest {
 
     private static String lastTelemetry(OpModeRunResult result) {
         return String.join(" | ", result.telemetry().lastTransmission());
+    }
+
+    /** The last transmission's line with this caption, or "" if there is none. */
+    static String line(OpModeRunResult result, String caption) {
+        return lineIn(result.telemetry().lastTransmission(), caption);
+    }
+
+    static String lineIn(List<String> transmission, String caption) {
+        for (String l : transmission) if (caption(l).equals(caption)) return l;
+        return "";
+    }
+
+    /** A telemetry line's caption: the text before " : ". */
+    static String caption(String line) {
+        int at = line.indexOf(" : ");
+        return at < 0 ? line : line.substring(0, at);
+    }
+
+    /** The target rpm the shooter line shows ({@code Pollen : 1580 / 1600 rpm OK}). */
+    static double shownTargetRpm(OpModeRunResult result, String shooter) {
+        return targetRpmIn(line(result, shooter));
+    }
+
+    static double targetRpmIn(String shooterLine) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile(" : (-?[0-9.]+) / (-?[0-9.]+) rpm ").matcher(shooterLine);
+        assertTrue(m.find(), "no current / target rpm in: " + shooterLine);
+        return Double.parseDouble(m.group(2));
     }
 
     private static void assertAngleNear(double expected, double actual, double tolDeg, String what) {

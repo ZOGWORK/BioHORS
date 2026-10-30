@@ -20,8 +20,6 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveController;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
 
-import java.util.Locale;
-
 /**
  * The MainHORS teleop: the MainHORS control scheme on this robot, plus odometry aim.
  *
@@ -95,6 +93,8 @@ public class MainHorsTeleOp extends LinearOpMode {
     // The pose change gives a velocity only across a loop this long, seconds (the existing guard).
     private static final double MIN_VELOCITY_DT_S = 1e-4;
     private static final double MAX_VELOCITY_DT_S = 0.25;
+    // The Loop line's average covers this many loops (about 1 s at the 20 ms sim tick). SET BY HAND.
+    private static final int LOOP_TIME_WINDOW = 50;
 
     private BioHorsRobot robot;
     private Localizer localizer;
@@ -112,7 +112,14 @@ public class MainHorsTeleOp extends LinearOpMode {
 
     // Edge-detect state (a press fires once, not every loop).
     private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast;
-    private int poseResets;
+
+    // Loop time for the driver display: the period from the start of one loop to the start of the
+    // next, ms. Display only; nothing reads these to decide anything.
+    private final double[] loopTimesMs = new double[LOOP_TIME_WINDOW];
+    private int loopTimeCount;
+    private int loopTimeNext;
+    private double lastLoopMs = Double.NaN;
+    private double peakLoopMs = Double.NaN;
 
     @Override
     public void runOpMode() {
@@ -167,8 +174,18 @@ public class MainHorsTeleOp extends LinearOpMode {
         ElapsedTime sinceRumble = new ElapsedTime();
         sinceRumble.reset();
         boolean rumbledOnce = false;
+        // Its own timer, apart from loopTimer (whose dt feeds the velocity), so the readout cannot
+        // disturb that math. ElapsedTime runs on sim time under SimLoop, never the wall clock.
+        ElapsedTime loopTimeTimer = new ElapsedTime();
+        boolean firstLoop = true;
 
         while (opModeIsActive()) {
+            // The first loop has no previous start to measure from; skipping it also keeps the
+            // INIT-to-PLAY gap out of the peak.
+            if (!firstLoop) recordLoopTime(loopTimeTimer.milliseconds());
+            loopTimeTimer.reset();
+            firstLoop = false;
+
             localizer.update();
             Pose pose = localizer.pose();
             boolean poseOk = poseUsable(pose);
@@ -179,18 +196,15 @@ public class MainHorsTeleOp extends LinearOpMode {
             loopTimer.reset();
             double rawVx = Double.NaN;
             double rawVy = Double.NaN;
-            String velocitySource = "none";
             if (poseOk) {
                 Velocity pv = pinpointVelocity();
                 if (pv != null && Double.isFinite(pv.vx) && Double.isFinite(pv.vy)) {
                     rawVx = pv.vx;
                     rawVy = pv.vy;
-                    velocitySource = "pinpoint";
                 } else if (lastPose != null && dt > MIN_VELOCITY_DT_S && dt < MAX_VELOCITY_DT_S
                         && Double.isFinite(lastPose.x()) && Double.isFinite(lastPose.y())) {
                     rawVx = (pose.x() - lastPose.x()) / dt;
                     rawVy = (pose.y() - lastPose.y()) / dt;
-                    velocitySource = "pose change";
                 }
             }
             double[] v = velocityFilter.update(rawVx, rawVy);
@@ -207,9 +221,6 @@ public class MainHorsTeleOp extends LinearOpMode {
                     ? AimController.leadAimPoint(pose.x(), pose.y(), vx, vy, cell[0], cell[1],
                             AimController.BALL_GROUND_SPEED_IN_PER_S)
                     : cell;
-            double leadRad = poseOk
-                    ? AimController.leadAngle(pose.x(), pose.y(), cell[0], cell[1], aimPoint[0], aimPoint[1])
-                    : 0.0;
             double headingErrorRad = poseOk
                     ? AimController.wrap(AimController.desiredHeading(pose.x(), pose.y(), aimPoint[0], aimPoint[1])
                             - pose.heading())
@@ -315,7 +326,6 @@ public class MainHorsTeleOp extends LinearOpMode {
                 localizer.setPose(resetPose(alliance));
                 lastPose = null;            // no velocity across the jump
                 velocityFilter.reset();
-                poseResets++;
                 gamepad1.rumble(120);
             }
             xLast = xNow;
@@ -330,39 +340,12 @@ public class MainHorsTeleOp extends LinearOpMode {
                 robot.intake.stop();
             }
 
-            // ----- Telemetry -----
-            telemetry.addData("Alliance", alliance);
-            telemetry.addData("Flower bar", robot.flowerBar.position());
-            telemetry.addData("Pose resets (X)", poseResets);
-            telemetry.addData("Target", "%s hive, %s cell", alliance, targetCell);
-            if (aimHeld && !poseOk) {
-                telemetry.addData("Aiming", "OFF -- POSE INVALID, manual turn");
-            } else {
-                telemetry.addData("Aiming", aiming ? "ON" : "off");
-            }
-            telemetry.addData("Heading error", poseOk
-                    ? String.format(Locale.ROOT, "%.1f deg", Math.toDegrees(headingErrorRad))
-                    : "n/a (pose invalid)");
-            telemetry.addData("Lead", leadEnabled()
-                    ? String.format(Locale.ROOT, "%.1f deg", Math.toDegrees(leadRad))
-                    : "DISABLED (ball speed unset)");
-            telemetry.addData("Aim velocity", "vx=%.1f vy=%.1f in/s (%s)", vx, vy, velocitySource);
-            telemetry.addData("Distance to target", poseOk
-                    ? String.format(Locale.ROOT, "%.1f in", distanceIn)
-                    : "n/a (pose invalid) -- fixed rpm");
+            // ----- Telemetry: the driving display, five lines and nothing else -----
+            telemetry.addData("Fire", fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason);
             addPoseTelemetry();
-            telemetry.addData("DriveScale", "%.2f", scale);
             addShooterTelemetry("Pollen", robot.pollenShooter);
             addShooterTelemetry("Nectar", robot.nectarShooter);
-            telemetry.addData("Pollen rpm", "table=%.0f trim=%+.0f current=%.0f",
-                    pollenTableRpm, pollenTrimRpm, robot.pollenShooter.getCurrentRpm());
-            telemetry.addData("Nectar rpm", "table=%.0f trim=%+.0f current=%.0f",
-                    nectarTableRpm, nectarTrimRpm, robot.nectarShooter.getCurrentRpm());
-            telemetry.addData("Gates", "pollen=%s nectar=%s requested=%s",
-                    robot.pollenGate.isClosed() ? "CLOSED" : "OPEN",
-                    robot.nectarGate.isClosed() ? "CLOSED" : "OPEN",
-                    gatesRequested ? "yes" : "no");
-            telemetry.addData("Fire", fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason);
+            addLoopTimeTelemetry();
             telemetry.update();
         }
 
@@ -411,12 +394,6 @@ public class MainHorsTeleOp extends LinearOpMode {
         }
     }
 
-    /** Lead runs only once the ball speed is set to a real, positive number. */
-    private static boolean leadEnabled() {
-        double s = AimController.BALL_GROUND_SPEED_IN_PER_S;
-        return Double.isFinite(s) && s > 0.0;
-    }
-
     /**
      * A trim after one press, never taking the shooter's target below zero. The step starts from
      * the trim as it currently applies (a trim below -table only clamps the target at zero), so a
@@ -451,8 +428,29 @@ public class MainHorsTeleOp extends LinearOpMode {
                 p.x(), p.y(), Math.toDegrees(p.heading()), ok ? "" : "(INVALID)");
     }
 
+    /** {@code current / target rpm STATE}: OFF, SPINNING UP (on, not at target) or OK. */
     private void addShooterTelemetry(String label, ShooterController s) {
-        telemetry.addData(label + " shooter", "on=%s target=%.0f rpm current=%.0f rpm atTarget=%s",
-                s.isShooterOn(), s.getTargetRpm(), s.getCurrentRpm(), s.isAtTarget());
+        String state = !s.isShooterOn() ? "OFF" : s.isAtTarget() ? "OK" : "SPINNING UP";
+        telemetry.addData(label, "%.0f / %.0f rpm %s", s.getCurrentRpm(), s.getTargetRpm(), state);
+    }
+
+    /** Adds one loop period (ms) to the last, the peak and the rolling window. */
+    private void recordLoopTime(double ms) {
+        lastLoopMs = ms;
+        peakLoopMs = Double.isNaN(peakLoopMs) ? ms : Math.max(peakLoopMs, ms);
+        loopTimesMs[loopTimeNext] = ms;
+        loopTimeNext = (loopTimeNext + 1) % loopTimesMs.length;
+        if (loopTimeCount < loopTimesMs.length) loopTimeCount++;
+    }
+
+    /** {@code last ms (avg over the last LOOP_TIME_WINDOW loops, max since PLAY)}. */
+    private void addLoopTimeTelemetry() {
+        if (loopTimeCount == 0) {
+            telemetry.addData("Loop", "-- ms (avg --, max --)");
+            return;
+        }
+        double sum = 0.0;
+        for (int i = 0; i < loopTimeCount; i++) sum += loopTimesMs[i];
+        telemetry.addData("Loop", "%.1f ms (avg %.1f, max %.1f)", lastLoopMs, sum / loopTimeCount, peakLoopMs);
     }
 }
