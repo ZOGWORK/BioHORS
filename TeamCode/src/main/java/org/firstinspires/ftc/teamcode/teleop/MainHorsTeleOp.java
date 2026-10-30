@@ -385,9 +385,14 @@ public class MainHorsTeleOp extends LinearOpMode {
         return Double.isFinite(s) && s > 0.0;
     }
 
-    /** A trim after one press, never taking the shooter's target below zero. */
-    private static double trimmed(double trimRpm, double stepRpm, double tableRpm) {
-        return Math.max(-tableRpm, trimRpm + stepRpm);
+    /**
+     * A trim after one press, never taking the shooter's target below zero. The step starts from
+     * the trim as it currently applies (a trim below -table only clamps the target at zero), so a
+     * press always moves the target by one step even after the table rpm has dropped.
+     */
+    static double trimmed(double trimRpm, double stepRpm, double tableRpm) {
+        double effective = Math.max(-tableRpm, trimRpm);
+        return Math.max(-tableRpm, effective + stepRpm);
     }
 
     /**
