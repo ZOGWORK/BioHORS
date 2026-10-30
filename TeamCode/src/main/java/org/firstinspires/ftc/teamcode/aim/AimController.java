@@ -23,6 +23,19 @@ public class AimController {
     // command. PLACEHOLDER: NEEDS MEASUREMENT (spin in place at full yaw, read the Pinpoint).
     public static double MAX_TURN_RATE_RAD_PER_S = 5.0;
 
+    // Ball-flight lead (leadAimPoint). The ball keeps the robot's velocity in flight, so a moving
+    // robot aims at a point shifted against its motion.
+    // Average HORIZONTAL (ground) speed of a shot from leaving the robot to reaching the cell, in/s,
+    // relative to the robot, at the shooter's target rpm: horizontal distance / flight time.
+    // PLACEHOLDER: NEEDS MEASUREMENT (film a shot from a known distance, or the sim's ShotModel:
+    // exitSpeed(rpm) x cos(hood angle)). 0 = UNSET: lead is exactly zero until it is measured.
+    public static double BALL_GROUND_SPEED_IN_PER_S = 0.0;
+    // Largest heading change the lead may make, radians, so a velocity spike can never swing the
+    // aim wildly. SET BY HAND (the shoot-while-moving spec's +/-10 deg).
+    public static double MAX_LEAD_RAD = Math.toRadians(10.0);
+    /** Fixed-point iterations of the lead solve (the spec's 3). */
+    static final int LEAD_ITERATIONS = 3;
+
     private double lastHeadingErrorRad = 0.0;
 
     /** Field bearing from the robot to the target, radians CCW from +X. */
@@ -54,6 +67,63 @@ public class AimController {
         double r2 = rx * rx + ry * ry;
         if (r2 < 1.0) return 0.0; // on top of the target: the bearing is meaningless
         return (ry * vx - rx * vy) / r2;
+    }
+
+    /**
+     * The point to aim at so a ball fired from a moving robot reaches the target, {x, y} inches.
+     *
+     * The ball's ground velocity is the robot's velocity plus its own ground speed along the aim,
+     * so aim at {@code target - robotVelocity * flightTime}, where
+     * {@code flightTime = distance(robot, aimPoint) / ballGroundSpeed}. Solved by fixed-point
+     * iteration from the true target, {@link #LEAD_ITERATIONS} times. The shift is then limited
+     * to {@link #MAX_LEAD_RAD} of bearing either side of the true target.
+     *
+     * Fails soft: returns the true target (zero lead) when the ball speed is not a positive
+     * number, the velocity is not finite (treated as zero), the robot is on top of the target, or
+     * anything comes out non-finite.
+     *
+     * @param vx              robot field velocity x, in/s
+     * @param vy              robot field velocity y, in/s
+     * @param ballGroundSpeed the ball's horizontal speed relative to the robot, in/s
+     */
+    public static double[] leadAimPoint(double robotX, double robotY, double vx, double vy,
+                                        double targetX, double targetY, double ballGroundSpeed) {
+        double[] target = {targetX, targetY};
+        if (!Double.isFinite(ballGroundSpeed) || ballGroundSpeed <= 0.0) return target;
+        if (!Double.isFinite(vx) || !Double.isFinite(vy)) return target;
+        if (!Double.isFinite(robotX) || !Double.isFinite(robotY)) return target;
+        if (Math.hypot(targetX - robotX, targetY - robotY) < 1.0) return target;
+
+        double ax = targetX;
+        double ay = targetY;
+        for (int i = 0; i < LEAD_ITERATIONS; i++) {
+            double flightTime = Math.hypot(ax - robotX, ay - robotY) / ballGroundSpeed;
+            ax = targetX - vx * flightTime;
+            ay = targetY - vy * flightTime;
+        }
+
+        // Limit the shift to MAX_LEAD_RAD of bearing, keeping the shifted point's range.
+        double trueBearing = bearingTo(robotX, robotY, targetX, targetY);
+        double lead = wrap(bearingTo(robotX, robotY, ax, ay) - trueBearing);
+        double maxLead = Double.isFinite(MAX_LEAD_RAD) ? Math.abs(MAX_LEAD_RAD) : 0.0;
+        if (Math.abs(lead) > maxLead) {
+            double range = Math.hypot(ax - robotX, ay - robotY);
+            double b = trueBearing + Math.signum(lead) * maxLead;
+            ax = robotX + range * Math.cos(b);
+            ay = robotY + range * Math.sin(b);
+        }
+        if (!Double.isFinite(ax) || !Double.isFinite(ay)) return target;
+        return new double[] {ax, ay};
+    }
+
+    /**
+     * Heading change the lead makes: bearing to the aim point minus bearing to the true target,
+     * radians CCW. 0 when either is unusable.
+     */
+    public static double leadAngle(double robotX, double robotY, double targetX, double targetY,
+                                   double aimX, double aimY) {
+        double a = wrap(bearingTo(robotX, robotY, aimX, aimY) - bearingTo(robotX, robotY, targetX, targetY));
+        return Double.isFinite(a) ? a : 0.0;
     }
 
     /** Yaw command for a stationary robot. */

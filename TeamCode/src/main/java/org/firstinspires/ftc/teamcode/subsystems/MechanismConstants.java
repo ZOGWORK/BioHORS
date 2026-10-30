@@ -97,6 +97,23 @@ public final class MechanismConstants {
         c.rpmTolerance = 75.0;         // PLACEHOLDER
     }
 
+    // ===== Teleop flywheel speed by distance to the hive cell (aim/DistanceSpeedTable) =====
+    // FILL IN WITH FIELD MEASUREMENTS: for each shooter, the rpm that scores from each distance
+    // (inches, from the drive centre to the cell's aim point), distances increasing. The teleop
+    // interpolates between points and holds the end points beyond them; the trim adds on top.
+    // Until measured, each table is ONE flat point at that shooter's fixed target rpm, so teleop
+    // runs exactly as before. A one-point table is a constant; its distance does not matter.
+    public static double[] POLLEN_SPEED_TABLE_DISTANCE_IN = {48.0};                  // PLACEHOLDER: one flat point
+    public static double[] POLLEN_SPEED_TABLE_RPM = {POLLEN_SHOOTER.targetRpm};      // = the fixed target (SET BY HAND)
+    public static double[] NECTAR_SPEED_TABLE_DISTANCE_IN = {48.0};                  // PLACEHOLDER: one flat point
+    public static double[] NECTAR_SPEED_TABLE_RPM = {NECTAR_SHOOTER.targetRpm};      // = the fixed target (SET BY HAND)
+    /**
+     * The teleop moves a shooter's target only when the table's rpm has moved at least this far
+     * (a trim press always applies). ShooterController clears its integral on every target change,
+     * so without this a multi-point table would reset it every loop as the robot drifts. SET BY HAND.
+     */
+    public static double SPEED_TABLE_UPDATE_STEP_RPM = 10.0;
+
     // ===== Teleop trim: each shooter its own step (rpm per press) =====
     public static double POLLEN_TRIM_STEP_RPM = 50.0; // SET BY HAND
     public static double NECTAR_TRIM_STEP_RPM = 50.0; // SET BY HAND
