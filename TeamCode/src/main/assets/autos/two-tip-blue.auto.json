@@ -697,19 +697,19 @@
             }
           ],
           "to": {
-            "xIn": 54.7,
+            "xIn": 61.5,
             "yIn": -54,
-            "headingRad": 0.000007346410206832132,
-            "provenance": "SET BY HAND (team's sketch, 2026-10-28): the point mirror of waypoints.json parkLane (see its provenance there)"
+            "headingRad": 3.141592653589793,
+            "provenance": "SET BY HAND (team's sketch, 2026-10-28; x moved with the park 2026-10-30, -61.5): the point mirror of waypoints.json parkLane (see its provenance there)"
           }
         }
       ],
       "heading": {
         "mode": "linear",
         "fromRad": 1.5707926535897931,
-        "toRad": -0.000007346410206832132
+        "toRad": 3.141592653589793
       },
-      "notes": "After the last volley (the team's sketch): out toward the north wall, then west along it past flower1, turning from facing the hive to facing west (clockwise, a quarter turn) on the way, to a spot straight north of the park spot."
+      "notes": "After the last volley (the team's sketch): out toward the north wall, then west along it past flower1, turning from facing the hive to facing the field (east; counter-clockwise, a quarter turn) on the way, to a spot straight north of the park spot."
     },
     {
       "id": "park",
@@ -719,18 +719,18 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": 54.7,
-            "yIn": -36,
-            "headingRad": 0.000007346410206832132,
-            "provenance": "SET BY HAND: the point mirror of waypoints.json park (see its provenance there)"
+            "xIn": 61.5,
+            "yIn": -49,
+            "headingRad": 3.141592653589793,
+            "provenance": "SET BY HAND (the team, 2026-10-30; Pedro Visualizer x 9, y 121, heading 0): the point mirror of waypoints.json park (see its provenance there)"
           }
         }
       ],
       "heading": {
         "mode": "constant",
-        "headingRad": 0.000007346410206832132
+        "headingRad": 3.141592653589793
       },
-      "notes": "Slides south into the park spot still facing west (the robot's left), coming in from the north side: partly in RED's loading zone."
+      "notes": "Slides south into the park spot, back to the west wall and the intake facing the field: where the teleop starts (MainHorsTeleOp's default start pose)."
     }
   ]
 }

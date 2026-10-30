@@ -36,7 +36,11 @@ import java.util.Locale;
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
  *   Left bumper / A ....... NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
  *   B ..................... request / cancel both gates open (the flower bar lifts slightly while open)
- *   X ..................... toggle the flower bar: DOWN (collect from a flower) / STOWED
+ *   X ..................... RESET the pose: back the robot flat against the alliance's wall at the
+ *                           loading zone's edge (the auto's park spot), intake facing the field, and
+ *                           press X: the pose becomes RESET_X/Y/HEADING (mirrored for BLUE), wiping
+ *                           the Pinpoint's drift.
+ *   Dpad up ............... toggle the flower bar: DOWN (collect from a flower) / STOWED
 
  *
  * Before PLAY: dpad left = RED, dpad right = BLUE. If an auto ran first, its alliance and last
@@ -72,11 +76,18 @@ public class MainHorsTeleOp extends LinearOpMode {
     private static final double RUMBLE_COOLDOWN_S = 1.2;
 
     // Where the robot is assumed to start when no auto ran before this teleop. RED values; BLUE
-    // is the point mirror. The auto's `start` waypoint: back on the south wall (the drive centre
-    // 7.8 in off it, MEASURED FROM CAD), facing the hive. Not measured on a real field.
-    public static double DEFAULT_START_X_IN = -13.0;   // NEEDS MEASUREMENT (= autos/waypoints.json start)
-    public static double DEFAULT_START_Y_IN = -62.87;  // MEASURED FROM CAD (FIRST CAD wall -70.674 + 7.8; = waypoints.json start)
-    public static double DEFAULT_START_HEADING_RAD = Math.PI / 2.0; // facing the hive (north)
+    // is the point mirror. The auto's `park` waypoint, where AUTO ends: by the west wall next to
+    // the loading zone, the intake facing the field. Not measured on a real field.
+    public static double DEFAULT_START_X_IN = -61.5;   // SET BY HAND (= waypoints.json park): the back 1.37 in off the CAD west wall
+    public static double DEFAULT_START_Y_IN = 49.0;    // SET BY HAND (the team, 2026-10-30; = waypoints.json park). NEEDS MEASUREMENT
+    public static double DEFAULT_START_HEADING_RAD = 0.0; // the intake facing the field (east), back to the west wall
+
+    // Where X resets the pose to (RED; BLUE is the point mirror): the robot backed flat against
+    // the west wall at the park spot, the intake facing the field. The wall fixes x and the
+    // heading exactly; y is the park's, by eye against the loading zone's edge.
+    public static double RESET_X_IN = -62.87;          // MEASURED FROM CAD: FIRST's CAD west wall -70.674 + the back's 7.8
+    public static double RESET_Y_IN = 49.0;            // SET BY HAND (= waypoints.json park). NEEDS MEASUREMENT
+    public static double RESET_HEADING_RAD = 0.0;      // square to the west wall, facing the field
 
     // Smoothing of the aim velocity (AimVelocityFilter): 1 = raw, smaller = smoother but laggier.
     // PLACEHOLDER: NEEDS MEASUREMENT (raise it if the aim lags a strafe, lower it if it twitches).
@@ -100,7 +111,8 @@ public class MainHorsTeleOp extends LinearOpMode {
     private boolean gatesRequested = false;
 
     // Edge-detect state (a press fires once, not every loop).
-    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, bLast, xLast, aLast, lbLast;
+    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast;
+    private int poseResets;
 
     @Override
     public void runOpMode() {
@@ -292,8 +304,20 @@ public class MainHorsTeleOp extends LinearOpMode {
             robot.nectarGate.setClosed(!gatesOpen);
 
             // ----- Flower bar: X toggles down / stowed; lifted slightly while the gates are open -----
+            boolean dpadUpNow = gamepad1.dpad_up || gamepad2.dpad_up;
+            if (dpadUpNow && !dpadUpLast) robot.flowerBar.toggle();
+            dpadUpLast = dpadUpNow;
+
+            // ----- X: reset the pose to the reset spot (wipes Pinpoint drift). The driver puts the
+            // robot there first: back to the west wall by the loading zone, intake facing the field. -----
             boolean xNow = gamepad1.x || gamepad2.x;
-            if (xNow && !xLast) robot.flowerBar.toggle();
+            if (xNow && !xLast) {
+                localizer.setPose(resetPose(alliance));
+                lastPose = null;            // no velocity across the jump
+                velocityFilter.reset();
+                poseResets++;
+                gamepad1.rumble(120);
+            }
             xLast = xNow;
             robot.flowerBar.setShooting(!robot.pollenGate.isClosed() || !robot.nectarGate.isClosed());
 
@@ -309,6 +333,7 @@ public class MainHorsTeleOp extends LinearOpMode {
             // ----- Telemetry -----
             telemetry.addData("Alliance", alliance);
             telemetry.addData("Flower bar", robot.flowerBar.position());
+            telemetry.addData("Pose resets (X)", poseResets);
             telemetry.addData("Target", "%s hive, %s cell", alliance, targetCell);
             if (aimHeld && !poseOk) {
                 telemetry.addData("Aiming", "OFF -- POSE INVALID, manual turn");
@@ -350,9 +375,16 @@ public class MainHorsTeleOp extends LinearOpMode {
         dpadLeftLast = gamepad1.dpad_left || gamepad2.dpad_left;
         dpadRightLast = gamepad1.dpad_right || gamepad2.dpad_right;
         xLast = gamepad1.x || gamepad2.x;
+        dpadUpLast = gamepad1.dpad_up || gamepad2.dpad_up;
         aLast = gamepad1.a || gamepad2.a;
         bLast = gamepad1.b || gamepad2.b;
         lbLast = gamepad1.left_bumper || gamepad2.left_bumper;
+    }
+
+    /** The pose X resets to for an alliance: the RED value, point-mirrored for BLUE. */
+    static Pose resetPose(Alliance alliance) {
+        if (alliance == Alliance.RED) return new Pose(RESET_X_IN, RESET_Y_IN, RESET_HEADING_RAD);
+        return new Pose(-RESET_X_IN, -RESET_Y_IN, AimController.wrap(RESET_HEADING_RAD + Math.PI));
     }
 
     /** The default start pose for an alliance: the RED value, point-mirrored for BLUE. */

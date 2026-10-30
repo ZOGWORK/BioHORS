@@ -51,12 +51,15 @@ Shooter/gate names, directions, and tuning values live in
 | Y (hold) | Outtake |
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF) |
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
-| X / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
-| B | Toggle both gates (start CLOSED) |
-| Left bumper | Unmapped |
+| Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
+| B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target and every switched-on shooter is at speed (telemetry names what blocks) |
+| X | **Reset the pose** (wipes Pinpoint drift): back the robot flat against your alliance's wall at the park spot by the loading zone, intake facing the field, then press X |
+| Dpad up | Flower bar down / stowed |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
-alliance and final pose are picked up automatically (the SDK blackboard).
+alliance and final pose are picked up automatically (the SDK blackboard); if not, the teleop
+assumes it starts at the auto's park spot (back to the west wall by the loading zone, intake
+facing the field; mirrored for BLUE).
 
 **Aim.** No camera and no turret: holding the left trigger turns the whole chassis to face the
 hive cell on the robot's half of the field (north cell when y > 0, south when y < 0, with 2 in of

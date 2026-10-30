@@ -15,6 +15,7 @@ import org.horizon36596.simloop.simclock.SimClockLoader;
 import org.horizon36596.simloop.sim.RlogDecodedCompare;
 import org.junit.jupiter.api.AfterEach;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
+import org.firstinspires.ftc.teamcode.teleop.MainHorsTeleOp;
 import org.junit.jupiter.api.Test;
 import org.psilynx.psikit.core.Logger;
 
@@ -272,21 +273,25 @@ class MainHorsTeleOpSimTest {
     void blueAllianceAimsAtTheBlueHive() {
         BioHorsSim sim = new BioHorsSim();
         // No auto ran: pick BLUE with dpad right during INIT. The default BLUE start is the
-        // point mirror of RED's (13, 63, -pi/2).
-        // That start already faces the north cell, so strafe sideways first (aim off) to make the
-        // aim do real work, then hold the trigger with the sticks centred.
-        sim.placeAt(13.0, 63.0, -Math.PI / 2.0);
+        // point mirror of RED's (MainHorsTeleOp.DEFAULT_START_*: the auto's park, back to the
+        // west wall facing the field), so on BLUE: back to the east wall, facing west.
+        // Strafe first (aim off) to make the aim do real work, then hold the trigger with the
+        // sticks centred.
+        double x0 = -MainHorsTeleOp.DEFAULT_START_X_IN, y0 = -MainHorsTeleOp.DEFAULT_START_Y_IN;
+        sim.placeAt(x0, y0, MainHorsTeleOp.DEFAULT_START_HEADING_RAD + Math.PI);
         run(sim, 200, (phase, tick, g1, g2) -> {
             if (phase == OpModePhase.INIT_LOOP) g1.dpad_right = true;
             if (phase != OpModePhase.ACTIVE) return;
             g1.left_stick_x = tick < 40 ? -1f : 0f;
             g1.left_trigger = tick >= 60 ? 1f : 0f;
         }, null);
-        assertTrue(Math.abs(sim.drivePlant.getX() - 13.0) > 15.0, "the strafe should have moved the robot sideways");
+        assertTrue(Math.hypot(sim.drivePlant.getX() - x0, sim.drivePlant.getY() - y0) > 15.0,
+                "the strafe should have moved the robot sideways");
 
-        // BLUE's up cell at kickoff is NORTH.
-        double expected = Math.atan2(CELL_Y - sim.drivePlant.getY(), BLUE_HIVE_X - sim.drivePlant.getX());
-        assertAngleNear(expected, sim.drivePlant.getHeading(), 3.0, "BLUE should aim at the BLUE north cell");
+        // The target is BLUE's cell on the robot's half of the field (FieldTargets.cellForHalf).
+        double cellY = sim.drivePlant.getY() > 0 ? CELL_Y : -CELL_Y;
+        double expected = Math.atan2(cellY - sim.drivePlant.getY(), BLUE_HIVE_X - sim.drivePlant.getX());
+        assertAngleNear(expected, sim.drivePlant.getHeading(), 3.0, "BLUE should aim at the BLUE cell on its half");
     }
 
     // ------------------------------------------------------------------ mechanisms
@@ -352,7 +357,7 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
-    void bTogglesBothGatesAndXTogglesTheFlowerBar() {
+    void bTogglesBothGatesAndDpadUpTogglesTheFlowerBar() {
         BioHorsSim open = new BioHorsSim();
         startAt(open, "RED", -13.0, -63.0, Math.PI / 2.0);
         run(open, 50, (phase, tick, g1, g2) -> {
@@ -374,11 +379,11 @@ class MainHorsTeleOpSimTest {
         BioHorsSim x = new BioHorsSim();
         startAt(x, "RED", -13.0, -63.0, Math.PI / 2.0);
         run(x, 50, (phase, tick, g1, g2) -> {
-            if (phase == OpModePhase.ACTIVE) g1.x = true;
+            if (phase == OpModePhase.ACTIVE) g1.dpad_up = true;
         }, null);
-        assertEquals(0.485, x.pollenGatePlant.getPosition(), 0.02, "X (flower bar) does not move the gates");
-        assertEquals(0.485, x.nectarGatePlant.getPosition(), 0.02, "X (flower bar) does not move the gates");
-        assertEquals(MechanismConstants.FLOWER_BAR_DOWN, x.flowerLeftPlant.getPosition(), 0.02, "X puts the bar down");
+        assertEquals(0.485, x.pollenGatePlant.getPosition(), 0.02, "dpad up (flower bar) does not move the gates");
+        assertEquals(0.485, x.nectarGatePlant.getPosition(), 0.02, "dpad up (flower bar) does not move the gates");
+        assertEquals(MechanismConstants.FLOWER_BAR_DOWN, x.flowerLeftPlant.getPosition(), 0.02, "dpad up puts the bar down");
         assertEquals(com.qualcomm.robotcore.hardware.Servo.Direction.REVERSE, x.flowerRight.getDirection(),
                 "the right bar servo is mounted mirrored");
         assertEquals(1.0 - MechanismConstants.FLOWER_BAR_DOWN, x.flowerRightPlant.getPosition(), 0.02,
@@ -389,19 +394,19 @@ class MainHorsTeleOpSimTest {
         startAt(xTwice, "RED", -13.0, -63.0, Math.PI / 2.0);
         run(xTwice, 60, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
-            g1.x = (tick >= 2 && tick < 5) || (tick >= 20 && tick < 23);
+            g1.dpad_up = (tick >= 2 && tick < 5) || (tick >= 20 && tick < 23);
         }, null);
         assertEquals(MechanismConstants.FLOWER_BAR_STOWED, xTwice.flowerLeftPlant.getPosition(), 0.02,
-                "X again stows the bar");
+                "dpad up again stows the bar");
         assertEquals(1.0 - MechanismConstants.FLOWER_BAR_STOWED, xTwice.flowerRightPlant.getPosition(), 0.02,
-                "X again stows the right side too");
+                "dpad up again stows the right side too");
         OpMode.blackboard.clear();
 
         BioHorsSim shoot = new BioHorsSim();
         startAt(shoot, "RED", -13.0, -63.0, Math.PI / 2.0);
         run(shoot, 60, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
-            g1.x = tick >= 2 && tick < 5;     // bar down
+            g1.dpad_up = tick >= 2 && tick < 5;     // bar down
             g1.b = tick >= 20 && tick < 23;   // gates open: the bar lifts slightly
         }, null);
         assertEquals(MechanismConstants.FLOWER_BAR_SHOOTING, shoot.flowerLeftPlant.getPosition(), 0.02,
@@ -490,6 +495,48 @@ class MainHorsTeleOpSimTest {
     // ------------------------------------------------------------------ helpers
 
     /** Puts the plant at a pose and tells the teleop (as an auto would) that it starts there. */
+    /**
+     * X resets the pose to the reset spot (backed flat against the west wall at the park spot, by
+     * the loading zone, intake facing the field), wiping odometry drift. The robot really stands there; its
+     * pose is started wrong (as drift would leave it); X puts it right. Both alliances.
+     */
+    @Test
+    void xResetsThePoseToTheResetSpotOnEitherAlliance() {
+        for (String alliance : new String[] {"RED", "BLUE"}) {
+            double s = "RED".equals(alliance) ? 1 : -1;
+            double rx = s * MainHorsTeleOp.RESET_X_IN, ry = s * MainHorsTeleOp.RESET_Y_IN;
+            double rh = MainHorsTeleOp.RESET_HEADING_RAD + ("RED".equals(alliance) ? 0 : Math.PI);
+            for (boolean pressX : new boolean[] {false, true}) {
+                BioHorsSim sim = new BioHorsSim();
+                sim.placeAt(rx, ry, rh);
+                OpMode.blackboard.put("biohors.alliance", alliance);
+                // What drift would leave: 5 in and 6 in off, and 9 deg turned.
+                OpMode.blackboard.put("biohors.pose", new double[] {rx + 5.0, ry - 6.0, rh + Math.toRadians(9)});
+                OpModeRunResult result = run(sim, 20, (phase, tick, g1, g2) -> {
+                    if (phase == OpModePhase.ACTIVE) g1.x = pressX && tick >= 3 && tick < 6;
+                }, null);
+                double[] shown = shownPose(lastTelemetry(result));
+                String what = alliance + (pressX ? " after X" : " without X");
+                if (pressX) {
+                    assertEquals(rx, shown[0], 0.5, what + ": x");
+                    assertEquals(ry, shown[1], 0.5, what + ": y");
+                    assertAngleNear(rh, Math.toRadians(shown[2]), 1.0, what + ": heading");
+                } else {
+                    assertTrue(Math.hypot(shown[0] - rx, shown[1] - ry) > 5.0, what + ": the drift should remain");
+                }
+                OpMode.blackboard.clear();
+            }
+        }
+    }
+
+    /** The x, y (in) and heading (deg) the teleop's "Pose" telemetry line shows. */
+    private static double[] shownPose(String telemetry) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("x=(-?[0-9.]+) y=(-?[0-9.]+) h=(-?[0-9.]+) deg").matcher(telemetry);
+        assertTrue(m.find(), "telemetry should show the pose: " + telemetry);
+        return new double[] {Double.parseDouble(m.group(1)), Double.parseDouble(m.group(2)), Double.parseDouble(m.group(3))};
+    }
+
     private static void startAt(BioHorsSim sim, String alliance, double x, double y, double h) {
         sim.placeAt(x, y, h);
         OpMode.blackboard.put("biohors.alliance", alliance);

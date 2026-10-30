@@ -335,8 +335,8 @@ def build():
               P('<b>The route (RED; BLUE is the point mirror).</b> Start on the south wall with 4 pollen, score them '
                 'from <i>scoreSouth</i>, drive north and take pollen from the flower with the bar down, score from '
                 '<i>scoreNorth</i>, come back down and sweep the garden row along the south wall with the bar stowed, '
-                'drive back round the hive and score the third volley from <i>scoreNorth</i>, then run west along the north wall and slide south into the park spot, facing west. In the sim it scores <b>12 of 12</b> pollen and tips the hive <b>twice</b>, '
-                'touches nothing, and finishes in about <b>28.8 s</b> of the 30 by the Zenith estimate, parked by 22.5 s in the sim.'),
+                'drive back round the hive and score the third volley from <i>scoreNorth</i>, then run west along the north wall and slide south into the park spot by the loading zone, the intake facing the field: where the teleop starts. In the sim it scores <b>12 of 12</b> pollen and tips the hive <b>twice</b>, '
+                'touches nothing, and finishes in about <b>29.4 s</b> of the 30 by the Zenith estimate, parked by about 23-24 s in the sim.'),
               Callout('warn', '<b>All of this is simulated.</b> No number on this robot is tuned yet. The poses come '
                       'from FIRST\'s field CAD and the robot CAD, not a real field. The shot leaves at the hood\'s 75 deg '
                       '(read from CAD); its speed is still a guess, so the auto rpm (1750) and the scoring spots were picked '
@@ -510,6 +510,24 @@ def build():
                 'the shooter fires out of the robot\'s front (SHOOTER_FACING_OFFSET_RAD = 0), then tune kP (1.2) until '
                 'the robot turns onto the hive without oscillating; MIN_YAW (0.06) is the smallest command that still '
                 'moves it.'),
+              P('<b>5f. Teleop controls</b> (MainHORS TeleOp; gamepad 2 mirrors the mechanism buttons)', 'h2'),
+              table([['Button', 'Does'],
+                     ['Left stick / right stick X', 'Drive and strafe (robot-centric: forward is the robot front) / turn'],
+                     ['Left trigger (hold)', 'AIM: turn onto our hive cell on this half of the field, leading the shot '
+                      'while moving (lead is 0 until the ball speed is measured)'],
+                     ['Right bumper (hold)', 'Slow mode'],
+                     ['Right trigger / Y (hold)', 'Intake in / out'],
+                     ['Dpad down', 'Both shooters on / off; their rpm follows the distance-to-rpm table (flat until measured)'],
+                     ['Dpad left / right', 'Pollen rpm trim - / +'],
+                     ['Left bumper / A', 'Nectar rpm trim - / +'],
+                     ['B', 'Request the gates open: they open only while the pose is valid, the aim is on target and '
+                      'every switched-on shooter is at speed; telemetry says what is blocking'],
+                     ['<b>X</b>', '<b>Reset the pose</b> (wipes Pinpoint drift): back the robot flat against your '
+                      'alliance\'s wall at the park spot by the loading zone, intake facing the field, then press X'],
+                     ['<b>Dpad up</b>', '<b>Flower bar</b> down / stowed (was X)']],
+                    [0.28, 0.72], c5),
+              Callout('tip', 'Use X whenever the aim starts drifting off the hive: drive back to the park spot, back '
+                      'square into the wall, press X. It works the same on RED and BLUE.'),
               PageBreak()]
 
     # ---- 6 change a pose
@@ -539,8 +557,9 @@ def build():
                      ['gardenSweepStart', '-40', '-61.17', '180 deg', 'Start of the sweep, by the south wall'],
                      ['gardenSweepEnd', '-59.6', '-61.62', '180 deg', 'Front roller over the corner pollen'],
                      ['offGardenLane', '-50', '-50', '180 deg', 'Back off the wall after the sweep'],
-                     ['parkLane', '-54.7', '54', '180 deg', 'Straight north of park: the robot slides south from here'],
-                     ['park', '-54.7', '36', '180 deg', 'End of the auto']],
+                     ['parkLane', '-61.5', '54', '0 deg', 'Straight north of park: the robot slides south from here'],
+                     ['park', '-61.5', '49', '0 deg', 'End of the auto and the teleop\'s start: back to the west wall '
+                      '(1.4 in off it), the intake facing the field']],
                     [0.22, 0.09, 0.09, 0.11, 0.49], c6),
               PageBreak(),
               P('<b>How to move one</b>', 'h2'),
@@ -557,9 +576,9 @@ def build():
                       + mono('npx zenith codegen two-tip') + '<br/>' + mono('npx zenith codegen two-tip-blue')],
                      ['4', 'Copy the same number into the state-machine auto\'s pose (named in CAPITALS, e.g. '
                       + mono('GARDEN_SWEEP_END') + ').', f('TeamCode/src/main/java/org/firstinspires/ftc/teamcode/auto/AutoPoses.java')],
-                     ['4b', 'Changed <i>start</i>? Also set the teleop\'s fallback start, used when the teleop runs without '
-                      'an auto before it: ' + mono('DEFAULT_START_X_IN') + ', ' + mono('DEFAULT_START_Y_IN') + ', '
-                      + mono('DEFAULT_START_HEADING_RAD') + '. Otherwise aim works from the old spot.',
+                     ['4b', 'Changed <i>park</i>? Also set the teleop\'s fallback start (used when the teleop runs without '
+                      'an auto before it), ' + mono('DEFAULT_START_X/Y/HEADING') + ' = the park, and the X reset spot '
+                      + mono('RESET_X/Y/HEADING') + ' (the same place, backed flat against the wall).',
                       f('TeamCode/src/main/java/org/firstinspires/ftc/teamcode/teleop/MainHorsTeleOp.java')],
                      ['5', 'Run the tests. AutoPosesTest checks the two copies are equal; the match tests check both autos '
                       'still score, tip, avoid contact and finish on time on both alliances.', mono('.\\gradlew.bat :TeamCode:testDebugUnitTest')],
@@ -625,7 +644,8 @@ def build():
     M = 'MechanismConstants'
     rows = [['Group', 'Value (file)', 'Now', 'Label', 'How to measure'],
             ['Field', 'All 11 waypoints (waypoints.json + AutoPoses)', 'Section 6', 'SET BY HAND / SET FROM SIM', 'Drive there on a real field, read the Pinpoint'],
-            ['Field', 'Teleop start pose (MainHorsTeleOp DEFAULT_START_X/Y)', '-13, -62.87', 'NEEDS MEASUREMENT', 'Same as the auto start'],
+            ['Field', 'Teleop start pose (MainHorsTeleOp DEFAULT_START_*)', '-61.5, 49, 0 deg', 'SET BY HAND', 'Same as the auto park'],
+            ['Field', 'X reset spot (MainHorsTeleOp RESET_*)', '-62.87, 49, 0 deg', 'x from CAD, y NEEDS MEASUREMENT', 'Back flat on the wall, read y off the loading zone edge'],
             ['Pinpoint', 'yPodOffset (pedro/Constants)', '0', 'PLACEHOLDER', 'Pinpoint Tuner'],
             ['Pinpoint', 'xPodOffset', '-2.84', 'MEASURED FROM CAD', 'Pinpoint Tuner: compare'],
             ['Pinpoint', 'x/y pod directions', 'FORWARD', 'PLACEHOLDER', 'Pinpoint Tuner'],

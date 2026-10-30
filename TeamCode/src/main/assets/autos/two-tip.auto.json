@@ -671,9 +671,9 @@
       "heading": {
         "mode": "linear",
         "fromRad": -1.5708,
-        "toRad": -3.1416
+        "toRad": 0.0
       },
-      "notes": "After the last volley (the team's sketch): out toward the north wall, then west along it past flower1, turning from facing the hive to facing west (clockwise, a quarter turn) on the way, to a spot straight north of the park spot."
+      "notes": "After the last volley (the team's sketch): out toward the north wall, then west along it past flower1, turning from facing the hive to facing the field (east; counter-clockwise, a quarter turn) on the way, to a spot straight north of the park spot."
     },
     {
       "id": "park",
@@ -689,9 +689,9 @@
       ],
       "heading": {
         "mode": "constant",
-        "headingRad": 3.1416
+        "headingRad": 0.0
       },
-      "notes": "Slides south into the park spot still facing west (the robot's left), coming in from the north side: partly in RED's loading zone."
+      "notes": "Slides south into the park spot, back to the west wall and the intake facing the field: where the teleop starts (MainHorsTeleOp's default start pose)."
     }
   ]
 }
