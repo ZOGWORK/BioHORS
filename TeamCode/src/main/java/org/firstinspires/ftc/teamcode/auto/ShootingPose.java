@@ -17,12 +17,19 @@ public final class ShootingPose {
     public static double POSITION_TOLERANCE_IN = 2.0;
     // SET BY HAND: the same as the follower's heading deviation tolerance (pedro/Constants, 3 deg).
     public static double HEADING_TOLERANCE_RAD = Math.toRadians(3.0);
-    // PLACEHOLDER: how long a volley waits at speed for the robot to reach a spot before it is skipped.
+    // PLACEHOLDER: how long a volley waits at speed for the robot to reach a spot before it is skipped,
+    // and how long a volley that is knocked off its spot waits to get back before it ends.
     public static double WAIT_FOR_POSE_S = 1.0;
 
     private static final Pose[] SPOTS = {AutoPoses.SCORE_SOUTH, AutoPoses.SCORE_NORTH};
 
     private ShootingPose() {
+    }
+
+    /** Pollen a volley of count really fed, from the seconds the gate was open and feeding. */
+    public static int fedPieces(double fedSeconds, int count, double secondsPerPiece, double fullVolleySeconds) {
+        if (fedSeconds >= fullVolleySeconds) return count;
+        return Math.max(0, Math.min(count, (int) Math.round(fedSeconds / secondsPerPiece)));
     }
 
     /** Whether the robot (field frame, inches and radians) is at one of the alliance's scoring spots. */

@@ -88,4 +88,41 @@ class ScoreCommandEstimateTest {
             org.firstinspires.ftc.teamcode.auto.ShootingPose.WAIT_FOR_POSE_S = savedWait;
         }
     }
+
+    @org.junit.jupiter.api.Test
+    void knockedOffTheSpotMidVolleyTheGateShutsAndOnlyWhatWasFedCounts() throws InterruptedException {
+        double savedWait = org.firstinspires.ftc.teamcode.auto.ShootingPose.WAIT_FOR_POSE_S;
+        org.firstinspires.ftc.teamcode.auto.ShootingPose.WAIT_FOR_POSE_S = 0.1;
+        try {
+            BioHorsSim sim = new BioHorsSim();
+            BioHorsRobot robot = new BioHorsRobot(sim.hardwareMap, null);
+            PollenEstimate pollen = new PollenEstimate(4);
+            ZenithSubsystems.Intake intake = new ZenithSubsystems.Intake(robot, pollen);
+            ZenithSubsystems.Launcher launcher = new ZenithSubsystems.Launcher(robot);
+            java.util.concurrent.atomic.AtomicBoolean onSpot = new java.util.concurrent.atomic.AtomicBoolean(true);
+            ScoreCommand score = new ScoreCommand(launcher, intake, pollen, 4, onSpot::get);
+            score.initialize();
+            long deadline = System.nanoTime() + 3_000_000_000L;
+            boolean knocked = false;
+            while (!score.isFinished() && System.nanoTime() < deadline) {
+                score.execute();
+                intake.periodic();
+                if (!knocked && !robot.pollenGate.isClosed()) {
+                    Thread.sleep(400);           // about one pollen fed
+                    score.execute();
+                    onSpot.set(false);           // then bumped off the spot
+                    knocked = true;
+                } else if (knocked) {
+                    score.execute();
+                    assertTrue(robot.pollenGate.isClosed(), "the gate stayed open off the spot");
+                }
+                Thread.sleep(5);
+            }
+            score.end(false);
+            assertTrue(knocked, "the volley should have started feeding");
+            assertTrue(pollen.held() > 0 && pollen.held() < 4, "only what was fed counts: held " + pollen.held());
+        } finally {
+            org.firstinspires.ftc.teamcode.auto.ShootingPose.WAIT_FOR_POSE_S = savedWait;
+        }
+    }
 }

@@ -96,4 +96,40 @@ class AutoMechanismsTest {
             ScoreCommand.SPINUP_TIMEOUT_S = savedSpin;
         }
     }
+
+    @Test
+    void knockedOffTheSpotMidVolleyTheGateShutsAndOnlyWhatWasFedCounts() throws InterruptedException {
+        double savedWait = ShootingPose.WAIT_FOR_POSE_S, savedSpin = ScoreCommand.SPINUP_TIMEOUT_S;
+        ShootingPose.WAIT_FOR_POSE_S = 0.1;
+        ScoreCommand.SPINUP_TIMEOUT_S = 0.01;
+        try {
+            BioHorsRobot robot = robot();
+            java.util.concurrent.atomic.AtomicBoolean onSpot = new java.util.concurrent.atomic.AtomicBoolean(true);
+            AutoMechanisms mech = new AutoMechanisms(robot, 4, onSpot::get);
+            mech.pollen().sensed(4);
+            mech.volley(4);
+            long deadline = System.nanoTime() + 3_000_000_000L;
+            long knockedAt = 0;
+            while (!mech.volleyDone() && System.nanoTime() < deadline) {
+                mech.update();
+                if (knockedAt == 0 && mech.pollenState() == AutoMechanisms.PollenState.FIRING) {
+                    Thread.sleep(400);           // about one pollen fed
+                    mech.update();
+                    onSpot.set(false);           // then bumped off the spot
+                    knockedAt = System.nanoTime();
+                } else if (knockedAt != 0) {
+                    assertTrue(robot.pollenGate.isClosed(), "the gate stayed open off the spot");
+                }
+                Thread.sleep(5);
+            }
+            assertTrue(mech.volleyDone(), "the volley should end");
+            assertEquals(1, mech.volleysCutShort());
+            assertEquals(0, mech.volleysFired(), "a cut-short volley is not a fired one");
+            assertTrue(mech.pollen().held() > 0 && mech.pollen().held() < 4,
+                    "only what was fed counts: held " + mech.pollen().held());
+        } finally {
+            ShootingPose.WAIT_FOR_POSE_S = savedWait;
+            ScoreCommand.SPINUP_TIMEOUT_S = savedSpin;
+        }
+    }
 }

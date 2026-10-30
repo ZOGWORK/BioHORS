@@ -47,6 +47,10 @@ public class AutoMechanisms {
     private final PollenEstimate pollen;
     private final BooleanSupplier atShootingPose;
     private double readyAt = Double.NaN;
+    private double fedSeconds;
+    private double offSince = Double.NaN;
+    private boolean paused;
+    private int volleysCutShort;
     private final ElapsedTime loopTimer = new ElapsedTime();
     private final ElapsedTime pollenTimer = new ElapsedTime();
     private final ElapsedTime sinceNewPollen = new ElapsedTime();
@@ -140,6 +144,9 @@ public class AutoMechanisms {
         pollenShooter = PollenState.SPIN_UP;
         pollenTimer.reset();
         readyAt = Double.NaN;
+        fedSeconds = 0;
+        offSince = Double.NaN;
+        paused = false;
     }
 
     public boolean volleyDone() {
@@ -174,16 +181,43 @@ public class AutoMechanisms {
                     }
                 }
                 break;
-            case FIRING:
-                if (pollenTimer.seconds() >= volleyCount * ScoreCommand.FEED_S_PER_PIECE + ScoreCommand.FEED_EXTRA_S) {
+            case FIRING: {
+                double full = volleyCount * ScoreCommand.FEED_S_PER_PIECE + ScoreCommand.FEED_EXTRA_S;
+                boolean cutShort = false;
+                if (atShootingPose.getAsBoolean()) {
+                    if (paused) {
+                        paused = false;
+                        offSince = Double.NaN;
+                        robot.pollenGate.setClosed(false);
+                        setIntake(IntakeState.FEED);
+                    } else {
+                        fedSeconds += dt;
+                    }
+                } else {
+                    if (!paused) {
+                        // Knocked off the spot mid-volley: shut the gate and stop feeding until it is back.
+                        paused = true;
+                        offSince = pollenTimer.seconds();
+                        robot.pollenGate.setClosed(true);
+                        setIntake(IntakeState.OFF);
+                    }
+                    cutShort = pollenTimer.seconds() - offSince >= ShootingPose.WAIT_FOR_POSE_S;
+                }
+                if (fedSeconds >= full || cutShort) {
                     robot.pollenGate.setClosed(true);
                     setIntake(IntakeState.OFF);
-                    pollen.launched(volleyCount);
-                    robot.intakeLoad.emptied();
-                    volleysFired++;
+                    int fed = ShootingPose.fedPieces(fedSeconds, volleyCount, ScoreCommand.FEED_S_PER_PIECE, full);
+                    pollen.launched(fed);
+                    if (fed == volleyCount) {
+                        robot.intakeLoad.emptied();
+                        volleysFired++;
+                    } else {
+                        volleysCutShort++;
+                    }
                     pollenShooter = PollenState.IDLE;
                 }
                 break;
+            }
         }
 
         // The bar lifts clear of the shots for the whole volley.
@@ -248,6 +282,11 @@ public class AutoMechanisms {
 
     public PollenEstimate pollen() {
         return pollen;
+    }
+
+    /** Volleys ended early because the robot was knocked off its scoring spot. */
+    public int volleysCutShort() {
+        return volleysCutShort;
     }
 
     public int volleysFired() {
