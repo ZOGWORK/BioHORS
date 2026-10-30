@@ -6,6 +6,8 @@ import com.seattlesolvers.solverslib.command.InstantCommand;
 
 import org.horizon36596.zenith.solverslib.NamedCommands;
 
+import java.util.function.BooleanSupplier;
+
 /**
  * The only verbs and end conditions a Zenith auto may use on this robot. Same names, same
  * arguments, as "commands" and "conditions" in autos/robot.json.
@@ -42,14 +44,15 @@ public final class BioHorsCommands {
     public static void register(final ZenithSubsystems.Intake intake,
                                 final ZenithSubsystems.Launcher launcher,
                                 final ZenithSubsystems.FlowerBar flowerBar,
-                                final PollenEstimate pollen) {
+                                final PollenEstimate pollen,
+                                final BooleanSupplier atShootingPose) {
         NamedCommands.register(FLOWER_BAR_DOWN, (args, ctx) -> new InstantCommand(flowerBar::down, flowerBar));
         NamedCommands.register(FLOWER_BAR_STOW, (args, ctx) -> new InstantCommand(flowerBar::stow, flowerBar));
         NamedCommands.register(INTAKE_ON, (args, ctx) -> new InstantCommand(intake::in, intake));
         NamedCommands.register(INTAKE_OFF, (args, ctx) -> new InstantCommand(intake::stop, intake));
         NamedCommands.register(SPIN_UP, (args, ctx) -> new SpinUp(launcher));
         NamedCommands.register(SCORE, (args, ctx) ->
-                new ScoreCommand(launcher, intake, pollen, NamedCommands.argInt(args, SCORE, "count")));
+                new ScoreCommand(launcher, intake, pollen, NamedCommands.argInt(args, SCORE, "count"), atShootingPose));
 
         NamedCommands.registerCondition(HOLDING_PIECE, () -> !pollen.empty());
         NamedCommands.registerCondition(HOPPER_FULL, pollen::full);

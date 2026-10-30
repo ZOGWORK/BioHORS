@@ -109,6 +109,9 @@ public final class BiobuzzMatch {
 
     private final BioHorsSim sim;
     private final boolean red;
+    private boolean gateWasCommandedOpen;
+    private final List<String> offSpotGateOpens = new ArrayList<>();
+    private final List<String> offSpotLaunches = new ArrayList<>();
     private final Json field;
     private final Json robotJson;
     private boolean otherUpIsNorth;               // the other alliance's hive at kickoff
@@ -354,6 +357,17 @@ public final class BiobuzzMatch {
         }
 
         // ---- launches ----
+        // The gate may only be told to open, and a ball may only leave, at a scoring spot
+        // (auto/ShootingPose), judged from where the robot really is.
+        boolean atSpot = org.firstinspires.ftc.teamcode.auto.ShootingPose.at(
+                red ? org.firstinspires.ftc.teamcode.aim.Alliance.RED : org.firstinspires.ftc.teamcode.aim.Alliance.BLUE,
+                new com.pedropathing.math.Pose(x, y, h));
+        boolean gateCommandedOpen = sim.pollenGate.getPosition() >= GATE_OPEN_THRESHOLD;
+        if (gateCommandedOpen && !gateWasCommandedOpen && !atSpot) {
+            offSpotGateOpens.add(String.format(java.util.Locale.ROOT, "t=%.2f gate opened at (%.1f, %.1f, %.0f deg)",
+                    time, x, y, Math.toDegrees(h)));
+        }
+        gateWasCommandedOpen = gateCommandedOpen;
         boolean gateOpen = sim.pollenGatePlant.getPosition() >= GATE_OPEN_THRESHOLD;
         boolean feeding = gateOpen && intakeIn && sim.pollenShooterRpm() >= LAUNCH_MIN_RPM && held > 0;
         if (feeding) {
@@ -362,6 +376,10 @@ public final class BiobuzzMatch {
                 launchTimer -= LAUNCH_S_PER_PIECE;
                 held--;
                 launched++;
+                if (!atSpot) {
+                    offSpotLaunches.add(String.format(java.util.Locale.ROOT, "t=%.2f launched at (%.1f, %.1f, %.0f deg)",
+                            time, x, y, Math.toDegrees(h)));
+                }
                 if (world != null) {
                     double[] l = ShotModel.pollenLaunch(x, y, h, sim.pollenShooterRpm(), vx, vy);
                     int id = world.nextHeldPieceId();
@@ -941,6 +959,10 @@ public final class BiobuzzMatch {
 
     public int held() { return held; }
     public int launched() { return launched; }
+    /** Each time the gate was told to open away from a scoring spot (ShootingPose); should be none. */
+    public List<String> offSpotGateOpens() { return offSpotGateOpens; }
+    /** Each ball that left the robot away from a scoring spot; should be none. */
+    public List<String> offSpotLaunches() { return offSpotLaunches; }
     public int scored() { return scored; }
     public int missed() { return missed; }
     public int collected() { return collected; }

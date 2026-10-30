@@ -79,6 +79,10 @@ class StateMachineAutoMatchTest {
         assertTrue(BiobuzzMatch.inchesFromPark(blue.rlog, false) < PARKED_WITHIN_IN,
                 "BLUE ended " + BiobuzzMatch.inchesFromPark(blue.rlog, false) + " in from the park spot\n" + blue.report);
 
+        assertTrue(red.match.offSpotGateOpens().isEmpty(), "RED gate opened off a scoring spot: " + red.match.offSpotGateOpens());
+        assertTrue(red.match.offSpotLaunches().isEmpty(), "RED launched off a scoring spot: " + red.match.offSpotLaunches());
+        assertTrue(blue.match.offSpotGateOpens().isEmpty(), "BLUE gate opened off a scoring spot: " + blue.match.offSpotGateOpens());
+        assertTrue(blue.match.offSpotLaunches().isEmpty(), "BLUE launched off a scoring spot: " + blue.match.offSpotLaunches());
         assertTrue(red.match.unintendedContacts().isEmpty(), "contact: " + red.match.unintendedContacts() + "\n" + red.report);
         // Zenith's starter route turns while it drives, and the 22 in robot slides square to the
         // south wall onto and off the garden lane. On the same route this follower strafes 32 % where

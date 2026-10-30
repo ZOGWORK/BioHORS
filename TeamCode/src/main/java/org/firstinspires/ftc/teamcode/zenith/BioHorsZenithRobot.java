@@ -9,6 +9,7 @@ import com.seattlesolvers.solverslib.geometry.Rotation2d;
 
 import org.firstinspires.ftc.teamcode.aim.Alliance;
 import org.firstinspires.ftc.teamcode.aim.PoseHandoff;
+import org.firstinspires.ftc.teamcode.auto.ShootingPose;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
 import org.horizon36596.zenith.solverslib.AutoFromFile;
@@ -55,7 +56,9 @@ public class BioHorsZenithRobot implements ZenithRobot {
 
     @Override
     public void registerCommands(AutoFromFile opMode) {
-        BioHorsCommands.register(intake, launcher, flowerBar, pollen);
+        // The gate opens only at a scoring spot (auto/ShootingPose), wherever the follower really is.
+        BioHorsCommands.register(intake, launcher, flowerBar, pollen,
+                () -> ShootingPose.at(alliance, drive.follower().pose()));
     }
 
     @Override

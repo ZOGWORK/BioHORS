@@ -24,7 +24,7 @@ public final class AutoPoses {
     public static final Pose SCORE_SOUTH = new Pose(-13.0, -48.0, Math.PI / 2);
     public static final Pose SCORE_NORTH = new Pose(-13.0, 48.0, -Math.PI / 2);
     public static final Pose FLOWER_NORTH_APPROACH = new Pose(-24.0, 42.0, Math.PI / 2);
-    public static final Pose FLOWER_NORTH_PICKUP = new Pose(-24.0, 52.75, Math.PI / 2);
+    public static final Pose FLOWER_NORTH_PICKUP = new Pose(-24.0, 52.85, Math.PI / 2);
     public static final Pose ABOVE_GARDEN_LANE = new Pose(-36.0, -54.7, Math.PI);
     public static final Pose GARDEN_SWEEP_START = new Pose(-40.0, -61.17, Math.PI);
     public static final Pose GARDEN_SWEEP_END = new Pose(-59.6, -61.62, Math.PI);

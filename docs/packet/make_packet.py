@@ -534,7 +534,7 @@ def build():
                      ['scoreSouth', '-13', '-48', '90 deg', 'First volley'],
                      ['scoreNorth', '-13', '48', '-90 deg', 'Second and third volley'],
                      ['flowerNorthApproach', '-24', '42', '90 deg', 'Lines up below the flower'],
-                     ['flowerNorthPickup', '-24', '52.75', '90 deg', 'Bar down, its tip at the flower'],
+                     ['flowerNorthPickup', '-24', '52.85', '90 deg', 'Bar down, its tip at the flower'],
                      ['aboveGardenLane', '-36', '-54.7', '180 deg', 'Above the garden row'],
                      ['gardenSweepStart', '-40', '-61.17', '180 deg', 'Start of the sweep, by the south wall'],
                      ['gardenSweepEnd', '-59.6', '-61.62', '180 deg', 'Front roller over the corner pollen'],
@@ -588,10 +588,15 @@ def build():
                      ['Shooter rpm in teleop', mono('POLLEN_SHOOTER.targetRpm') + ' / nectar (1600)', 'same'],
                      ['Gate / flower bar positions', mono('*_GATE_OPEN/CLOSED') + ', ' + mono('FLOWER_BAR_*'), 'same'],
                      ['Drive speed on a leg (state machine)', mono('DEFAULT_SPEED') + ' 0.8, ' + mono('PICKUP_SPEED')
-                      + ' 0.3, ' + mono('GARDEN_SWEEP_SPEED') + ' 0.2, ' + mono('SLIDE_SPEED') + ' 0.3, ' + mono('OFF_LANE_SPEED')
+                      + ' 0.2, ' + mono('GARDEN_SWEEP_SPEED') + ' 0.2, ' + mono('SLIDE_SPEED') + ' 0.3, ' + mono('OFF_LANE_SPEED')
                       + ' 0.6', f(sm)],
-                     ['Waits (state machine)', mono('FLOWER_WAIT_S') + ' 1.0, ' + mono('GARDEN_WAIT_S') + ' 0.8, '
+                     ['Waits (state machine)', mono('FLOWER_WAIT_S') + ' 1.5, ' + mono('FLOWER_DWELL_S') + ' 0.5, '
+                      + mono('GARDEN_WAIT_S') + ' 0.8, '
                       + mono('SPIN_UP_AFTER_S') + ' 0.5, ' + mono('SWEEP_TIMEOUT_S') + ' 3.0', f(sm)],
+                     ['Where the gate may open', mono('ShootingPose') + ': within ' + mono('POSITION_TOLERANCE_IN')
+                      + ' 2 in and ' + mono('HEADING_TOLERANCE_RAD') + ' 3 deg of scoreSouth / scoreNorth; a volley '
+                      'that is not there within ' + mono('WAIT_FOR_POSE_S') + ' 1.0 s is skipped',
+                      f('TeamCode/src/main/java/org/firstinspires/ftc/teamcode/auto/ShootingPose.java')],
                      ['Drive speed / waits (Zenith auto)', 'a path step\'s <i>speedFraction</i>, a wait step\'s <i>timeoutS</i> / <i>seconds</i> (or in the '
                       'Zenith app); then ' + mono('zenith validate') + ', ' + mono('deploy') + ', ' + mono('codegen'), f('autos/two-tip.auto.json')],
                      ['Volley timing (both autos)', mono('SPINUP_TIMEOUT_S') + ' 2.0, ' + mono('FEED_S_PER_PIECE') + ' 0.4, '
@@ -651,7 +656,8 @@ def build():
             ['Teleop', 'STICK_DEADBAND, TRANSLATION/YAW_EXPO, MAX_*', '0.05, 1.6/1.8, 1.0/0.85', 'PLACEHOLDER', 'Driver preference'],
             ['Auto', 'SPINUP_TIMEOUT_S, FEED_S_PER_PIECE, FEED_EXTRA_S', '2.0, 0.4, 0.2', 'PLACEHOLDER', 'Time a real volley'],
             ['Auto', 'State machine speeds (DEFAULT ... OFF_LANE)', '0.8 .. 0.2', 'SET BY HAND', 'Run the auto; slow down where it misses'],
-            ['Auto', 'FLOWER_WAIT_S, GARDEN_WAIT_S, SWEEP_TIMEOUT_S', '1.0, 0.8, 3.0', 'SET BY HAND', 'Run the auto'],
+            ['Auto', 'FLOWER_WAIT_S, FLOWER_DWELL_S, GARDEN_WAIT_S, SWEEP_TIMEOUT_S', '1.5, 0.5, 0.8, 3.0', 'SET BY HAND', 'Run the auto'],
+            ['Auto', 'ShootingPose tolerances, WAIT_FOR_POSE_S', '2 in, 3 deg, 1.0 s', 'SET BY HAND / PLACEHOLDER', 'Widen if real volleys get skipped'],
             ['Auto', 'COLLECT_NO_PROGRESS_S, FLOWER_BAR_SETTLE_S (' + M + ')', '0.5, 0.25', 'PLACEHOLDER', 'Film a collect and a volley'],
             ['Auto', 'SPIN_UP_TIMEOUT_S (BioHorsCommands), INTAKE_S_PER_PIECE (PollenEstimate)', '2.0, 0.35', 'PLACEHOLDER', 'Time a real spin-up and collect'],
             ['Auto', 'DEFAULT_SPEED_FRACTION (BioHorsZenithRobot)', '0.8', 'PLACEHOLDER', 'Same as robot.json default speed'],
