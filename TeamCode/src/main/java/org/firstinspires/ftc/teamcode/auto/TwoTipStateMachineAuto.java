@@ -69,9 +69,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         COLLECT_FLOWER,         // bar down, intake on, slowly in; ends at the opening or when full
         WAIT_FLOWER_FULL,
         FLOWER_DWELL,           // intake still running and the bar still down a little longer
-        TO_SCORE_NORTH,         // the starter's leg: backs off the flower facing it, bar up, turns round
-        SHOOT_FLOWER,
-        TO_GARDEN,              // back round the west of the hive, ending heading west above the lane
+        TO_SCORE_NORTH,         // the starter's leg: backs off the flower facing it, bar still down, turns round
+        SHOOT_FLOWER,           // the volley lifts the bar to SHOOTING
+        TO_GARDEN,              // bar stowed; back round the west of the hive, ending heading west above the lane
         SLIDE_ONTO_LANE,        // down onto the lane, square to the south wall
         SWEEP_GARDEN,           // intake on, west along the row (bar stowed): the pollen come in a line
         WAIT_GARDEN_FULL,
@@ -241,11 +241,12 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
             case TO_SCORE_NORTH:
                 mech.intakeOff();
-                mech.flowerBarStow();
+                // The bar stays down all the way back (the team); the volley lifts it to SHOOTING.
                 go(curve(TO_SCORE_NORTH, SCORE_NORTH).heading(pieces(TO_SCORE_NORTH_HEADING)), DEFAULT_SPEED);
                 break;
 
             case TO_GARDEN:
+                mech.flowerBarStow();   // folded after the north volley, for the rest of the route
                 go(curve(TO_GARDEN, ABOVE_GARDEN_LANE).heading(pieces(TO_GARDEN_HEADING)), DEFAULT_SPEED);
                 break;
             case SLIDE_ONTO_LANE:
