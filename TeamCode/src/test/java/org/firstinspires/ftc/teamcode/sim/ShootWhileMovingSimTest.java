@@ -23,8 +23,6 @@ import org.psilynx.psikit.core.Logger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Shoot-while-moving in the MainHORS teleop, run unchanged in SimLoop: the fire interlock on the
@@ -113,17 +111,20 @@ class ShootWhileMovingSimTest {
     void anOpenGateClosesOnItsOwnWhenTheAimIsLost() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, -13.0, -63.0, Math.PI / 2.0);
-        double[] gateAt = new double[160];
-        OpModeRunResult result = run(sim, TELEOP, 120, (phase, tick, g1, g2) -> {
+        double[] gateAt = new double[260];
+        OpModeRunResult result = run(sim, TELEOP, 200, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.b = tick >= 2 && tick < 5;
             g1.right_stick_x = tick >= 30 && tick < 60 ? 0.5f : 0f; // the driver turns away
+            g1.left_trigger = tick >= 80 ? 1f : 0f;                  // then aims back, B untouched
         }, (tick, s) -> gateAt[tick] = s.pollenGatePlant.getPosition());
 
         assertEquals(GATE_OPEN, gateAt[25], 0.02, "on target with the shooters off: open");
-        assertEquals(GATE_CLOSED, sim.pollenGatePlant.getPosition(), 0.02, "turned away: closed on its own");
-        assertTrue(lastLine(result, "Fire").contains("BLOCKED: AIM"), lastLine(result, "Fire"));
-        assertTrue(lastLine(result, "Gates").contains("requested=yes"), "the request still stands");
+        assertEquals(GATE_CLOSED, gateAt[75], 0.02, "turned away: closed on its own");
+        assertTrue(anyLine(result, "Fire", "BLOCKED: AIM"), "telemetry should name the aim error");
+        // The request still stands: back on target, the gate reopens with no second B press.
+        assertEquals(GATE_OPEN, sim.pollenGatePlant.getPosition(), 0.02, "back on target: open again");
+        assertEquals("Fire : READY", lastLine(result, "Fire"));
     }
 
     @Test
@@ -145,8 +146,9 @@ class ShootWhileMovingSimTest {
                 .run();
         assertEquals(GATE_CLOSED, sim.pollenGatePlant.getPosition(), 0.02);
         assertTrue(lastLine(result, "Fire").contains("POSE INVALID"), lastLine(result, "Fire"));
-        assertTrue(lastLine(result, "Pollen shooter").contains("target=1600"),
-                "pose invalid: the fixed rpm, " + lastLine(result, "Pollen shooter"));
+        assertTrue(lastLine(result, "Pose").contains("INVALID"), lastLine(result, "Pose"));
+        assertEquals(1600.0, target(lastLine(result, "Pollen")), 0.5,
+                "pose invalid: the fixed rpm, " + lastLine(result, "Pollen"));
     }
 
     // ------------------------------------------------------------------ aim while strafing
@@ -157,7 +159,6 @@ class ShootWhileMovingSimTest {
         assertTrue(r.moved > 15.0, "the robot should strafe while aiming, moved " + r.moved);
         assertTrue(r.worstErrToCellDeg <= 3.0, String.format(
                 "lead off: aim should stay on the cell while strafing; worst %.2f deg", r.worstErrToCellDeg));
-        assertTrue(lastLine(r.result, "Lead").contains("DISABLED"), "telemetry says lead is disabled");
     }
 
     @Test
@@ -280,7 +281,7 @@ class ShootWhileMovingSimTest {
         List<List<String>> sent = result.telemetry().transmissions();
         for (List<String> one : sent) {
             for (String line : one) {
-                if (line.startsWith("Pollen shooter") && Double.isNaN(targetAtStart[0]) && lines[0]++ > 5) {
+                if (line.startsWith("Pollen : ") && Double.isNaN(targetAtStart[0]) && lines[0]++ > 5) {
                     targetAtStart[0] = target(line);
                 }
             }
@@ -289,7 +290,7 @@ class ShootWhileMovingSimTest {
         // Expected from the plant's true distance, worked out here.
         double d = Math.hypot(RED_HIVE_X - sim.drivePlant.getX(), -CELL_Y - sim.drivePlant.getY());
         double table = 1500.0 + (d - 30.0) / 40.0 * 800.0;
-        double shown = target(lastLine(result, "Pollen shooter"));
+        double shown = target(lastLine(result, "Pollen"));
         assertEquals(table + 50.0, shown, MechanismConstants.SPEED_TABLE_UPDATE_STEP_RPM + 5.0,
                 "target = table at the true distance + trim (distance " + d + " in)");
         double d0 = Math.hypot(RED_HIVE_X + 13.0, -CELL_Y + 63.0);
@@ -300,10 +301,9 @@ class ShootWhileMovingSimTest {
         assertNotEquals(1600.0, shown, "no longer the fixed target");
     }
 
+    /** The target rpm a shooter line shows ({@code Pollen : 1580 / 1600 rpm OK}). */
     private static double target(String shooterLine) {
-        Matcher m = Pattern.compile("target=(-?[0-9.]+)").matcher(shooterLine);
-        assertTrue(m.find(), "no target in " + shooterLine);
-        return Double.parseDouble(m.group(1));
+        return MainHorsTeleOpSimTest.targetRpmIn(shooterLine);
     }
 
     // ------------------------------------------------------------------ a real shot with lead
@@ -388,12 +388,9 @@ class ShootWhileMovingSimTest {
                 .run();
     }
 
-    /** The last telemetry line whose caption starts with {@code caption}. */
+    /** The last transmission's line with this caption. */
     private static String lastLine(OpModeRunResult result, String caption) {
-        for (String line : result.telemetry().lastTransmission()) {
-            if (line.startsWith(caption)) return line;
-        }
-        return "";
+        return MainHorsTeleOpSimTest.line(result, caption);
     }
 
     /** True if any transmission had a line starting with caption that contains text. */
