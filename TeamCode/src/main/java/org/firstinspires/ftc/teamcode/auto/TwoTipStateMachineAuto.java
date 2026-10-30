@@ -66,6 +66,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         DRIVE_OUT,              // start -> south score spot
         SHOOT_PRELOADS,         // tip 1 (3 nectar staged in the south cell)
         TO_OTHER_SIDE,          // round the west of the hive to below flower1
+        DROP_FLOWER_BAR,        // bar down and intake on, standing still until the bar is down
         COLLECT_FLOWER,         // bar down, intake on, slowly in; ends at the opening or when full
         WAIT_FLOWER_FULL,
         FLOWER_DWELL,           // intake still running and the bar still down a little longer
@@ -171,6 +172,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 if (mech.volleyDone()) next();
                 break;
 
+            case DROP_FLOWER_BAR:
+                if (stateTimer.seconds() >= MechanismConstants.FLOWER_BAR_DROP_S) next();
+                break;
             case COLLECT_FLOWER:
                 // Always all the way in to the pickup (the team: closer); the wait after it covers full.
                 if (!follower.isBusy()) next();
@@ -228,9 +232,12 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
             case TO_OTHER_SIDE:
                 go(curve(TO_OTHER_SIDE, FLOWER_NORTH_APPROACH).heading(pieces(TO_OTHER_SIDE_HEADING)), DEFAULT_SPEED);
                 break;
-            case COLLECT_FLOWER:
+            case DROP_FLOWER_BAR:
+                // The team: drop the bar first, then drive in to intake.
                 mech.flowerBarDown();
                 mech.collect();
+                break;
+            case COLLECT_FLOWER:
                 // Heading held square to the wall: a tangent heading would turn a small sideways
                 // offset into a yaw that swings the mouth off the flower's opening.
                 go(Paths.line(here(), p(FLOWER_NORTH_PICKUP)).constant(h(FACING_NORTH)), PICKUP_SPEED);

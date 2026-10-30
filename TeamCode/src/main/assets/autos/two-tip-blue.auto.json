@@ -190,6 +190,12 @@
       "notes": "Puts the flower bar down to reach into flower1's opening."
     },
     {
+      "id": "waitBarDown",
+      "kind": "wait",
+      "seconds": 0.5,
+      "notes": "The team: drop the flower bar, THEN drive in to intake. Waits for the bar to swing all the way down before the robot moves toward the flower (PLACEHOLDER 0.5 s = MechanismConstants.FLOWER_BAR_DROP_S; the sim's servo takes 0.38 s)."
+    },
+    {
       "id": "collectFlower",
       "kind": "path",
       "segments": [
@@ -198,7 +204,7 @@
           "from": "current",
           "to": {
             "xIn": 24,
-            "yIn": -52.85,
+            "yIn": -52.5,
             "headingRad": -1.5707926535897931,
             "provenance": "SET BY HAND: the point mirror of waypoints.json flowerNorthPickup (see its provenance there)"
           }

@@ -92,6 +92,8 @@ class ZenithAutoMatchTest {
                 "RED ended " + BiobuzzMatch.inchesFromPark(red2.rlog, true) + " in from the park spot\n" + red2.report);
 
         // ---- the run is sound: no unintended contact, little strafing, belief agrees with truth ----
+        assertTrue(red2.match.barUpIntoFlower().isEmpty(), "RED drove in to the flower before the bar was down: " + red2.match.barUpIntoFlower());
+        assertTrue(blue.match.barUpIntoFlower().isEmpty(), "BLUE drove in to the flower before the bar was down: " + blue.match.barUpIntoFlower());
         assertTrue(red2.match.offSpotGateOpens().isEmpty(), "RED gate opened off a scoring spot: " + red2.match.offSpotGateOpens());
         assertTrue(red2.match.offSpotLaunches().isEmpty(), "RED launched off a scoring spot: " + red2.match.offSpotLaunches());
         assertTrue(blue.match.offSpotGateOpens().isEmpty(), "BLUE gate opened off a scoring spot: " + blue.match.offSpotGateOpens());
@@ -210,6 +212,8 @@ class ZenithAutoMatchTest {
             assertEquals(b.match.tips(), c.match.tips(), "BLUE tips in physics\n" + c.report);
             assertEquals(PRELOAD_PHYSICS + c.match.collected(), c.match.launched(), "BLUE pollen launched\n" + c.report);
             assertTrue(c.match.unintendedContacts().isEmpty(), "BLUE structure contact: " + c.match.unintendedContacts());
+            assertTrue(b.match.barUpIntoFlower().isEmpty(), "RED physics drove in to the flower before the bar was down: " + b.match.barUpIntoFlower());
+            assertTrue(c.match.barUpIntoFlower().isEmpty(), "BLUE physics drove in to the flower before the bar was down: " + c.match.barUpIntoFlower());
             assertTrue(b.match.offSpotGateOpens().isEmpty(), "RED physics gate opened off a scoring spot: " + b.match.offSpotGateOpens());
             assertTrue(b.match.offSpotLaunches().isEmpty(), "RED physics launched off a scoring spot: " + b.match.offSpotLaunches());
             assertTrue(c.match.offSpotGateOpens().isEmpty(), "BLUE physics gate opened off a scoring spot: " + c.match.offSpotGateOpens());

@@ -156,4 +156,9 @@ public final class MechanismConstants {
 
     /** Time for the bar to reach SHOOTING before a volley feeds, seconds. PLACEHOLDER: film it. */
     public static double FLOWER_BAR_SETTLE_S = 0.25;
+
+    /** Time for the bar to swing from STOWED to DOWN before the robot drives into a flower, seconds.
+     *  PLACEHOLDER: the sim's servo takes 0.38 s; film the real one. The Zenith auto's waitBarDown
+     *  step must say the same (BarDropWaitTest). */
+    public static double FLOWER_BAR_DROP_S = 0.5;
 }
