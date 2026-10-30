@@ -28,9 +28,9 @@
     },
     "flowerNorthPickup": {
       "xIn": -24.0,
-      "yIn": 52.85,
+      "yIn": 52.5,
       "headingRad": 1.5708,
-      "provenance": "SET BY HAND: tuned to BioHORS with the flower bar DOWN (its tip 14.19 in ahead of the drive centre, MEASURED FROM CAD): the bar tip 0.06 in short of flower1's foot (the field file's box, y = 67.1), 0.1 in closer than before (the team, 2026-10-30: in closer). The field file's foot is solid, so this is as close as the sim allows; the real bar is built to slide into the retrieval opening. NEEDS MEASUREMENT on the real field: drive in until the bar seats."
+      "provenance": "SET BY HAND: tuned to BioHORS with the flower bar DOWN (its tip 14.19 in ahead of the drive centre, MEASURED FROM CAD): the bar tip 0.41 in short of flower1's foot (the field file's box, y = 67.1). The team asked for closer (2026-10-30); with the bar fully down before the drive in, the follower settles up to 0.35 in past the pickup, so this is as close as the sim allows without the bar touching the field file's solid foot. The real bar is built to slide into the retrieval opening. NEEDS MEASUREMENT on the real field: drive in until the bar seats."
     },
     "aboveGardenLane": {
       "xIn": -36.0,

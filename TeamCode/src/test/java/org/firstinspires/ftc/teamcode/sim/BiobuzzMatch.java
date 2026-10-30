@@ -110,6 +110,7 @@ public final class BiobuzzMatch {
     private final BioHorsSim sim;
     private final boolean red;
     private boolean gateWasCommandedOpen;
+    private final List<String> barUpIntoFlower = new ArrayList<>();
     private final List<String> offSpotGateOpens = new ArrayList<>();
     private final List<String> offSpotLaunches = new ArrayList<>();
     private final Json field;
@@ -354,6 +355,25 @@ public final class BiobuzzMatch {
             }
         } else {
             flowerTimer = 0;
+        }
+
+        // ---- the flower bar is down before the robot drives in to the flower ----
+        {
+            com.pedropathing.math.Pose pick = org.firstinspires.ftc.teamcode.auto.AutoPoses.of(
+                    red ? org.firstinspires.ftc.teamcode.aim.Alliance.RED : org.firstinspires.ftc.teamcode.aim.Alliance.BLUE,
+                    org.firstinspires.ftc.teamcode.auto.AutoPoses.FLOWER_NORTH_PICKUP);
+            double dx = pick.x() - x, dy = pick.y() - y, dist = Math.hypot(dx, dy);
+            double towardIn = dist > 1e-6 ? (vx * dx + vy * dy) / dist : 0;   // in/s toward the pickup
+            double bar = sim.flowerLeftPlant.getPosition();
+            // Collecting (the intake running in), within 8 in of the pickup: past the approach point
+            // (10.9 in out) by more than the 1.5 in the arrival there overshoots, so only the drive in
+            // itself is judged, not a leg that passes the flower.
+            if (intakeIn && dist < 8.0 && towardIn > 2.0
+                    && bar < org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN - 0.02
+                    && barUpIntoFlower.size() < 5) {
+                barUpIntoFlower.add(String.format(java.util.Locale.ROOT,
+                        "t=%.2f %.1f in from the pickup, moving in at %.1f in/s, bar at %.2f", time, dist, towardIn, bar));
+            }
         }
 
         // ---- launches ----
@@ -959,6 +979,8 @@ public final class BiobuzzMatch {
 
     public int held() { return held; }
     public int launched() { return launched; }
+    /** Ticks the robot drove in toward the flower before the bar was down; should be none. */
+    public List<String> barUpIntoFlower() { return barUpIntoFlower; }
     /** Each time the gate was told to open away from a scoring spot (ShootingPose); should be none. */
     public List<String> offSpotGateOpens() { return offSpotGateOpens; }
     /** Each ball that left the robot away from a scoring spot; should be none. */

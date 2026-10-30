@@ -82,6 +82,8 @@ class StateMachineAutoMatchTest {
         assertTrue(BiobuzzMatch.inchesFromPark(blue.rlog, false) < PARKED_WITHIN_IN,
                 "BLUE ended " + BiobuzzMatch.inchesFromPark(blue.rlog, false) + " in from the park spot\n" + blue.report);
 
+        assertTrue(red.match.barUpIntoFlower().isEmpty(), "RED drove in to the flower before the bar was down: " + red.match.barUpIntoFlower());
+        assertTrue(blue.match.barUpIntoFlower().isEmpty(), "BLUE drove in to the flower before the bar was down: " + blue.match.barUpIntoFlower());
         assertTrue(red.match.offSpotGateOpens().isEmpty(), "RED gate opened off a scoring spot: " + red.match.offSpotGateOpens());
         assertTrue(red.match.offSpotLaunches().isEmpty(), "RED launched off a scoring spot: " + red.match.offSpotLaunches());
         assertTrue(blue.match.offSpotGateOpens().isEmpty(), "BLUE gate opened off a scoring spot: " + blue.match.offSpotGateOpens());
