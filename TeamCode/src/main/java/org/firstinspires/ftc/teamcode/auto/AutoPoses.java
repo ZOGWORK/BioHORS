@@ -29,8 +29,8 @@ public final class AutoPoses {
     public static final Pose GARDEN_SWEEP_START = new Pose(-40.0, -61.17, Math.PI);
     public static final Pose GARDEN_SWEEP_END = new Pose(-59.6, -61.62, Math.PI);
     public static final Pose OFF_GARDEN_LANE = new Pose(-50.0, -50.0, Math.PI);
-    public static final Pose PARK_LANE = new Pose(-54.7, 54.0, Math.PI);
-    public static final Pose PARK = new Pose(-54.7, 36.0, Math.PI);
+    public static final Pose PARK_LANE = new Pose(-61.5, 54.0, 0.0);
+    public static final Pose PARK = new Pose(-61.5, 49.0, 0.0);
 
     // ---- Bezier control points ----
     public static final Pose[] TO_OTHER_SIDE = {
@@ -104,6 +104,7 @@ public final class AutoPoses {
     public static final double FACING_NORTH = Math.PI / 2;
     public static final double FACING_SOUTH = -Math.PI / 2;
     public static final double FACING_WEST = Math.PI;
+    public static final double FACING_EAST = 0.0;
 
     /** A RED pose as seen by the given alliance. */
     public static Pose of(Alliance alliance, Pose red) {
