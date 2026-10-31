@@ -367,66 +367,99 @@ class MainHorsTeleOpSimTest {
 
     @Test
     void bTogglesBothGatesAndDpadUpTogglesTheFlowerBar() {
+        // Every servo is read on a late ACTIVE tick: at STOP the robot shuts the gates and stows the bar.
         BioHorsSim open = new BioHorsSim();
         startAt(open, "RED", -13.0, -63.0, Math.PI / 2.0);
         // The interlock needs a shooter on and at speed (NO SHOOTER ON otherwise): dpad down first.
-        run(open, 200, (phase, tick, g1, g2) -> {
+        double[] openLate = servosAt(open, 200, 195, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5;
             g1.b = tick >= 150 && tick < 153;
-        }, null);
-        assertEquals(0.67, open.pollenGatePlant.getPosition(), 0.02, "B opens the pollen gate");
-        assertEquals(0.67, open.nectarGatePlant.getPosition(), 0.02, "B opens the nectar gate");
+        });
+        assertEquals(0.67, openLate[0], 0.02, "B opens the pollen gate");
+        assertEquals(0.67, openLate[1], 0.02, "B opens the nectar gate");
         OpMode.blackboard.clear();
 
         BioHorsSim twice = new BioHorsSim();
         startAt(twice, "RED", -13.0, -63.0, Math.PI / 2.0);
-        run(twice, 230, (phase, tick, g1, g2) -> {
+        double[] twiceLate = servosAt(twice, 230, 225, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5;
             g1.b = (tick >= 150 && tick < 153) || (tick >= 180 && tick < 183);
-        }, null);
-        assertEquals(0.485, twice.pollenGatePlant.getPosition(), 0.02, "B again closes it");
+        });
+        assertEquals(0.485, twiceLate[0], 0.02, "B again closes it");
         OpMode.blackboard.clear();
 
         BioHorsSim x = new BioHorsSim();
         startAt(x, "RED", -13.0, -63.0, Math.PI / 2.0);
-        run(x, 50, (phase, tick, g1, g2) -> {
+        double[] xLate = servosAt(x, 50, 45, (phase, tick, g1, g2) -> {
             if (phase == OpModePhase.ACTIVE) g1.dpad_up = true;
-        }, null);
-        assertEquals(0.485, x.pollenGatePlant.getPosition(), 0.02, "dpad up (flower bar) does not move the gates");
-        assertEquals(0.485, x.nectarGatePlant.getPosition(), 0.02, "dpad up (flower bar) does not move the gates");
-        assertEquals(MechanismConstants.FLOWER_BAR_DOWN, x.flowerLeftPlant.getPosition(), 0.02, "dpad up puts the bar down");
+        });
+        assertEquals(0.485, xLate[0], 0.02, "dpad up (flower bar) does not move the gates");
+        assertEquals(0.485, xLate[1], 0.02, "dpad up (flower bar) does not move the gates");
+        assertEquals(MechanismConstants.FLOWER_BAR_DOWN, xLate[2], 0.02, "dpad up puts the bar down");
         assertEquals(com.qualcomm.robotcore.hardware.Servo.Direction.REVERSE, x.flowerRight.getDirection(),
                 "the right bar servo is mounted mirrored");
-        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_DOWN, x.flowerRightPlant.getPosition(), 0.02,
+        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_DOWN, xLate[3], 0.02,
                 "the right servo goes down too (mirrored output)");
         OpMode.blackboard.clear();
 
         BioHorsSim xTwice = new BioHorsSim();
         startAt(xTwice, "RED", -13.0, -63.0, Math.PI / 2.0);
-        run(xTwice, 60, (phase, tick, g1, g2) -> {
+        double[] xTwiceLate = servosAt(xTwice, 60, 55, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_up = (tick >= 2 && tick < 5) || (tick >= 20 && tick < 23);
-        }, null);
-        assertEquals(MechanismConstants.FLOWER_BAR_STOWED, xTwice.flowerLeftPlant.getPosition(), 0.02,
-                "dpad up again stows the bar");
-        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_STOWED, xTwice.flowerRightPlant.getPosition(), 0.02,
+        });
+        assertEquals(MechanismConstants.FLOWER_BAR_STOWED, xTwiceLate[2], 0.02, "dpad up again stows the bar");
+        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_STOWED, xTwiceLate[3], 0.02,
                 "dpad up again stows the right side too");
         OpMode.blackboard.clear();
 
         BioHorsSim shoot = new BioHorsSim();
         startAt(shoot, "RED", -13.0, -63.0, Math.PI / 2.0);
-        run(shoot, 200, (phase, tick, g1, g2) -> {
+        double[] shootLate = servosAt(shoot, 200, 195, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_up = tick >= 2 && tick < 5;     // bar down
             g1.dpad_down = tick >= 2 && tick < 5;   // shooters on
             g1.b = tick >= 150 && tick < 153;       // gates open: the bar lifts slightly
-        }, null);
-        assertEquals(MechanismConstants.FLOWER_BAR_SHOOTING, shoot.flowerLeftPlant.getPosition(), 0.02,
+        });
+        assertEquals(MechanismConstants.FLOWER_BAR_SHOOTING, shootLate[2], 0.02,
                 "with the gates open the bar sits at its shooting position");
-        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_SHOOTING, shoot.flowerRightPlant.getPosition(), 0.02,
+        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_SHOOTING, shootLate[3], 0.02,
                 "both sides at the shooting position");
+    }
+
+    @Test
+    void stopShutsTheGatesAndStowsTheBarMidVolley() {
+        // The match ends mid-volley: gates open, bar at its shooting position. After STOP the
+        // servos must be commanded shut and stowed, or pollen rolls out.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double[] late = servosAt(sim, 200, 195, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_up = tick >= 2 && tick < 5;
+            g1.dpad_down = tick >= 2 && tick < 5;
+            g1.b = tick >= 150 && tick < 153;
+        });
+        assertEquals(MechanismConstants.POLLEN_GATE_OPEN, late[0], 0.02, "mid-volley before STOP: pollen gate open");
+        assertEquals(MechanismConstants.FLOWER_BAR_SHOOTING, late[2], 0.02, "and the bar at shooting");
+        // What the robot last commanded, read from the servos (the plants need time to follow).
+        assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, sim.pollenGate.getPosition(), 1e-9, "STOP shuts the pollen gate");
+        assertEquals(MechanismConstants.NECTAR_GATE_CLOSED, sim.nectarGate.getPosition(), 1e-9, "STOP shuts the nectar gate");
+        assertEquals(MechanismConstants.FLOWER_BAR_STOWED, sim.flowerLeft.getPosition(), 1e-9, "STOP stows the bar");
+    }
+
+    /** Runs the teleop; the pollen gate, nectar gate, flower left and right plant positions at {@code atTick}. */
+    private static double[] servosAt(BioHorsSim sim, int activeTicks, int atTick, GamepadScript gamepads) {
+        double[] seen = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+        runWatching(sim, activeTicks, gamepads, tick -> {
+            if (tick != atTick) return;
+            seen[0] = sim.pollenGatePlant.getPosition();
+            seen[1] = sim.nectarGatePlant.getPosition();
+            seen[2] = sim.flowerLeftPlant.getPosition();
+            seen[3] = sim.flowerRightPlant.getPosition();
+        });
+        return seen;
     }
 
     @Test
@@ -617,26 +650,32 @@ class MainHorsTeleOpSimTest {
     // ------------------------------------------------------------------ dead shooter encoder
 
     @Test
-    void aDeadEncoderIsFlaggedAndTheShooterDoesNotRunAwayToFullPower() {
+    void aDeadEncoderIsFlaggedAndTheHealthyShooterFiresAlone() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);   // facing the south cell
         sim.pollenShooter.setMeasuredShaftSpeedFraction(0.0);  // the pollen encoder reads nothing
         double[] worstLatePower = {0.0};
-        double[] gate = {Double.NaN};
+        double[] gate = {Double.NaN, Double.NaN};
         OpModeRunResult result = runWatching(sim, 250, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5;   // both on
             g1.b = tick >= 150 && tick < 153;        // and ask to fire
         }, tick -> {
             if (tick >= 100) worstLatePower[0] = Math.max(worstLatePower[0], Math.abs(sim.pollenShooter.getPower()));
-            if (tick == 245) gate[0] = sim.pollenGatePlant.getPosition();
+            if (tick == 245) {
+                gate[0] = sim.pollenGatePlant.getPosition();
+                gate[1] = sim.nectarGatePlant.getPosition();
+            }
         });
         assertTrue(line(result, "Pollen").endsWith("ENCODER? (no speed reading)"), line(result, "Pollen"));
         assertTrue(line(result, "Nectar").endsWith(" rpm OK"), "nectar is unaffected: " + line(result, "Nectar"));
         assertTrue(worstLatePower[0] < 0.4, String.format(
                 "feedforward only, not a wound-up loop: pollen power %.2f", worstLatePower[0]));
         assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, gate[0], 0.02,
-                "no speed reading, never at target: the interlock keeps the gates shut");
+                "no speed reading: the pollen gate stays shut, nothing feeds an unverified flywheel");
+        assertEquals(MechanismConstants.NECTAR_GATE_OPEN, gate[1], 0.02,
+                "limp mode: the faulted shooter is left out of the interlock and nectar fires alone");
+        assertTrue(line(result, "Fire").contains("POLLEN FAULT: nectar only"), line(result, "Fire"));
     }
 
     // ------------------------------------------------------------------ battery and match cues
@@ -731,7 +770,7 @@ class MainHorsTeleOpSimTest {
         startAt(sim, "RED", rx, ry, MainHorsTeleOp.RESET_HEADING_RAD);
         List<String> poseAt = new java.util.ArrayList<>();
         OpModeRunResult result = runWatching(sim, 120, (phase, tick, g1, g2) -> {
-            if (phase == OpModePhase.ACTIVE) g1.x = tick >= 80 && tick < 83;   // the driver resets
+            if (phase == OpModePhase.ACTIVE) g1.x = tick >= 80 && tick < 110;   // the driver holds X to reset
         }, tick -> {
             // A glitch: for one loop the odometry says the robot is 30 in away.
             if (tick == 20) sim.pinpoint.moveChassisTo((rx + 30.0) * 25.4, ry * 25.4, MainHorsTeleOp.RESET_HEADING_RAD);
@@ -904,6 +943,115 @@ class MainHorsTeleOpSimTest {
         }
     }
 
+    // ------------------------------------------------------------------ flower bar speed cap
+
+    @Test
+    void theBarDownCapsTheDriveSpeedAndSaysSo() {
+        BioHorsSim stowed = new BioHorsSim();
+        startAt(stowed, "RED", -13.0, -63.0, Math.PI / 2.0);
+        run(stowed, 30, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.left_stick_y = tick >= 5 ? -1f : 0f;
+        }, null);
+        OpMode.blackboard.clear();
+
+        BioHorsSim down = new BioHorsSim();
+        startAt(down, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double[] barAtEnd = {Double.NaN};
+        OpModeRunResult result = runWatching(down, 30, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_up = tick < 2;                      // bar down before the sprint starts
+            g1.left_stick_y = tick >= 5 ? -1f : 0f;     // full stick, as if into the hive wall
+        }, tick -> {
+            if (tick == 28) barAtEnd[0] = down.flowerLeft.getPosition();
+        });
+
+        double ratio = (down.drivePlant.getY() + 63.0) / (stowed.drivePlant.getY() + 63.0);
+        assertEquals(MainHorsTeleOp.BAR_DOWN_SPEED_CAP, ratio, 0.08, "bar down drives at about the cap");
+        assertTrue(line(result, "Fire").contains("BAR DOWN: slow"), line(result, "Fire"));
+        assertEquals(MechanismConstants.FLOWER_BAR_DOWN, barAtEnd[0], 1e-9,
+                "auto-stow is off by default: a full-stick sprint leaves the bar down");
+    }
+
+    @Test
+    void withAutoStowOnASustainedSprintStowsTheBarButSlowModeDoesNot() {
+        for (boolean slowMode : new boolean[] {false, true}) {
+            BioHorsSim sim = new BioHorsSim();
+            startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+            OpMode.blackboard.put(ConfiguredTeleOp.BAR_AUTO_STOW, true);
+            double[] bar = {Double.NaN, Double.NaN};
+            OpModeRunResult result = runWatching(ConfiguredTeleOp.CLASS, sim, 80, (phase, tick, g1, g2) -> {
+                if (phase != OpModePhase.ACTIVE) return;
+                g1.dpad_up = tick >= 2 && tick < 5;
+                g1.left_stick_y = tick >= 30 ? -1f : 0f;
+                g1.right_bumper = slowMode;
+            }, tick -> {
+                if (tick == 30 + 10) bar[0] = sim.flowerLeft.getPosition();   // 0.2 s into the sprint
+                if (tick == 75) bar[1] = sim.flowerLeft.getPosition();
+            });
+            assertEquals(MechanismConstants.FLOWER_BAR_DOWN, bar[0], 1e-9, "not before BAR_AUTO_STOW_S of sprinting");
+            if (slowMode) {
+                assertEquals(MechanismConstants.FLOWER_BAR_DOWN, bar[1], 1e-9, "slow mode held: never stowed");
+            } else {
+                assertEquals(MechanismConstants.FLOWER_BAR_STOWED, bar[1], 1e-9, "a sustained sprint stows the bar");
+                boolean shown = false;
+                for (List<String> sent : result.telemetry().transmissions()) {
+                    shown |= lineIn(sent, "Fire").contains("BAR STOWED (sprint)");
+                }
+                assertTrue(shown, "the Fire line says why the bar went up");
+            }
+            OpMode.blackboard.clear();
+        }
+    }
+
+    // ------------------------------------------------------------------ jam give-up
+
+    @Test
+    void aJamThatDoesNotClearStopsTheIntakeUntilTheTriggerIsPulledAgain() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        int[] reverseTicks = {0};
+        double[] power = {Double.NaN, Double.NaN};
+        OpModeRunResult result = runWatching(sim, 270, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.right_trigger = tick < 235 || tick >= 240 ? 1f : 0f;
+        }, tick -> {
+            if (tick == 40) {   // a ball wedges for good
+                sim.intakeLeft.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+                sim.intakeRight.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+            }
+            if (tick == 236) {  // the driver clears it by hand with the trigger released
+                sim.intakeLeft.setExternalTorqueFraction(0.0);
+                sim.intakeRight.setExternalTorqueFraction(0.0);
+            }
+            if (sim.intakeLeft.getPower() < 0) reverseTicks[0]++;
+            if (tick == 230) power[0] = sim.intakeLeft.getPower();
+            if (tick == 265) power[1] = sim.intakeLeft.getPower();
+        });
+        boolean shown = false;
+        for (List<String> sent : result.telemetry().transmissions()) {
+            shown |= lineIn(sent, "Fire").contains("INTAKE JAMMED: clear by hand");
+        }
+        assertEquals(MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES * MechanismConstants.INTAKE_JAM_REVERSE_S,
+                reverseTicks[0] * TICK_S, 3 * TICK_S, "exactly the give-up count of reverses, then no more");
+        assertEquals(0.0, power[0], 1e-9, "given up: the intake is stopped, not grinding the ball");
+        assertTrue(shown, "the Fire line says to clear it by hand");
+        assertEquals(1.0, power[1], 1e-9, "released and pulled again: intaking again");
+    }
+
+    // ------------------------------------------------------------------ X hold
+
+    @Test
+    void aTapOfXDoesNotResetThePoseMidField() {
+        // Mid-field, well away from the reset spot: a fat-fingered X tap must leave the pose alone.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -20.0, -20.0, 0.0);
+        OpModeRunResult result = run(sim, 45, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.x = tick >= 3 && tick < 15;   // 0.24 s, under RESET_HOLD_S
+        }, null);
+        double[] shown = shownPose(lastTelemetry(result));
+        assertEquals(-20.0, shown[0], 1.0, "x unchanged by a tap");
+        assertEquals(-20.0, shown[1], 1.0, "y unchanged by a tap");
+    }
+
     /**
      * A shooter at idle power: under the ~0.27 a 1600 rpm firing target needs (the sim's free speed
      * is 6000 rpm), so a spun-up shooter fails this; idle (800 rpm) needs about 0.13.
@@ -915,9 +1063,14 @@ class MainHorsTeleOpSimTest {
     /** Runs the teleop; {@code afterTick} sees each ACTIVE tick's number after the world moved. */
     private static OpModeRunResult runWatching(BioHorsSim sim, int activeTicks, GamepadScript gamepads,
                                                Consumer<Integer> afterTick) {
+        return runWatching(TELEOP, sim, activeTicks, gamepads, afterTick);
+    }
+
+    private static OpModeRunResult runWatching(String opMode, BioHorsSim sim, int activeTicks, GamepadScript gamepads,
+                                               Consumer<Integer> afterTick) {
         final OpModePhase[] phaseNow = {OpModePhase.INIT};
         final int[] tickNow = {0};
-        return OpModeRunner.forTeamClass(TELEOP, sim.hardwareMap)
+        return OpModeRunner.forTeamClass(opMode, sim.hardwareMap)
                 .teamPackages("org.firstinspires.ftc.teamcode.", SimClockLoader.PEDRO_PATHING)
                 .keepBlackboard(true)
                 .initLoopTicks(INIT_LOOP_TICKS)
@@ -1062,8 +1215,8 @@ class MainHorsTeleOpSimTest {
                 // What drift would leave: 5 in and 6 in off, and 9 deg turned.
                 OpMode.blackboard.put("biohors.pose", new double[] {rx + 5.0, ry - 6.0, rh + Math.toRadians(9)});
                 OpMode.blackboard.put("biohors.poseTimer", new org.horizon36596.simloop.sim.SimElapsedTime(new org.horizon36596.simloop.sim.FakeTimer())); // saved just now
-                OpModeRunResult result = run(sim, 20, (phase, tick, g1, g2) -> {
-                    if (phase == OpModePhase.ACTIVE) g1.x = pressX && tick >= 3 && tick < 6;
+                OpModeRunResult result = run(sim, 45, (phase, tick, g1, g2) -> {
+                    if (phase == OpModePhase.ACTIVE) g1.x = pressX && tick >= 3 && tick < 33;   // held 0.6 s
                 }, null);
                 double[] shown = shownPose(lastTelemetry(result));
                 String what = alliance + (pressX ? " after X" : " without X");

@@ -20,6 +20,7 @@ import org.firstinspires.ftc.teamcode.aim.PoseSanity;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
 import org.firstinspires.ftc.teamcode.subsystems.DriveController;
+import org.firstinspires.ftc.teamcode.subsystems.FlowerBarController;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeController;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
@@ -43,11 +44,16 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
  *   Left bumper / A ....... NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
  *   B ..................... request / cancel both gates open (the flower bar lifts slightly while open)
- *   X ..................... RESET the pose: back the robot flat against the alliance's wall at the
+ *   X (hold) .............. RESET the pose: back the robot flat against the alliance's wall at the
  *                           loading zone's edge (the auto's park spot), intake facing the field, and
- *                           press X: the pose becomes RESET_X/Y/HEADING (mirrored for BLUE), wiping
- *                           the Pinpoint's drift.
- *   Dpad up ............... toggle the flower bar: DOWN (collect from a flower) / STOWED
+ *                           HOLD X for RESET_HOLD_S: the pose becomes RESET_X/Y/HEADING (mirrored for
+ *                           BLUE), wiping the Pinpoint's drift, and the pad rumbles. A tap does
+ *                           nothing: the reset also tells PoseSanity to trust the pose again, so a
+ *                           fat-fingered press mid-field would aim on a wrong pose unchecked.
+ *   Dpad up ............... toggle the flower bar: DOWN (collect from a flower) / STOWED. While
+ *                           it is DOWN the drive is capped at BAR_DOWN_SPEED_CAP (the Fire line
+ *                           says BAR DOWN: slow); not while it is lifted for shooting. Optional
+ *                           (BAR_AUTO_STOW_ENABLED, off): a sustained full-stick sprint stows it.
 
  *
  * Before PLAY: dpad left = RED, dpad right = BLUE. If an auto ran first, its alliance and last
@@ -82,6 +88,14 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *
  * Intake jam: while right trigger pulls in, an intake that stalls (both encoders far below a full
  * robot's speed) runs outward for a moment, then pulls in again. The Fire line says INTAKE JAM.
+ * After MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES reverses that do not clear it, the intake
+ * stops and the Fire line says INTAKE JAMMED: clear by hand, until the trigger is released.
+ *
+ * Limp mode: once a shooter's encoder fault latches (ShooterController.encoderFault: no speed
+ * reading, or reading backwards) its gate stays CLOSED for the rest of the teleop and the interlock
+ * leaves it out, so the healthy shooter fires alone. A long one-sided rumble when it latches, and
+ * the Fire line says POLLEN FAULT: nectar only (or the other way round). No pollen is ever fed
+ * into a flywheel whose speed nobody can read.
  *
  * Match cues: three short rumbles as the endgame starts and one long one FINAL_WARNING_S before
  * the end (EndgameAlerts, timed from PLAY); through the endgame the Fire line counts down
@@ -110,6 +124,18 @@ public class MainHorsTeleOp extends LinearOpMode {
     private static final double SLOW_DRIVE_SCALE = 0.45;
     private static final double TRIGGER_THRESHOLD = 0.1;
     private static final double RUMBLE_COOLDOWN_S = 1.2;
+    /** Drive speed scale ceiling while the flower bar is DOWN (not SHOOTING), so a sprint bar-down
+     *  into a hive wall or the field border hits softer. 1.0 turns the cap off. Slow mode below it
+     *  still applies. PLACEHOLDER: the team sets it on feel. */
+    public static double BAR_DOWN_SPEED_CAP = 0.6;
+    /** The aggressive version, OFF by default: with the bar DOWN, holding the left stick past
+     *  BAR_AUTO_STOW_STICK (out of 1) for BAR_AUTO_STOW_S stows the bar. Never while slow mode is
+     *  held. Team call on feel; the cap applies either way. */
+    public static boolean BAR_AUTO_STOW_ENABLED = false;
+    public static double BAR_AUTO_STOW_STICK = 0.9;    // SET BY HAND
+    public static double BAR_AUTO_STOW_S = 0.3;        // SET BY HAND
+    /** How long the Fire line says the bar was auto-stowed, seconds. SET BY HAND. */
+    private static final double AUTO_STOWED_SHOWN_S = 1.5;
 
     // Where the robot is assumed to start when no auto ran before this teleop. RED values; BLUE
     // is the point mirror. The auto's `park` waypoint, where AUTO ends: by the west wall next to
@@ -138,6 +164,8 @@ public class MainHorsTeleOp extends LinearOpMode {
     /** Average loop time above which the Fire line says SLOW LOOP, ms. SET BY HAND: twice the 20 ms
      *  an FTC loop is written for; aim and the shooter loops degrade past it. */
     public static double SLOW_LOOP_MS = 40.0;
+    /** How long X must be held to reset the pose, seconds. SET BY HAND. */
+    public static double RESET_HOLD_S = 0.5;
     /** How long the Fire line says a request was dropped, seconds. SET BY HAND. */
     private static final double DROPPED_SHOWN_S = 1.5;
     // Where the trims are kept between OpModes.
@@ -243,6 +271,12 @@ public class MainHorsTeleOp extends LinearOpMode {
         ElapsedTime requestIdle = new ElapsedTime();
         ElapsedTime sinceDropped = new ElapsedTime();
         boolean requestDropped = false;
+        ElapsedTime sprintTimer = new ElapsedTime();     // how long the stick has been pushed past the auto-stow line
+        ElapsedTime sinceAutoStow = new ElapsedTime();
+        boolean autoStowed = false;
+        ElapsedTime xHold = new ElapsedTime();
+        boolean xArmed = false;       // X went down during PLAY and has not reset the pose yet
+        boolean pollenFaultLast = false, nectarFaultLast = false;
         EndgameAlerts alerts = new EndgameAlerts();
         LowBatteryWarning battery = new LowBatteryWarning();
         Pose lastPose = localizer.pose();
@@ -307,6 +341,20 @@ public class MainHorsTeleOp extends LinearOpMode {
 
             // ----- Drive, with aim overriding manual turn while left trigger is held -----
             double scale = gamepad1.right_bumper ? SLOW_DRIVE_SCALE : NORMAL_DRIVE_SCALE;
+            // Bar DOWN: optionally stow it on a sustained sprint, else cap the speed. The bar is
+            // read as it stands from last loop's toggle (one loop late, 20 ms).
+            boolean sprinting = !gamepad1.right_bumper
+                    && Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y) >= BAR_AUTO_STOW_STICK;
+            if (!sprinting || robot.flowerBar.position() != FlowerBarController.Position.DOWN) sprintTimer.reset();
+            if (BAR_AUTO_STOW_ENABLED && sprintTimer.seconds() >= BAR_AUTO_STOW_S) {
+                robot.flowerBar.setDown(false);
+                autoStowed = true;
+                sinceAutoStow.reset();
+                sprintTimer.reset();
+            }
+            boolean barCapped = robot.flowerBar.position() == FlowerBarController.Position.DOWN
+                    && BAR_DOWN_SPEED_CAP < 1.0;
+            if (barCapped) scale = Math.min(scale, BAR_DOWN_SPEED_CAP);
             double axial = DriveController.shapeTranslation(-gamepad1.left_stick_y);
             double lateral = DriveController.shapeTranslation(gamepad1.left_stick_x);
             boolean aimHeld = gamepad1.left_trigger > TRIGGER_THRESHOLD;
@@ -401,30 +449,52 @@ public class MainHorsTeleOp extends LinearOpMode {
                 requestDropped = false;
             }
             bLast = bNow;
+            // Limp mode: a shooter with a latched encoder fault is left out of the interlock and its
+            // gate stays shut, so the healthy one fires alone.
+            boolean pollenFault = robot.pollenShooter.encoderFault();
+            boolean nectarFault = robot.nectarShooter.encoderFault();
+            if ((pollenFault && !pollenFaultLast) || (nectarFault && !nectarFaultLast)) {
+                try {
+                    gamepad1.rumble(1.0, 0.0, 1000);   // left side only: unlike every other cue
+                    gamepad2.rumble(1.0, 0.0, 1000);
+                } catch (Throwable ignored) {
+                }
+            }
+            pollenFaultLast = pollenFault;
+            nectarFaultLast = nectarFault;
             FireGate.Decision fire = FireGate.decide(poseOk, headingErrorRad, AimController.ON_TARGET_TOLERANCE_RAD,
-                    fireState(robot.pollenShooter, shootersOn), fireState(robot.nectarShooter, shootersOn));
+                    fireState(robot.pollenShooter, shootersOn && !pollenFault),
+                    fireState(robot.nectarShooter, shootersOn && !nectarFault));
             boolean gatesOpen = gatesRequested && fire.clear;
             // A request is only waiting for something while a volley runs, the driver aims, or a
-            // switched-on shooter is still spinning up. Otherwise it is forgotten: drop it.
-            boolean spinningUp = shootersOn && (!robot.pollenShooter.isAtTarget() || !robot.nectarShooter.isAtTarget());
+            // switched-on healthy shooter is still spinning up. Otherwise it is forgotten: drop it.
+            boolean spinningUp = shootersOn && ((!pollenFault && !robot.pollenShooter.isAtTarget())
+                    || (!nectarFault && !robot.nectarShooter.isAtTarget()));
             if (!gatesRequested || gatesOpen || aimHeld || spinningUp) requestIdle.reset();
             if (gatesRequested && requestIdle.seconds() >= REQUEST_IDLE_S) {
                 gatesRequested = false;
                 requestDropped = true;
                 sinceDropped.reset();
             }
-            robot.pollenGate.setClosed(!gatesOpen);
-            robot.nectarGate.setClosed(!gatesOpen);
+            robot.pollenGate.setClosed(!gatesOpen || pollenFault);
+            robot.nectarGate.setClosed(!gatesOpen || nectarFault);
 
             // ----- Flower bar: dpad up toggles down / stowed; lifted slightly while the gates are open -----
             boolean dpadUpNow = gamepad1.dpad_up || gamepad2.dpad_up;
             if (dpadUpNow && !dpadUpLast) robot.flowerBar.toggle();
             dpadUpLast = dpadUpNow;
 
-            // ----- X: reset the pose to the reset spot (wipes Pinpoint drift). The driver puts the
-            // robot there first: back to the west wall by the loading zone, intake facing the field. -----
+            // ----- X held RESET_HOLD_S: reset the pose to the reset spot (wipes Pinpoint drift). The
+            // driver puts the robot there first: back to the west wall by the loading zone, intake
+            // facing the field. Once per hold; a tap does nothing. -----
             boolean xNow = gamepad1.x || gamepad2.x;
             if (xNow && !xLast) {
+                xHold.reset();
+                xArmed = true;
+            }
+            if (!xNow) xArmed = false;
+            if (xArmed && xHold.seconds() >= RESET_HOLD_S) {
+                xArmed = false;
                 localizer.setPose(resetPose(alliance));
                 lastPose = null;            // no velocity across the jump
                 velocityFilter.reset();
@@ -458,10 +528,16 @@ public class MainHorsTeleOp extends LinearOpMode {
 
             String fireText = fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason;
             if (robot.intakeJam.reversing()) fireText += " | INTAKE JAM: reversing";
+            if (robot.intakeJam.givenUp()) fireText += " | INTAKE JAMMED: clear by hand";
+            if (pollenFault && nectarFault) fireText += " | BOTH SHOOTERS FAULT: no shooting";
+            else if (pollenFault) fireText += " | POLLEN FAULT: nectar only";
+            else if (nectarFault) fireText += " | NECTAR FAULT: pollen only";
             if (leftS <= EndgameAlerts.ENDGAME_S) {
                 fireText += String.format(java.util.Locale.ROOT, " | ENDGAME %.0f s", Math.max(0.0, Math.ceil(leftS)));
             }
             if (requestDropped && sinceDropped.seconds() < DROPPED_SHOWN_S) fireText += " | B request dropped";
+            if (barCapped) fireText += " | BAR DOWN: slow";
+            if (autoStowed && sinceAutoStow.seconds() < AUTO_STOWED_SHOWN_S) fireText += " | BAR STOWED (sprint)";
             if (loopTimes.hasSample() && loopTimes.averageMs() > SLOW_LOOP_MS) {
                 fireText += String.format(java.util.Locale.ROOT, " | SLOW LOOP %.0f ms", loopTimes.averageMs());
             }

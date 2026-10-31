@@ -14,6 +14,10 @@ import java.util.function.Supplier;
  * from rest, and from a reverse, is slow on purpose). The jam threshold sits far below a FULL robot's
  * speed (INTAKE_LOADED_TICKS_PER_S), so a full hopper is not reversed out. Thresholds: PLACEHOLDER
  * (MechanismConstants).
+ *
+ * Give-up: after INTAKE_JAM_GIVE_UP_REVERSES reverses in a row that did not clear it (the intake
+ * never got back up to speed between them), the next stall stops the intake instead of grinding
+ * the stuck ball. It stays stopped until the driver lets go of intake; pulling in again starts over.
  */
 public class IntakeJamGuard {
 
@@ -27,6 +31,8 @@ public class IntakeJamGuard {
     private boolean stallSeen;
     private boolean isReversing;
     private int jams;
+    private int reversesInARow;
+    private boolean givenUp;
 
     public IntakeJamGuard(DcMotorEx left, DcMotorEx right) {
         this(left, right, ElapsedTime::new);
@@ -56,8 +62,11 @@ public class IntakeJamGuard {
         }
         if (!wantIn) {
             wasIn = false;
+            reversesInARow = 0;
+            givenUp = false;
             return requested;
         }
+        if (givenUp) return 0.0;
         if (!wasIn) {
             runningIn.reset();
             stallSeen = false;
@@ -68,6 +77,7 @@ public class IntakeJamGuard {
         double v = (Math.abs(left.getVelocity()) + Math.abs(right.getVelocity())) / 2.0;
         if (v >= MechanismConstants.INTAKE_JAM_TICKS_PER_S) {
             stallSeen = false;
+            reversesInARow = 0;   // back up to speed: the last reverse cleared it
             return requested;
         }
         if (!stallSeen) {
@@ -76,6 +86,11 @@ public class IntakeJamGuard {
         }
         if (stalled.seconds() < MechanismConstants.INTAKE_JAM_DETECT_S) return requested;
 
+        if (reversesInARow >= MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES) {
+            givenUp = true;
+            return 0.0;
+        }
+        reversesInARow++;
         isReversing = true;
         reversing.reset();
         jams++;
@@ -85,6 +100,11 @@ public class IntakeJamGuard {
     /** True while a jam reverse is running. */
     public boolean reversing() {
         return isReversing;
+    }
+
+    /** True once it has given up on a jam: the intake is held stopped until the driver lets go. */
+    public boolean givenUp() {
+        return givenUp;
     }
 
     /** Jam reverses started since the OpMode began. */

@@ -92,4 +92,38 @@ class IntakeJamGuardTest {
         assertFalse(guard.reversing());
         assertEquals(-1.0, tick(-1.0), 1e-12, "the driver's own outtake passes straight through");
     }
+
+    /** Ticks pulling in for seconds; returns how many ticks reversed. */
+    int reverseTicks(double seconds) {
+        int n = (int) Math.round(seconds / TICK);
+        int r = 0;
+        for (int i = 0; i < n; i++) if (tick(1.0) < 0) r++;
+        return r;
+    }
+
+    @Test
+    void aJamThatNeverClearsGivesUpAfterTheSetReversesUntilLetGo() {
+        load(JAM_TORQUE_FRACTION);
+        reverseTicks(6.0);
+        assertEquals(MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES, guard.jams(), "the set number of reverses, then no more");
+        assertTrue(guard.givenUp());
+        assertEquals(0.0, tick(1.0), 1e-12, "given up: stopped, still pulling the trigger");
+        assertEquals(0.0, tick(0.0), 1e-12, "trigger released");
+        assertFalse(guard.givenUp(), "letting go clears the give-up");
+        assertEquals(1.0, tick(1.0), 1e-12, "pulling again runs in again");
+    }
+
+    @Test
+    void aReverseThatClearedTheJamDoesNotCountTowardGivingUp() {
+        load(JAM_TORQUE_FRACTION);
+        while (guard.jams() < MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES - 1) tick(1.0);
+        while (guard.reversing()) tick(1.0);
+        load(0.0);                      // that reverse spat it out
+        assertEquals(0, reverseTicks(1.5), "running free again");
+        load(JAM_TORQUE_FRACTION);      // a new jam, trigger held throughout
+        reverseTicks(6.0);
+        assertEquals(2 * MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES - 1, guard.jams(),
+                "the new jam gets the full set of reverses");
+        assertTrue(guard.givenUp());
+    }
 }

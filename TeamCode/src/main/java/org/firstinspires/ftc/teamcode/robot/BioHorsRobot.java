@@ -149,10 +149,15 @@ public class BioHorsRobot {
         nectarShooter.update();
     }
 
-    /** Everything off. Call when the OpMode stops. */
+    /** Everything off, gates shut and the bar stowed (no pollen rolls out after the match). Call
+     *  when the OpMode stops. */
     public void stop() {
         drive.stop();
         intake.stop();
+        pollenGate.setClosed(true);
+        nectarGate.setClosed(true);
+        flowerBar.setShooting(false);
+        flowerBar.setDown(false);
         pollenShooter.setShooterOn(false);
         nectarShooter.setShooterOn(false);
         pollenShooter.update();

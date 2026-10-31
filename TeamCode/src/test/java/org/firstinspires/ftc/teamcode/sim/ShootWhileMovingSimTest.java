@@ -59,6 +59,8 @@ class ShootWhileMovingSimTest {
         startAt(sim, -13.0, -63.0, Math.PI / 2.0); // faces the RED south cell already
         final int[] closedWhileSlow = {0};
         final String[] openedEarly = {null};
+        // Read on a late ACTIVE tick: at STOP the robot shuts its gates.
+        final double[] gatesLate = {Double.NaN, Double.NaN};
         OpModeRunResult result = run(sim, TELEOP, 250, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5; // shooters on, from rest
@@ -70,6 +72,10 @@ class ShootWhileMovingSimTest {
             boolean moving = s.pollenGatePlant.getPosition() > GATE_CLOSED + 0.02
                     || s.nectarGatePlant.getPosition() > GATE_CLOSED + 0.02;
             if (tick > 2 && slow && !moving) closedWhileSlow[0]++;
+            if (tick == 245) {
+                gatesLate[0] = s.pollenGatePlant.getPosition();
+                gatesLate[1] = s.nectarGatePlant.getPosition();
+            }
             if (slow && moving && openedEarly[0] == null) {
                 openedEarly[0] = String.format("tick %d: pollen %.0f rpm, nectar %.0f rpm",
                         tick, s.pollenShooterRpm(), s.nectarShooterRpm());
@@ -82,9 +88,9 @@ class ShootWhileMovingSimTest {
         assertTrue(anyLine(result, "Fire", "BLOCKED: Pollen flywheel"),
                 "telemetry should name the slow flywheel");
         assertFalse(anyLine(result, "Fire", "AIM"), "the aim was on target the whole time");
-        assertEquals(GATE_OPEN, sim.pollenGatePlant.getPosition(), 0.02,
+        assertEquals(GATE_OPEN, gatesLate[0], 0.02,
                 "once both flywheels are at speed the standing request opens the gate");
-        assertEquals(GATE_OPEN, sim.nectarGatePlant.getPosition(), 0.02);
+        assertEquals(GATE_OPEN, gatesLate[1], 0.02);
         assertTrue(lastLine(result, "Fire").contains("READY"), lastLine(result, "Fire"));
     }
 
@@ -105,7 +111,7 @@ class ShootWhileMovingSimTest {
         double want = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
         assertTrue(Math.toDegrees(Math.abs(wrap(sim.drivePlant.getHeading() - want))) <= TOL_DEG + 0.5,
                 "the aim should have arrived");
-        assertEquals(GATE_OPEN, sim.pollenGatePlant.getPosition(), 0.02, "on target: the gate opens");
+        assertEquals(GATE_OPEN, gateAt[195], 0.02, "on target: the gate opens");
     }
 
     @Test
@@ -125,7 +131,7 @@ class ShootWhileMovingSimTest {
         assertEquals(GATE_CLOSED, gateAt[205], 0.02, "turned away: closed on its own");
         assertTrue(anyLine(result, "Fire", "BLOCKED: AIM"), "telemetry should name the aim error");
         // The request still stands: back on target, the gate reopens with no second B press.
-        assertEquals(GATE_OPEN, sim.pollenGatePlant.getPosition(), 0.02, "back on target: open again");
+        assertEquals(GATE_OPEN, gateAt[325], 0.02, "back on target: open again");
         assertEquals("Fire : READY", lastLine(result, "Fire"));
     }
 
