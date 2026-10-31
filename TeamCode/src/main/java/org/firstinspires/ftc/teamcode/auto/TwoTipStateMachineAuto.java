@@ -59,6 +59,14 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     public static double FLOWER_DWELL_S = 0.5;        // SET BY HAND (the team): intake on, bar down, after full
     public static double GARDEN_WAIT_S = 0.8;         // SET BY HAND
     public static double SPIN_UP_AFTER_S = 0.5;       // the starter's: spin up 0.5 s into the drive back
+    // Running late (a slow pickup, a stuck path): the AUTO ends at 30 s wherever the robot is. Times
+    // are from PLAY. SET FROM SIM: the planned route leaves the garden at 16.7 s and parks at 25.0 s;
+    // leaving the garden to park takes 8.3 s, a last volley plus parking 4.3 s; each cutoff keeps
+    // ~0.5 s in hand. Parking matters only if BIOBUZZ scores it: check the game manual.
+    /** Still at the garden at this time: leave it now with what is aboard. */
+    public static double LEAVE_GARDEN_BY_S = 20.5;
+    /** Reaching the last volley at or after this time: skip it and park. */
+    public static double SKIP_LAST_VOLLEY_AFTER_S = 25.2;
     public static final int PRELOAD = 4;              // SET BY HAND: the robot starts full (G407 max)
     public static final int VOLLEY = 4;
 
@@ -90,6 +98,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     private AutoMechanisms mech;
     private PinpointWatchdog watchdog;
     private boolean halted;
+    private final java.util.List<String> lateCuts = new java.util.ArrayList<>();
     private Alliance alliance = Alliance.RED;
     private State state = State.DRIVE_OUT;
     private boolean spunUpOnTheWay;
@@ -134,6 +143,10 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         telemetry.addData("Alliance", "%s (change it with the Choose Alliance OpMode)", alliance);
         telemetry.addData("Pinpoint", robot.pinpointReady() ? "READY" : "NOT READY");
         telemetry.addData("Start", "%s", p(START));
+        java.util.List<String> checks = org.firstinspires.ftc.teamcode.utilities.PreMatchCheck.lines(robot);
+        telemetry.addData("Check", org.firstinspires.ftc.teamcode.utilities.PreMatchCheck.allOk(checks)
+                ? "ALL OK" : "FIX BEFORE PLAY");
+        for (String c : checks) telemetry.addLine("  " + c);
     }
 
     private void startAuto() {
@@ -166,6 +179,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         telemetry.addData("Intake speed", "%.0f ticks/s, slowdown %.0f %%", robot.intakeLoad.speedTicksPerS(),
                 100 * robot.intakeLoad.slowdown());
         telemetry.addData("Intake / pollen shooter", "%s / %s", mech.intakeState(), mech.pollenState());
+        if (!lateCuts.isEmpty()) telemetry.addData("LATE", "%s", lateCuts);
         if (mech.spinUpFailures() > 0) {
             telemetry.addData("SHOOTER", "never reached speed: %d volley(s) skipped, pollen kept", mech.spinUpFailures());
         }
@@ -184,8 +198,32 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     // ------------------------------------------------------------------ the state machine
 
+    /**
+     * Where a late auto goes instead, or null if it is on time. Only where the planned path onward
+     * stays safe: off the garden lane (its own leg), or the park legs from the north score spot.
+     */
+    static State lateCut(State s, double sincePlayS, double enteredAtS) {
+        switch (s) {
+            case SLIDE_ONTO_LANE:
+            case SWEEP_GARDEN:
+            case WAIT_GARDEN_FULL:
+                return sincePlayS >= LEAVE_GARDEN_BY_S ? State.OFF_GARDEN_LANE : null;
+            case SHOOT_GARDEN:
+                // Judged by when the volley was reached: one already under way is let finish.
+                return enteredAtS >= SKIP_LAST_VOLLEY_AFTER_S ? State.TO_PARK_LANE : null;
+            default:
+                return null;
+        }
+    }
+
     /** Called every loop: has the current state finished? If so, move on. */
     private void run() {
+        State late = lateCut(state, matchTimer.seconds(), matchTimer.seconds() - stateTimer.seconds());
+        if (late != null) {
+            lateCuts.add(String.format(java.util.Locale.ROOT, "%s -> %s at %.1f s", state, late, matchTimer.seconds()));
+            enter(late);
+            return;
+        }
         switch (state) {
             case SHOOT_PRELOADS:
             case SHOOT_FLOWER:
@@ -386,6 +424,11 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     public AutoMechanisms mechanisms() {
         return mech;
+    }
+
+    /** The late cuts taken this run ("STATE -> STATE at t s"). */
+    public java.util.List<String> lateCuts() {
+        return lateCuts;
     }
 
     /** True once the Pinpoint watchdog has halted the auto. */

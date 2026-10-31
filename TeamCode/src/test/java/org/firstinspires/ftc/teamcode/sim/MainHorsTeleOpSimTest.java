@@ -15,7 +15,7 @@ import org.horizon36596.simloop.simclock.SimClockLoader;
 import org.horizon36596.simloop.sim.RlogDecodedCompare;
 import org.junit.jupiter.api.AfterEach;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
-import org.firstinspires.ftc.teamcode.teleop.EndgameAlerts;
+import org.firstinspires.ftc.teamcode.utilities.EndgameAlerts;
 import org.firstinspires.ftc.teamcode.teleop.MainHorsTeleOp;
 import org.junit.jupiter.api.Test;
 import org.psilynx.psikit.core.Logger;
@@ -317,6 +317,7 @@ class MainHorsTeleOpSimTest {
         OpModeRunResult result = run(sim, 40, (phase, tick, g1, g2) -> {
             // Pick BLUE in INIT and keep holding dpad right for a while after PLAY.
             g1.dpad_right = phase == OpModePhase.INIT_LOOP || (phase == OpModePhase.ACTIVE && tick < 10);
+            g1.dpad_down = phase == OpModePhase.ACTIVE && tick >= 15 && tick < 18; // on, so the line shows the firing target
         }, null);
         // No auto ran, so the pose is the alliance's default start: BLUE's is RED's point mirror.
         double[] shown = shownPose(lastTelemetry(result));
@@ -349,9 +350,17 @@ class MainHorsTeleOpSimTest {
     void shootersStartOffAndGatesStartClosed() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
-        run(sim, 50, GamepadScript.NONE, null);
-        assertEquals(0.0, sim.pollenShooter.getPower(), 1e-9);
-        assertEquals(0.0, sim.nectarShooter.getPower(), 1e-9);
+        double[] power = new double[2];
+        runWatching(sim, 50, GamepadScript.NONE, tick -> {
+            if (tick == 45) {
+                power[0] = sim.pollenShooter.getPower();
+                power[1] = sim.nectarShooter.getPower();
+            }
+        });
+        // No one has asked for the shooters: they idle (MechanismConstants.SHOOTER_IDLE_RPM).
+        assertTrue(power[0] > 0.0, "pollen idles, not stopped");
+        assertIdlePower(power[0], "pollen at idle");
+        assertIdlePower(power[1], "nectar at idle");
         assertEquals(0.485, sim.pollenGatePlant.getPosition(), 0.02, "pollen gate closed");
         assertEquals(0.485, sim.nectarGatePlant.getPosition(), 0.02, "nectar gate closed");
     }
@@ -497,8 +506,8 @@ class MainHorsTeleOpSimTest {
         });
         assertEquals(1600.0, whileAiming[0], 100.0, "aiming alone spins pollen up to its target");
         assertEquals(1600.0, whileAiming[1], 100.0, "and nectar to its own");
-        assertEquals(0.0, afterRelease[0], 1e-9, "trigger released, no volley: pollen off");
-        assertEquals(0.0, afterRelease[1], 1e-9, "nectar off");
+        assertIdlePower(afterRelease[0], "trigger released, no volley: pollen back to idle");
+        assertIdlePower(afterRelease[1], "nectar back to idle");
     }
 
     @Test
@@ -543,7 +552,7 @@ class MainHorsTeleOpSimTest {
         assertEquals(1600.0, midVolley[1], 100.0, "pollen still at speed with the trigger released");
         assertEquals(1600.0, midVolley[2], 100.0, "nectar too");
         assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, afterCancel[0], 0.02, "B cancels the volley");
-        assertEquals(0.0, afterCancel[1], 1e-9, "and with the gates shut the aim spin-up ends");
+        assertIdlePower(afterCancel[1], "and with the gates shut the aim spin-up ends: back to idle");
     }
 
     /** A drag on both flywheels, as pollen passing through slows them. PLACEHOLDER (a test load). */
@@ -602,7 +611,7 @@ class MainHorsTeleOpSimTest {
         }, tick -> {
             if (tick == 70) power[0] = sim.pollenShooter.getPower();
         });
-        assertEquals(0.0, power[0], 1e-9, "the interlock would keep the gates shut, so no spin-up");
+        assertIdlePower(power[0], "the interlock would keep the gates shut, so no spin-up past idle");
     }
 
     // ------------------------------------------------------------------ dead shooter encoder
@@ -671,6 +680,162 @@ class MainHorsTeleOpSimTest {
         assertTrue(last.endsWith(" | ENDGAME 0 s") || last.endsWith(" | ENDGAME 1 s"), last);
     }
 
+    // ------------------------------------------------------------------ more guards and cues
+
+    @Test
+    void aBackwardsEncoderIsFlaggedAndDoesNotRunAway() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        sim.pollenShooter.setMeasuredShaftSpeedFraction(-1.0);   // the pollen encoder reads backwards
+        double[] worstLatePower = {0.0};
+        OpModeRunResult result = runWatching(sim, 200, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.dpad_down = tick >= 2 && tick < 5;
+        }, tick -> {
+            if (tick >= 100) worstLatePower[0] = Math.max(worstLatePower[0], Math.abs(sim.pollenShooter.getPower()));
+        });
+        assertTrue(line(result, "Pollen").endsWith("ENCODER REVERSED? (reads backwards)"), line(result, "Pollen"));
+        assertTrue(line(result, "Nectar").endsWith(" rpm OK"), "nectar is unaffected: " + line(result, "Nectar"));
+        assertTrue(worstLatePower[0] < 0.4, String.format(
+                "feedforward only, not a loop pushing against a backwards reading: %.2f", worstLatePower[0]));
+    }
+
+    @Test
+    void aForgottenGateRequestIsDroppedAndCannotFireLater() {
+        // Shooters on and at speed, facing well away from the hive, B pressed and forgotten. Later the
+        // driver turns onto the hive by hand: the old request must not fire.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, -40.0, 0.0);   // about 45 deg off the south cell
+        double gateHalfway = (MechanismConstants.POLLEN_GATE_OPEN + MechanismConstants.POLLEN_GATE_CLOSED) / 2.0;
+        boolean[] opened = {false};
+        boolean[] dropShown = {false};
+        OpModeRunResult result = runWatching(sim, 450, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_down = tick >= 2 && tick < 5;
+            g1.b = tick >= 160 && tick < 163;              // at speed by now; off target
+            g1.left_trigger = tick >= 350 ? 1f : 0f;       // much later: aim onto the hive
+        }, tick -> {
+            if (sim.pollenGatePlant.getPosition() > gateHalfway) opened[0] = true;
+        });
+        for (List<String> sent : result.telemetry().transmissions()) {
+            dropShown[0] |= lineIn(sent, "Fire").contains("B request dropped");
+        }
+        assertTrue(dropShown[0], "the Fire line says the request was dropped");
+        assertFalse(opened[0], "the dropped request never opens the gates");
+        assertEquals("Fire : READY", line(result, "Fire"), "on target and at speed: it WOULD have fired");
+    }
+
+    @Test
+    void aPoseJumpIsInvalidUntilX() {
+        BioHorsSim sim = new BioHorsSim();
+        double rx = MainHorsTeleOp.RESET_X_IN, ry = MainHorsTeleOp.RESET_Y_IN;
+        startAt(sim, "RED", rx, ry, MainHorsTeleOp.RESET_HEADING_RAD);
+        List<String> poseAt = new java.util.ArrayList<>();
+        OpModeRunResult result = runWatching(sim, 120, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.x = tick >= 80 && tick < 83;   // the driver resets
+        }, tick -> {
+            // A glitch: for one loop the odometry says the robot is 30 in away.
+            if (tick == 20) sim.pinpoint.moveChassisTo((rx + 30.0) * 25.4, ry * 25.4, MainHorsTeleOp.RESET_HEADING_RAD);
+        });
+        boolean invalidShown = false;
+        boolean blocked = false;
+        int n = 0;
+        for (List<String> sent : result.telemetry().transmissions()) {
+            if (lineIn(sent, "Loop").isEmpty()) continue;
+            n++;
+            if (n > 30 && n < 75) {
+                invalidShown |= lineIn(sent, "Pose").contains("INVALID: POSE JUMPED");
+                blocked |= lineIn(sent, "Fire").contains("POSE INVALID");
+            }
+        }
+        assertTrue(invalidShown, "after the jump the Pose line says so");
+        assertTrue(blocked, "and the interlock blocks on it");
+        assertFalse(line(result, "Pose").contains("INVALID"), "X put it right: " + line(result, "Pose"));
+    }
+
+    @Test
+    void aSlowLoopIsShown() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        OpModeRunResult result = OpModeRunner.forTeamClass(TELEOP, sim.hardwareMap)
+                .teamPackages("org.firstinspires.ftc.teamcode.", SimClockLoader.PEDRO_PATHING)
+                .keepBlackboard(true)
+                .tickSeconds(0.05)             // a 50 ms loop
+                .initLoopTicks(INIT_LOOP_TICKS)
+                .activeTicks(40)
+                .eachTick(sim::step)
+                .run();
+        assertTrue(line(result, "Fire").contains(" | SLOW LOOP 50 ms"), line(result, "Fire"));
+        // (Every other test runs at the 20 ms tick and never shows it.)
+    }
+
+    @Test
+    void initShowsThePreMatchCheck() {
+        for (double volts : new double[] {12.0, 12.8}) {
+            BioHorsSim sim = new BioHorsSim();
+            startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+            sim.battery.setVoltage(volts);
+            OpModeRunResult result = run(sim, 2, GamepadScript.NONE, null);
+            List<String> init = null;
+            for (List<String> sent : result.telemetry().transmissions()) if (!lineIn(sent, "Check").isEmpty()) init = sent;
+            assertTrue(init != null, "INIT sends the check");
+            String all = String.join(" | ", init);
+            assertTrue(all.contains("OK Pinpoint READY"), all);
+            assertTrue(all.contains("OK shooter encoders at rest"), all);
+            assertTrue(all.contains("OK auto pose waiting"), all);
+            if (volts < 12.5) {
+                assertEquals("Check : FIX BEFORE PLAY", lineIn(init, "Check"));
+                assertTrue(all.contains("!! battery 12.0 V"), all);
+            } else {
+                assertEquals("Check : ALL OK", lineIn(init, "Check"));
+                assertTrue(all.contains("OK battery 12.8 V"), all);
+            }
+            OpMode.blackboard.clear();
+        }
+    }
+
+    @Test
+    void trimsCarryToTheNextTeleopAndBackClearsThem() {
+        BioHorsSim first = new BioHorsSim();
+        startAt(first, "RED", -13.0, -63.0, Math.PI / 2.0);
+        run(first, 30, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_right = tick >= 2 && tick < 5;    // pollen +50
+            g1.a = tick >= 10 && tick < 13;           // nectar +50
+        }, null);
+
+        BioHorsSim second = new BioHorsSim();
+        startAt(second, "RED", -13.0, -63.0, Math.PI / 2.0);
+        OpModeRunResult next = run(second, 30, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.dpad_down = tick >= 2 && tick < 5;
+        }, null);
+        assertEquals(1650.0, shownTargetRpm(next, "Pollen"), 0.5, "the pollen trim carried over");
+        assertEquals(1650.0, shownTargetRpm(next, "Nectar"), 0.5, "the nectar trim carried over");
+
+        BioHorsSim third = new BioHorsSim();
+        startAt(third, "RED", -13.0, -63.0, Math.PI / 2.0);
+        OpModeRunResult cleared = run(third, 30, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.INIT_LOOP) g1.back = true;   // clear in INIT
+            if (phase == OpModePhase.ACTIVE) g1.dpad_down = tick >= 2 && tick < 5;
+        }, null);
+        assertEquals(1600.0, shownTargetRpm(cleared, "Pollen"), 0.5, "back in INIT cleared it");
+        assertEquals(1600.0, shownTargetRpm(cleared, "Nectar"), 0.5);
+    }
+
+    @Test
+    void idlingShootersNeverOpenTheGates() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);   // on target
+        double[] gate = {Double.NaN};
+        OpModeRunResult result = runWatching(sim, 250, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.b = tick >= 150 && tick < 153;   // idle reached long since
+        }, tick -> {
+            if (tick == 200) gate[0] = sim.pollenGatePlant.getPosition();
+        });
+        assertTrue(line(result, "Pollen").endsWith(" / 800 rpm IDLE"), line(result, "Pollen"));
+        assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, gate[0], 0.02, "idle is not ready to fire");
+        assertTrue(line(result, "Fire").contains("NO SHOOTER ON"), line(result, "Fire"));
+    }
+
     // ------------------------------------------------------------------ intake jam
 
     /** A jammed roller in the sim: the load takes 90 % of the motor's torque. PLACEHOLDER (a test load). */
@@ -712,6 +877,14 @@ class MainHorsTeleOpSimTest {
             assertEquals(1.0, powerAtEnd[0], 1e-9, (jam ? "jam cleared" : "free") + ": pulling in at the end");
             OpMode.blackboard.clear();
         }
+    }
+
+    /**
+     * A shooter at idle power: under the ~0.27 a 1600 rpm firing target needs (the sim's free speed
+     * is 6000 rpm), so a spun-up shooter fails this; idle (800 rpm) needs about 0.13.
+     */
+    static void assertIdlePower(double power, String what) {
+        assertTrue(power < 0.2, String.format("%s: power %.3f", what, power));
     }
 
     /** Runs the teleop; {@code afterTick} sees each ACTIVE tick's number after the world moved. */
@@ -776,8 +949,8 @@ class MainHorsTeleOpSimTest {
 
         List<String> first = driving.get(0);
         assertEquals(DRIVING_CAPTIONS, captions(first), "first driving screen: " + first);
-        assertTrue(lineIn(first, "Pollen").endsWith(" rpm OFF"), "shooters start OFF: " + first);
-        assertTrue(lineIn(first, "Nectar").endsWith(" rpm OFF"), "shooters start OFF: " + first);
+        assertTrue(lineIn(first, "Pollen").endsWith(" rpm IDLE"), "shooters start idling: " + first);
+        assertTrue(lineIn(first, "Nectar").endsWith(" rpm IDLE"), "shooters start idling: " + first);
 
         boolean spinningUpShown = false;
         for (List<String> sent : driving) spinningUpShown |= lineIn(sent, "Pollen").endsWith(" rpm SPINNING UP");

@@ -143,6 +143,7 @@ class ShootWhileMovingSimTest {
                     if (phase != OpModePhase.ACTIVE) return;
                     if (n[0]++ == 0) sim.pinpoint.forceFault(GoBildaPinpointDriver.DeviceStatus.FAULT_NO_PODS_DETECTED);
                     g1.b = tick >= 2 && tick < 5;
+                    g1.dpad_down = tick >= 2 && tick < 5;   // on (not idling), so the line shows the firing rpm
                 })
                 .eachTick(sim::step)
                 .run();

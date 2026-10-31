@@ -21,7 +21,9 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * SHOOTER_ENCODER_DEAD_S and the encoder reads under SHOOTER_ENCODER_DEAD_RPM, the encoder (or the
  * motor) is dead. The loop would otherwise wind up to full power forever; from then on the shooter
  * runs on its feedforward alone (the power the target needs, no PID) and {@link #encoderFault()} is
- * true. It stays latched until the OpMode ends. A wheel that never reads speed is never at target,
+ * true. A backwards encoder (wired or set reversed: it reads NEGATIVE rpm while pushed forward, so
+ * the loop pushes harder and harder) is caught the same way and also sets
+ * {@link #encoderReversed()}. Both stay latched until the OpMode ends. A wheel that never reads speed is never at target,
  * so the fire interlock keeps the gates shut: a dead motor and a dead encoder look the same.
  */
 public class ShooterController {
@@ -79,7 +81,9 @@ public class ShooterController {
 
     private boolean shooterOn = false;
     private double encoderSilentS = 0.0;
+    private double encoderBackwardS = 0.0;
     private boolean encoderFault = false;
+    private boolean encoderReversed = false;
     private boolean lastAtTarget = false;
     private boolean justReachedTargetFlag = false;
 
@@ -159,9 +163,23 @@ public class ShooterController {
         return lastAppliedPower;
     }
 
-    /** True once the encoder check has found the wheel driven but silent (latched). */
+    /** The encoder's speed right now, rpm, read without running the loop (the pre-match check). */
+    public double measuredRpmNow() {
+        try {
+            return (motor.getVelocity() * 60.0) / config.ticksPerRev;
+        } catch (Exception e) {
+            return Double.NaN;
+        }
+    }
+
+    /** True once the encoder check has found the wheel driven but silent or backwards (latched). */
     public boolean encoderFault() {
         return encoderFault;
+    }
+
+    /** True when the fault was a backwards reading (wired or set reversed), not a silent one. */
+    public boolean encoderReversed() {
+        return encoderReversed;
     }
 
     public boolean justReachedTarget() {
@@ -203,13 +221,23 @@ public class ShooterController {
         double ff = (targetTicksPerSec / maxTicksPerSec) * config.kF;
         if (targetRpm > 0) ff += config.kS * (config.ffReferenceVoltage / Math.max(voltage, 1e-3));
 
-        // Encoder check: driven hard, but the encoder says the wheel is not turning.
-        if (!encoderFault && shooterOn && Math.abs(lastAppliedPower) >= MechanismConstants.SHOOTER_ENCODER_CHECK_POWER
-                && Math.abs(currentRpmNow) < MechanismConstants.SHOOTER_ENCODER_DEAD_RPM) {
+        // Encoder check: driven hard forward, but the encoder says the wheel is not turning, or is
+        // turning backwards.
+        boolean pushedForward = shooterOn && lastAppliedPower >= MechanismConstants.SHOOTER_ENCODER_CHECK_POWER;
+        if (!encoderFault && pushedForward && Math.abs(currentRpmNow) < MechanismConstants.SHOOTER_ENCODER_DEAD_RPM) {
             encoderSilentS += dt;
             if (encoderSilentS >= MechanismConstants.SHOOTER_ENCODER_DEAD_S) encoderFault = true;
         } else {
             encoderSilentS = 0.0;
+        }
+        if (!encoderFault && pushedForward && currentRpmNow <= -MechanismConstants.SHOOTER_ENCODER_DEAD_RPM) {
+            encoderBackwardS += dt;
+            if (encoderBackwardS >= MechanismConstants.SHOOTER_ENCODER_DEAD_S) {
+                encoderFault = true;
+                encoderReversed = true;
+            }
+        } else {
+            encoderBackwardS = 0.0;
         }
 
         // PIDF output, clamped. With a dead encoder: the feedforward alone, no feedback to wind up.

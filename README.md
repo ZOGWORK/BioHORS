@@ -66,12 +66,27 @@ INIT telemetry says why.
 11.5 V for a second), and `ENDGAME n s` counting down the last 30 s. The gamepads rumble three
 short blips as the endgame starts and once, long, 10 s before the end. A shooter whose encoder
 reads nothing while it is pushed shows `ENCODER? (no speed reading)` and runs on its feedforward
-alone instead of winding up to full power; the gates stay shut for it.
+alone instead of winding up to full power; the gates stay shut for it. A backwards encoder
+(negative rpm while pushed forward) shows `ENCODER REVERSED?` and is handled the same way. Also on
+the Fire line: `SLOW LOOP n ms` when the loop averages over 40 ms, and `B request dropped` when a
+gate request has waited 3 s with no volley, no aim and no spin-up (so a forgotten B cannot fire the
+moment the robot faces the hive). A pose off the field or one that jumped further than the robot can
+drive in a loop is `INVALID` (aim off, gates shut) until X resets it.
+
+**Idle and trims:** with neither dpad down nor aim asking for them, both flywheels idle at 800 rpm
+(`IDLE`), so a spin-up starts part way; idle never counts as ready to fire. The rpm trims carry over
+to the next teleop; press back during INIT to clear them.
+
+**INIT check (teleop and both autos):** a pass/fail list before PLAY: Pinpoint READY, battery at
+12.5 V or more, both shooter encoders at rest; the teleop adds whether an auto pose is waiting.
 
 **Failsafes in the autos:** if the Pinpoint stops reporting READY mid-route (5 loops), or is not
 READY 1 s after PLAY, the auto halts: drive stopped, mechanisms off, gates shut (`AUTO HALTED`).
 At the spin-up timeout a volley fires only if the flywheel is at 80 % of its target or more;
-otherwise it is skipped with the pollen kept (`SHOOTER never reached speed`).
+otherwise it is skipped with the pollen kept (`SHOOTER never reached speed`). The hand-written
+state machine auto also watches the clock: still at the garden at 20.5 s it leaves with what it has,
+and reaching the last volley at 25.2 s or later it skips the volley and parks (`LATE`). The Zenith
+auto runs its steps in a fixed order, so it has no such cutoff.
 
 **Aim.** No camera and no turret: holding the left trigger turns the whole chassis to face the
 hive cell on the robot's half of the field (north cell when y > 0, south when y < 0, with 2 in of

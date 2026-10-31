@@ -99,6 +99,10 @@ public class BioHorsZenithRobot implements ZenithRobot {
     public void initLoop(AutoFromFile opMode) {
         opMode.telemetry.addData("Alliance", "%s (change it with the Choose Alliance OpMode)", alliance);
         opMode.telemetry.addData("Pinpoint", hardware.pinpointReady() ? "READY" : "NOT READY");
+        java.util.List<String> checks = org.firstinspires.ftc.teamcode.utilities.PreMatchCheck.lines(hardware);
+        opMode.telemetry.addData("Check", org.firstinspires.ftc.teamcode.utilities.PreMatchCheck.allOk(checks)
+                ? "ALL OK" : "FIX BEFORE PLAY");
+        for (String c : checks) opMode.telemetry.addLine("  " + c);
     }
 
     @Override

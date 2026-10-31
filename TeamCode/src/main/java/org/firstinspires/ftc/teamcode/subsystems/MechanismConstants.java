@@ -151,6 +151,14 @@ public final class MechanismConstants {
     public static double INTAKE_SENSE_SETTLE_S = 0.4;           // PLACEHOLDER: ignore the spin-up after starting
     public static double INTAKE_SENSE_DEBOUNCE_S = 0.15;        // CARRIED OVER: MAINHORS26's SPEED_STABLE_HOLD_SECONDS
     public static double INTAKE_SENSE_FILTER_ALPHA = 0.3;       // PLACEHOLDER: speed smoothing per loop
+    // ===== Teleop idle flywheel speed =====
+    /** Between volleys the teleop keeps both flywheels turning slowly, so aiming spins them up
+     *  sooner. false: they stop, as before. Idle never counts as ON for the fire interlock. */
+    public static boolean SHOOTER_IDLE_ENABLED = true;
+    /** The idle speed, flywheel rpm. PLACEHOLDER: about half the firing speed; NEEDS MEASUREMENT
+     *  (time the spin-up from idle; lower it if the battery suffers). */
+    public static double SHOOTER_IDLE_RPM = 800.0;
+
     // ===== Shooter encoder check (ShooterController) =====
     /** Only judged while the motor is given at least this power. SET BY HAND: well above the
      *  ~0.27 a 1600 rpm target needs at full speed, so only a hard push counts. */
