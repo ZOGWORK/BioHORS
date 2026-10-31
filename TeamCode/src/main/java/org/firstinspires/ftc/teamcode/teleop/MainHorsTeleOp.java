@@ -38,7 +38,9 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *                           and spin both shooters up (see "Spin-up while aiming" below)
  *   Right bumper (hold) ... slow mode (0.45x)
  *   Right trigger ......... intake in (a stalled intake reverses briefly on its own: IntakeJamGuard)
- *   Y (hold) .............. outtake
+ *   Y ..................... VOLLEY (VolleySequence): spin both shooters up, then request both gates for
+ *                           a timed window, then let go. Y again cancels. See "Y volley" below.
+ *                           (There is no outtake button: Y outtake was removed.)
  *   Dpad down ............. toggle both shooters on/off (each at its own target), for spinning
  *                           without aiming
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
@@ -85,6 +87,18 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *     dip shut them, end the spin-up, and then reopen them into stopped flywheels (the interlock
  *     ignores a shooter that is off).
  *   - With the pose invalid, aiming does not spin up: the interlock would keep the gates shut anyway.
+ *
+ * Y volley (MAINHORS26's intake auto sequence, on this robot):
+ *   - Y while idle: both shooters on; once every healthy shooter is at speed, the gates are
+ *     requested for VolleySequence.FIRE_WINDOW_S, then the request is let go. Not at speed within
+ *     VolleySequence.SPINUP_TIMEOUT_S: it ends with no gate requested.
+ *   - It only REQUESTS the gates, ORed with B's request: the fire interlock still decides, limp mode
+ *     still keeps a faulted shooter's gate shut. It does not aim: hold left trigger to aim.
+ *   - While it runs: B is ignored and the manual intake is locked out. The intake feeds at
+ *     INTAKE_POWER only while the gates are really open in the fire window (that is what pushes the
+ *     pollen through; there is no claw). Y again cancels at once.
+ *   - At the end the shooters go back to what dpad down / aim had them doing, and a B request the
+ *     driver made stands. The Fire line says Y SEQ while it runs.
  *
  * Intake jam: while right trigger pulls in, an intake that stalls (both encoders far below a full
  * robot's speed) runs outward for a moment, then pulls in again. The Fire line says INTAKE JAM.
@@ -175,6 +189,7 @@ public class MainHorsTeleOp extends LinearOpMode {
     private BioHorsRobot robot;
     private Localizer localizer;
     private final AimController aim = new AimController();
+    private final VolleySequence volley = new VolleySequence();
 
     private Alliance alliance = Alliance.RED;
     private FieldTargets.Cell targetCell = FieldTargets.upCellAtKickoff(Alliance.RED);
@@ -192,7 +207,7 @@ public class MainHorsTeleOp extends LinearOpMode {
     private PoseSanity poseSanity;
 
     // Edge-detect state (a press fires once, not every loop).
-    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast;
+    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast, yLast;
 
     // Loop time for the driver display: the period from the start of one loop to the start of the
     // next, ms. Display only; nothing reads it to decide anything.
@@ -386,7 +401,12 @@ public class MainHorsTeleOp extends LinearOpMode {
             if (dpadDownNow && !dpadDownLast) shootersToggledOn = !shootersToggledOn;
             dpadDownLast = dpadDownNow;
             aimSpinUp = aiming || (aimSpinUp && gatesRequested);
-            boolean shootersOn = shootersToggledOn || aimSpinUp;
+            // Y starts the volley, or cancels a running one. Its spin-up is on top of the others,
+            // so when it ends the shooters fall back to what dpad down and aim have them doing.
+            boolean yNow = gamepad1.y || gamepad2.y;
+            if (yNow && !yLast) volley.press();
+            yLast = yNow;
+            boolean shootersOn = shootersToggledOn || aimSpinUp || volley.wantsShooters();
             // Idle: the motors turn slowly, but to the fire interlock and the display they are OFF.
             boolean idling = !shootersOn && MechanismConstants.SHOOTER_IDLE_ENABLED;
             shootersFiring = shootersOn;
@@ -443,7 +463,7 @@ public class MainHorsTeleOp extends LinearOpMode {
 
             // ----- Gates: B requests / cancels both; they open only while the interlock is clear -----
             boolean bNow = gamepad1.b || gamepad2.b;
-            if (bNow && !bLast) {
+            if (bNow && !bLast && !volley.running()) {   // B is ignored while the volley runs
                 gatesRequested = !gatesRequested;
                 requestIdle.reset();
                 requestDropped = false;
@@ -462,15 +482,20 @@ public class MainHorsTeleOp extends LinearOpMode {
             }
             pollenFaultLast = pollenFault;
             nectarFaultLast = nectarFault;
+            // The volley moves on once every healthy shooter is at speed; its request joins B's.
+            volley.update((!pollenFault || !nectarFault)
+                    && (pollenFault || robot.pollenShooter.isAtTarget())
+                    && (nectarFault || robot.nectarShooter.isAtTarget()));
+            boolean requested = gatesRequested || volley.requestsGates();
             FireGate.Decision fire = FireGate.decide(poseOk, headingErrorRad, AimController.ON_TARGET_TOLERANCE_RAD,
                     fireState(robot.pollenShooter, shootersOn && !pollenFault),
                     fireState(robot.nectarShooter, shootersOn && !nectarFault));
-            boolean gatesOpen = gatesRequested && fire.clear;
+            boolean gatesOpen = requested && fire.clear;
             // A request is only waiting for something while a volley runs, the driver aims, or a
             // switched-on healthy shooter is still spinning up. Otherwise it is forgotten: drop it.
             boolean spinningUp = shootersOn && ((!pollenFault && !robot.pollenShooter.isAtTarget())
                     || (!nectarFault && !robot.nectarShooter.isAtTarget()));
-            if (!gatesRequested || gatesOpen || aimHeld || spinningUp) requestIdle.reset();
+            if (!gatesRequested || gatesOpen || aimHeld || spinningUp || volley.running()) requestIdle.reset();
             if (gatesRequested && requestIdle.seconds() >= REQUEST_IDLE_S) {
                 gatesRequested = false;
                 requestDropped = true;
@@ -504,12 +529,13 @@ public class MainHorsTeleOp extends LinearOpMode {
             xLast = xNow;
             robot.flowerBar.setShooting(!robot.pollenGate.isClosed() || !robot.nectarGate.isClosed());
 
-            // ----- Intake: right trigger in, Y out; a stalled intake reverses briefly -----
+            // ----- Intake: right trigger in; a stalled intake reverses briefly. During the volley the
+            // trigger is locked out and the intake feeds only while the gates are really open. -----
             double intakeRequest = 0.0;
-            if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD) {
+            if (volley.running()) {
+                if (volley.requestsGates() && gatesOpen) intakeRequest = IntakeController.INTAKE_POWER;
+            } else if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD) {
                 intakeRequest = IntakeController.INTAKE_POWER;
-            } else if (gamepad1.y || gamepad2.y) {
-                intakeRequest = IntakeController.OUTTAKE_POWER;
             }
             robot.intake.setPower(robot.intakeJam.power(intakeRequest));
 
@@ -527,6 +553,7 @@ public class MainHorsTeleOp extends LinearOpMode {
             double leftS = EndgameAlerts.remainingS(sincePlay.seconds());
 
             String fireText = fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason;
+            if (volley.running()) fireText += " | Y SEQ";
             if (robot.intakeJam.reversing()) fireText += " | INTAKE JAM: reversing";
             if (robot.intakeJam.givenUp()) fireText += " | INTAKE JAMMED: clear by hand";
             if (pollenFault && nectarFault) fireText += " | BOTH SHOOTERS FAULT: no shooting";
@@ -563,6 +590,7 @@ public class MainHorsTeleOp extends LinearOpMode {
         aLast = gamepad1.a || gamepad2.a;
         bLast = gamepad1.b || gamepad2.b;
         lbLast = gamepad1.left_bumper || gamepad2.left_bumper;
+        yLast = gamepad1.y || gamepad2.y;
     }
 
     /** The pose X resets to for an alliance: the RED value, point-mirrored for BLUE. */

@@ -47,14 +47,14 @@ Shooter/gate names, directions, and tuning values live in
 | Right stick X | Turn (overridden while aiming) |
 | Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field, and spin both shooters up (no dpad down needed; a volley under way keeps them up after you let go) |
 | Right bumper (hold) | Slow mode, 0.45x |
-| Right trigger | Intake in (a stalled intake reverses for 0.3 s on its own; the Fire line says `INTAKE JAM`) |
-| Y (hold) | Outtake |
+| Right trigger | Intake in (a stalled intake reverses for 0.3 s on its own; the Fire line says `INTAKE JAM`. After 3 reverses that do not clear it the intake stops: `INTAKE JAMMED: clear by hand`, until you let go) |
+| Y | **Volley**: spins both shooters up, then requests both gates for a 1 s window once they are at speed, then lets go (gives up after 2 s if they never get there). The interlock still decides; it does not aim. B and the intake trigger are locked out while it runs; the intake feeds only while the gates are open. Y again cancels. Fire line: `Y SEQ`. There is no outtake button |
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF), to keep them spinning without aiming |
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
 | Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
 | B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target, at least one shooter is on and every switched-on shooter is at speed (telemetry names what blocks) |
-| X | **Reset the pose** (wipes Pinpoint drift): back the robot flat against your alliance's wall at the park spot by the loading zone, intake facing the field, then press X |
-| Dpad up | Flower bar down / stowed |
+| X (hold 0.5 s) | **Reset the pose** (wipes Pinpoint drift): back the robot flat against your alliance's wall at the park spot by the loading zone, intake facing the field, then hold X until the pad rumbles. A tap does nothing |
+| Dpad up | Flower bar down / stowed. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
 alliance and final pose are picked up automatically (the SDK blackboard), once, and only if the
@@ -66,7 +66,7 @@ INIT telemetry says why.
 11.5 V for a second), and `ENDGAME n s` counting down the last 30 s. The gamepads rumble three
 short blips as the endgame starts and once, long, 10 s before the end. A shooter whose encoder
 reads nothing while it is pushed shows `ENCODER? (no speed reading)` and runs on its feedforward
-alone instead of winding up to full power; the gates stay shut for it. A backwards encoder
+alone instead of winding up to full power; its gate stays shut and the other shooter fires alone (`POLLEN FAULT: nectar only`, with a long left-side rumble). A backwards encoder
 (negative rpm while pushed forward) shows `ENCODER REVERSED?` and is handled the same way. Also on
 the Fire line: `SLOW LOOP n ms` when the loop averages over 40 ms, and `B request dropped` when a
 gate request has waited 3 s with no volley, no aim and no spin-up (so a forgotten B cannot fire the
