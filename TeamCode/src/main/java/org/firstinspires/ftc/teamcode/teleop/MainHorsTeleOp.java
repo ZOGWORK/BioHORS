@@ -117,7 +117,8 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  * stayed under LowBatteryWarning.LOW_V for a second.
  *
  * More cues and guards:
- *   - Idle: with neither dpad down nor aim asking for them, both flywheels turn at
+ *   - Idle (OFF by default, MechanismConstants.SHOOTER_IDLE_ENABLED): when switched on, with
+ *     neither dpad down nor aim asking for them, both flywheels turn at
  *     MechanismConstants.SHOOTER_IDLE_RPM (the display says IDLE), so a spin-up starts part way.
  *     Idle is OFF to the fire interlock: the gates never open on it.
  *   - A gate request (B) is dropped after REQUEST_IDLE_S with no volley, no aim and no spin-up, so a
@@ -128,7 +129,7 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *   - The rpm trims carry over to the next teleop (the blackboard); back during INIT clears them.
  *   - INIT shows a pre-match check (utilities/PreMatchCheck).
  *
- * Shooters start OFF (then idle) and gates CLOSED. Tuning values are placeholders (MechanismConstants,
+ * Shooters start OFF (and stay off until asked, while idle is off) and gates CLOSED. Tuning values are placeholders (MechanismConstants,
  * AimController).
  */
 @TeleOp(name = "MainHORS TeleOp", group = "Linear OpMode")

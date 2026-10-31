@@ -153,8 +153,9 @@ public final class MechanismConstants {
     public static double INTAKE_SENSE_FILTER_ALPHA = 0.3;       // PLACEHOLDER: speed smoothing per loop
     // ===== Teleop idle flywheel speed =====
     /** Between volleys the teleop keeps both flywheels turning slowly, so aiming spins them up
-     *  sooner. false: they stop, as before. Idle never counts as ON for the fire interlock. */
-    public static boolean SHOOTER_IDLE_ENABLED = true;
+     *  sooner. false: they stop, as before. Idle never counts as ON for the fire interlock.
+     *  OFF for now (the team, 2026-10-31): turn it back on once the idle rpm is measured. */
+    public static boolean SHOOTER_IDLE_ENABLED = false;
     /** The idle speed, flywheel rpm. PLACEHOLDER: about half the firing speed; NEEDS MEASUREMENT
      *  (time the spin-up from idle; lower it if the battery suffers). */
     public static double SHOOTER_IDLE_RPM = 800.0;

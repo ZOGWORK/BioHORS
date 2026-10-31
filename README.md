@@ -73,7 +73,8 @@ gate request has waited 3 s with no volley, no aim and no spin-up (so a forgotte
 moment the robot faces the hive). A pose off the field or one that jumped further than the robot can
 drive in a loop is `INVALID` (aim off, gates shut) until X resets it.
 
-**Idle and trims:** with neither dpad down nor aim asking for them, both flywheels idle at 800 rpm
+**Idle and trims:** idle is OFF for now (`SHOOTER_IDLE_ENABLED = false`): unasked, the flywheels stand
+still. Switched on, with neither dpad down nor aim asking for them, both flywheels idle at 800 rpm
 (`IDLE`), so a spin-up starts part way; idle never counts as ready to fire. The rpm trims carry over
 to the next teleop; press back during INIT to clear them.
 
