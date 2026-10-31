@@ -1,8 +1,15 @@
 # Failsafes and quality-of-life: report (2026-10-31)
 
-Everything is on branch `main-budt66`, in **PR #38** (not merged). All 194 TeamCode tests pass
+Everything is on branch `main-budt66`, in **PR #38** (not merged). All 196 TeamCode tests pass
 (4 skipped, as before). Every new feature has a test, and for each one I broke the code on purpose
-to check that its test goes red (33 breaks in total), then put it back.
+to check that its test goes red (36 breaks in total), then put it back.
+
+Greptile's second review (2/5) found three real bugs in this work, all now fixed and tested:
+- **State machine auto:** on a Pinpoint halt, the shooters kept their power.
+- **Zenith auto:** on a halt, later steps could still turn the intake on.
+- **Pose check:** driving through a Pinpoint dropout was wrongly read as a jump.
+
+A third review has been requested.
 
 ## What the drivers will notice
 
@@ -28,7 +35,8 @@ The driving display is still five lines. Everything new goes on the end of the F
 
 - **Pinpoint lost:** both autos stop the drive for the rest of AUTO if the Pinpoint isn't READY for
   5 loops after being READY, or isn't READY 1 s after PLAY. Mechanisms stop and the gates stay shut
-  (`AUTO HALTED`). This is the "keep halting" choice you made.
+  (`AUTO HALTED`), and no later step can turn them back on. This is the "keep halting" choice you
+  made.
 - **Failed spin-up:** at the spin-up timeout a volley fires only if the flywheel is at 80 % of its
   target or more. Otherwise it is skipped and the pollen kept.
 - **Running late (hand-written state machine auto only):** still at the garden at 20.5 s, it leaves
