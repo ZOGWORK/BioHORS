@@ -532,13 +532,19 @@ public class MainHorsTeleOp extends LinearOpMode {
 
             // ----- Intake: right trigger in; a stalled intake reverses briefly. During the volley the
             // trigger is locked out and the intake feeds only while the gates are really open. -----
-            double intakeRequest = 0.0;
-            if (volley.running()) {
-                if (volley.requestsGates() && gatesOpen) intakeRequest = IntakeController.INTAKE_POWER;
-            } else if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD) {
-                intakeRequest = IntakeController.INTAKE_POWER;
+            boolean triggerHeld = gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD;
+            if (volley.running() && !(volley.requestsGates() && gatesOpen) && triggerHeld) {
+                // The volley stops the intake, not the driver: a jam give-up must outlast it.
+                robot.intake.setPower(robot.intakeJam.hold());
+            } else {
+                double intakeRequest = 0.0;
+                if (volley.running()) {
+                    if (volley.requestsGates() && gatesOpen) intakeRequest = IntakeController.INTAKE_POWER;
+                } else if (triggerHeld) {
+                    intakeRequest = IntakeController.INTAKE_POWER;
+                }
+                robot.intake.setPower(robot.intakeJam.power(intakeRequest));
             }
-            robot.intake.setPower(robot.intakeJam.power(intakeRequest));
 
             // ----- Telemetry: the driving display, five lines and nothing else -----
             // ----- Match cues and the battery -----

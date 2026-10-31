@@ -1209,6 +1209,31 @@ class MainHorsTeleOpSimTest {
         assertEquals(1.0, power[1], 1e-9, "released and pulled again: intaking again");
     }
 
+    @Test
+    void aYVolleyDoesNotClearAJamGiveUpWhileTheTriggerIsHeld() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);   // on target, so the volley does fire
+        double[] power = {Double.NaN, Double.NaN};
+        boolean[] fedAfterGiveUp = {false};
+        OpModeRunResult result = runWatching(sim, 400, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.right_trigger = 1f;                  // held the whole time
+            g1.y = tick >= 235 && tick < 237;       // a volley after the guard has given up
+        }, tick -> {
+            if (tick == 40) {
+                sim.intakeLeft.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+                sim.intakeRight.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+            }
+            if (tick == 230) power[0] = sim.intakeLeft.getPower();
+            if (tick > 230 && sim.intakeLeft.getPower() != 0.0) fedAfterGiveUp[0] = true;
+            if (tick == 390) power[1] = sim.intakeLeft.getPower();
+        });
+        assertEquals(0.0, power[0], 1e-9, "given up before the volley");
+        assertFalse(fedAfterGiveUp[0], "neither the volley nor the held trigger restarts a given-up intake");
+        assertEquals(0.0, power[1], 1e-9, "still stopped after the volley");
+        assertTrue(line(result, "Fire").contains("INTAKE JAMMED: clear by hand"), line(result, "Fire"));
+    }
+
     // ------------------------------------------------------------------ X hold
 
     @Test

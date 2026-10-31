@@ -126,4 +126,14 @@ class IntakeJamGuardTest {
                 "the new jam gets the full set of reverses");
         assertTrue(guard.givenUp());
     }
+
+    @Test
+    void aHoldIsNotARelease() {
+        load(JAM_TORQUE_FRACTION);
+        reverseTicks(6.0);
+        assertTrue(guard.givenUp());
+        for (int i = 0; i < 25; i++) assertEquals(0.0, guard.hold(), 1e-12);
+        assertTrue(guard.givenUp(), "the teleop stopping the intake does not clear the give-up");
+        assertEquals(0.0, tick(1.0), 1e-12, "trigger still held: still stopped");
+    }
 }

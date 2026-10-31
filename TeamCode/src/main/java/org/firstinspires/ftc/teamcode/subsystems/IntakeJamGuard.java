@@ -97,6 +97,17 @@ public class IntakeJamGuard {
         return IntakeController.OUTTAKE_POWER;
     }
 
+    /**
+     * In place of {@link #power} for a loop where the teleop, not the driver, stops the intake (the
+     * Y volley's spin-up, with the trigger still held). Returns 0. The next pull starts a fresh
+     * spin-up, but this is not a release: a give-up and the count of reverses in a row stand.
+     */
+    public double hold() {
+        isReversing = false;
+        wasIn = false;
+        return 0.0;
+    }
+
     /** True while a jam reverse is running. */
     public boolean reversing() {
         return isReversing;
