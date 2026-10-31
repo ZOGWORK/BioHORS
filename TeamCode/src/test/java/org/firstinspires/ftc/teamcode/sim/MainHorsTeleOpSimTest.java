@@ -434,6 +434,158 @@ class MainHorsTeleOpSimTest {
         assertEquals(-1.0, outPower[1], 1e-9, "Y runs intakeRight out");
     }
 
+    // ------------------------------------------------------------------ spin-up while aiming
+
+    @Test
+    void holdingAimSpinsTheShootersUpAndLettingGoStopsThem() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, -40.0, 0.0);
+        double[] whileAiming = new double[2];
+        double[] afterRelease = new double[2];
+        runWatching(sim, 200, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.left_trigger = tick < 150 ? 1f : 0f; // no dpad down at all
+        }, tick -> {
+            if (tick == 149) {
+                whileAiming[0] = sim.pollenShooterRpm();
+                whileAiming[1] = sim.nectarShooterRpm();
+            }
+            if (tick == 195) {
+                afterRelease[0] = sim.pollenShooter.getPower();
+                afterRelease[1] = sim.nectarShooter.getPower();
+            }
+        });
+        assertEquals(1600.0, whileAiming[0], 100.0, "aiming alone spins pollen up to its target");
+        assertEquals(1600.0, whileAiming[1], 100.0, "and nectar to its own");
+        assertEquals(0.0, afterRelease[0], 1e-9, "trigger released, no volley: pollen off");
+        assertEquals(0.0, afterRelease[1], 1e-9, "nectar off");
+    }
+
+    @Test
+    void dpadDownStillKeepsTheShootersOnAfterAiming() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, -40.0, 0.0);
+        double[] afterRelease = {Double.NaN};
+        runWatching(sim, 200, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_down = tick >= 2 && tick < 5;          // toggled on first
+            g1.left_trigger = tick >= 20 && tick < 100 ? 1f : 0f;
+        }, tick -> {
+            if (tick == 195) afterRelease[0] = sim.pollenShooterRpm();
+        });
+        assertEquals(1600.0, afterRelease[0], 100.0, "the dpad-down toggle outlasts the aim");
+    }
+
+    @Test
+    void aVolleyKeepsTheShootersUpAfterTheTriggerIsReleased() {
+        // Already facing the RED south cell (the driving-display start). Aim, request the gates,
+        // let go of the trigger mid-volley, then cancel with B.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double[] midVolley = new double[3];
+        double[] afterCancel = new double[2];
+        runWatching(sim, 260, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.left_trigger = tick < 150 ? 1f : 0f;
+            g1.b = (tick >= 140 && tick < 143) || (tick >= 210 && tick < 213);
+        }, tick -> {
+            if (tick == 200) {
+                midVolley[0] = sim.pollenGatePlant.getPosition();
+                midVolley[1] = sim.pollenShooterRpm();
+                midVolley[2] = sim.nectarShooterRpm();
+            }
+            if (tick == 255) {
+                afterCancel[0] = sim.pollenGatePlant.getPosition();
+                afterCancel[1] = sim.pollenShooter.getPower();
+            }
+        });
+        assertEquals(MechanismConstants.POLLEN_GATE_OPEN, midVolley[0], 0.02, "the volley is still feeding");
+        assertEquals(1600.0, midVolley[1], 100.0, "pollen still at speed with the trigger released");
+        assertEquals(1600.0, midVolley[2], 100.0, "nectar too");
+        assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, afterCancel[0], 0.02, "B cancels the volley");
+        assertEquals(0.0, afterCancel[1], 1e-9, "and with the gates shut the aim spin-up ends");
+    }
+
+    @Test
+    void withThePoseInvalidAimingDoesNotSpinUp() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, -40.0, 0.0);
+        double[] power = {Double.NaN};
+        final int[] n = {0};
+        runWatching(sim, 75, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            if (n[0]++ == 0) sim.pinpoint.forceFault(GoBildaPinpointDriver.DeviceStatus.FAULT_NO_PODS_DETECTED);
+            g1.left_trigger = 1f;
+        }, tick -> {
+            if (tick == 70) power[0] = sim.pollenShooter.getPower();
+        });
+        assertEquals(0.0, power[0], 1e-9, "the interlock would keep the gates shut, so no spin-up");
+    }
+
+    // ------------------------------------------------------------------ intake jam
+
+    /** A jammed roller in the sim: the load takes 90 % of the motor's torque. PLACEHOLDER (a test load). */
+    static final double JAM_TORQUE_FRACTION = -0.9;
+
+    @Test
+    void aStalledIntakeReversesBrieflyAndTheDisplaySaysSo() {
+        for (boolean jam : new boolean[] {false, true}) {
+            BioHorsSim sim = new BioHorsSim();
+            startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+            int[] reverseTicks = {0};
+            double[] powerAtEnd = {Double.NaN};
+            OpModeRunResult result = runWatching(sim, 120, (phase, tick, g1, g2) -> {
+                if (phase == OpModePhase.ACTIVE) g1.right_trigger = 1f;
+            }, tick -> {
+                if (jam && tick == 40) {
+                    sim.intakeLeft.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+                    sim.intakeRight.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+                }
+                if (jam && tick == 75) { // the jam clears (the reverse spat it out)
+                    sim.intakeLeft.setExternalTorqueFraction(0.0);
+                    sim.intakeRight.setExternalTorqueFraction(0.0);
+                }
+                if (sim.intakeLeft.getPower() < 0) reverseTicks[0]++;
+                if (tick == 115) powerAtEnd[0] = sim.intakeLeft.getPower();
+            });
+            boolean jamShown = false;
+            for (List<String> sent : result.telemetry().transmissions()) {
+                jamShown |= lineIn(sent, "Fire").contains("INTAKE JAM");
+            }
+            if (!jam) {
+                assertEquals(0, reverseTicks[0], "a free intake never reverses");
+                assertFalse(jamShown, "and the display never says JAM");
+            } else {
+                assertEquals(MechanismConstants.INTAKE_JAM_REVERSE_S, reverseTicks[0] * TICK_S, 1.5 * TICK_S,
+                        "one reverse of the set length");
+                assertTrue(jamShown, "the Fire line says INTAKE JAM while it reverses");
+            }
+            assertEquals(1.0, powerAtEnd[0], 1e-9, (jam ? "jam cleared" : "free") + ": pulling in at the end");
+            OpMode.blackboard.clear();
+        }
+    }
+
+    /** Runs the teleop; {@code afterTick} sees each ACTIVE tick's number after the world moved. */
+    private static OpModeRunResult runWatching(BioHorsSim sim, int activeTicks, GamepadScript gamepads,
+                                               Consumer<Integer> afterTick) {
+        final OpModePhase[] phaseNow = {OpModePhase.INIT};
+        final int[] tickNow = {0};
+        return OpModeRunner.forTeamClass(TELEOP, sim.hardwareMap)
+                .teamPackages("org.firstinspires.ftc.teamcode.", SimClockLoader.PEDRO_PATHING)
+                .keepBlackboard(true)
+                .initLoopTicks(INIT_LOOP_TICKS)
+                .activeTicks(activeTicks)
+                .gamepads((phase, tick, g1, g2) -> {
+                    phaseNow[0] = phase;
+                    tickNow[0] = tick;
+                    gamepads.apply(phase, tick, g1, g2);
+                })
+                .eachTick(dt -> {
+                    sim.step(dt);
+                    if (phaseNow[0] == OpModePhase.ACTIVE) afterTick.accept(tickNow[0]);
+                })
+                .run();
+    }
+
     /** The intake powers seen on the last ACTIVE tick (before STOP turns them off). */
     private static double[] sampleIntake(BioHorsSim sim, GamepadScript gamepads) {
         double[] seen = new double[2];

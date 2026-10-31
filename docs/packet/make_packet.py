@@ -514,10 +514,10 @@ def build():
               table([['Button', 'Does'],
                      ['Left stick / right stick X', 'Drive and strafe (robot-centric: forward is the robot front) / turn'],
                      ['Left trigger (hold)', 'AIM: turn onto our hive cell on this half of the field, leading the shot '
-                      'while moving (lead is 0 until the ball speed is measured)'],
+                      'while moving (lead is 0 until the ball speed is measured), and spin both shooters up'],
                      ['Right bumper (hold)', 'Slow mode'],
-                     ['Right trigger / Y (hold)', 'Intake in / out'],
-                     ['Dpad down', 'Both shooters on / off; their rpm follows the distance-to-rpm table (flat until measured)'],
+                     ['Right trigger / Y (hold)', 'Intake in / out; a stalled intake reverses briefly on its own (INTAKE JAM)'],
+                     ['Dpad down', 'Both shooters on / off without aiming; their rpm follows the distance-to-rpm table (flat until measured)'],
                      ['Dpad left / right', 'Pollen rpm trim - / +'],
                      ['Left bumper / A', 'Nectar rpm trim - / +'],
                      ['B', 'Request the gates open: they open only while the pose is valid, the aim is on target and '

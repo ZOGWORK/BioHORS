@@ -147,6 +147,19 @@ at a pickup once, after it arrives, a fresh reading shows nothing new for `COLLE
 To check on the robot: run the intake in, empty, and read "Intake speed" in the auto's telemetry
 for `INTAKE_FREE_TICKS_PER_S`. `INTAKE_SENSOR_ENABLED = false` falls back to the time estimate.
 
+## 4d. Teleop intake jam reverse
+
+`IntakeJamGuard`: while right trigger pulls in, if both intake motors' average speed stays below
+`INTAKE_JAM_TICKS_PER_S` (700 ticks/s, PLACEHOLDER: a quarter of the free speed) for
+`INTAKE_JAM_DETECT_S` (0.25 s), the intake runs outward for `INTAKE_JAM_REVERSE_S` (0.3 s), then
+pulls in again. It waits `INTAKE_SENSE_SETTLE_S` after every start, so the spin-up is not a jam.
+Letting go of the trigger ends a reverse at once.
+
+The threshold must stay well below a FULL robot (2100 ticks/s, 4c), or a full hopper gets spat out.
+To set it: hold a pollen hard against the rollers, read "Intake speed" in the auto's telemetry, and
+put the threshold about halfway between that and 2100. Done when a real jam clears and a full
+robot held on the trigger never reverses.
+
 ## 5. Auto timing and the pollen estimate
 
 | Item | Current | Where | How | Done when |

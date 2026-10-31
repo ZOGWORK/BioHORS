@@ -13,6 +13,7 @@ import org.firstinspires.ftc.teamcode.subsystems.DriveController;
 import org.firstinspires.ftc.teamcode.subsystems.FlowerBarController;
 import org.firstinspires.ftc.teamcode.subsystems.GateController;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeController;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeJamGuard;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeLoadSensor;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
@@ -36,6 +37,8 @@ public class BioHorsRobot {
     public final IntakeController intake;
     /** Pollen count from the intake's encoders (both intake motors). */
     public final IntakeLoadSensor intakeLoad;
+    /** Teleop jam clearing: reverses a stalled intake briefly (both intake motors' encoders). */
+    public final IntakeJamGuard intakeJam;
     public final ShooterController pollenShooter;
     public final ShooterController nectarShooter;
     public final GateController pollenGate;
@@ -100,6 +103,7 @@ public class BioHorsRobot {
         drive = new DriveController(frontLeft, frontRight, backLeft, backRight);
         intake = new IntakeController(intakeLeft, intakeRight);
         intakeLoad = new IntakeLoadSensor(intakeLeft, intakeRight);
+        intakeJam = new IntakeJamGuard(intakeLeft, intakeRight);
         pollenShooter = new ShooterController(
                 MechanismConstants.POLLEN_SHOOTER, pollenShooterMotor, telemetry, batterySensor);
         nectarShooter = new ShooterController(

@@ -45,11 +45,11 @@ Shooter/gate names, directions, and tuning values live in
 |---|---|
 | Left stick | Drive (forward / strafe) |
 | Right stick X | Turn (overridden while aiming) |
-| Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field |
+| Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field, and spin both shooters up (no dpad down needed; a volley under way keeps them up after you let go) |
 | Right bumper (hold) | Slow mode, 0.45x |
-| Right trigger | Intake in |
+| Right trigger | Intake in (a stalled intake reverses for 0.3 s on its own; the Fire line says `INTAKE JAM`) |
 | Y (hold) | Outtake |
-| Dpad down | Toggle both shooters on/off, each at its own target (start OFF) |
+| Dpad down | Toggle both shooters on/off, each at its own target (start OFF), to keep them spinning without aiming |
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
 | Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
 | B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target and every switched-on shooter is at speed (telemetry names what blocks) |

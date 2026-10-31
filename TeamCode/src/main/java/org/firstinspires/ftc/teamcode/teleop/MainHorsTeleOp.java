@@ -17,6 +17,7 @@ import org.firstinspires.ftc.teamcode.aim.PoseHandoff;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
 import org.firstinspires.ftc.teamcode.subsystems.DriveController;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeController;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
 
@@ -26,11 +27,13 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
  * Controls (gamepad1; gamepad2 mirrors the mechanism buttons):
  *   Left stick ............ drive (forward / strafe)
  *   Right stick X ......... turn (overridden while aiming)
- *   Left trigger (hold) ... AIM: turn the robot to face our hive's cell on this half of the field
+ *   Left trigger (hold) ... AIM: turn the robot to face our hive's cell on this half of the field,
+ *                           and spin both shooters up (see "Spin-up while aiming" below)
  *   Right bumper (hold) ... slow mode (0.45x)
- *   Right trigger ......... intake in
+ *   Right trigger ......... intake in (a stalled intake reverses briefly on its own: IntakeJamGuard)
  *   Y (hold) .............. outtake
- *   Dpad down ............. toggle both shooters on/off (each at its own target)
+ *   Dpad down ............. toggle both shooters on/off (each at its own target), for spinning
+ *                           without aiming
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
  *   Left bumper / A ....... NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
  *   B ..................... request / cancel both gates open (the flower bar lifts slightly while open)
@@ -61,6 +64,16 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
  *   - B only REQUESTS the gates open. They open while the request stands and the fire interlock
  *     (aim/FireGate) is clear: pose valid, on target, every switched-on shooter at speed. They
  *     close on their own when it is not, and telemetry says why. B again cancels the request.
+ *
+ * Spin-up while aiming:
+ *   - Holding aim with a usable pose switches both shooters on, without dpad down. Letting go
+ *     switches them off again, unless dpad down has them on.
+ *   - A volley is not cut short: once the gates are open, the aim's spin-up holds until they close
+ *     (B cancels, or the interlock blocks), even with the trigger released.
+ *   - With the pose invalid, aiming does not spin up: the interlock would keep the gates shut anyway.
+ *
+ * Intake jam: while right trigger pulls in, an intake that stalls (both encoders far below a full
+ * robot's speed) runs outward for a moment, then pulls in again. The Fire line says INTAKE JAM.
  *
  * Shooters start OFF and gates CLOSED. Tuning values are placeholders (MechanismConstants,
  * AimController).
@@ -109,6 +122,10 @@ public class MainHorsTeleOp extends LinearOpMode {
     private double pollenTrimRpm = 0.0;
     private double nectarTrimRpm = 0.0;
     private boolean gatesRequested = false;
+    // Shooters on from dpad down (stays until pressed again), and on from aiming (see the class doc).
+    private boolean shootersToggledOn = false;
+    private boolean aimSpinUp = false;
+    private boolean gatesOpenLastLoop = false;
 
     // Edge-detect state (a press fires once, not every loop).
     private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast;
@@ -248,15 +265,16 @@ public class MainHorsTeleOp extends LinearOpMode {
                         gamepad1.right_stick_x, scale);
             }
 
-            // ----- Shooters: dpad down toggles both, dpad left/right trims pollen. Each target is
-            // its distance table's rpm plus its trim. -----
+            // ----- Shooters: on while dpad down has them toggled on, or while aiming (held through
+            // an open volley). Dpad left/right trims pollen. Each target is its distance table's rpm
+            // plus its trim. -----
             boolean dpadDownNow = gamepad1.dpad_down || gamepad2.dpad_down;
-            if (dpadDownNow && !dpadDownLast) {
-                boolean on = !robot.pollenShooter.isShooterOn();
-                robot.pollenShooter.setShooterOn(on);
-                robot.nectarShooter.setShooterOn(on);
-            }
+            if (dpadDownNow && !dpadDownLast) shootersToggledOn = !shootersToggledOn;
             dpadDownLast = dpadDownNow;
+            aimSpinUp = aiming || (aimSpinUp && gatesOpenLastLoop);
+            boolean shootersOn = shootersToggledOn || aimSpinUp;
+            robot.pollenShooter.setShooterOn(shootersOn);
+            robot.nectarShooter.setShooterOn(shootersOn);
 
             double pollenTableRpm = pollenSpeedTable.rpmAt(distanceIn, MechanismConstants.POLLEN_SHOOTER.targetRpm);
             double nectarTableRpm = nectarSpeedTable.rpmAt(distanceIn, MechanismConstants.NECTAR_SHOOTER.targetRpm);
@@ -309,8 +327,9 @@ public class MainHorsTeleOp extends LinearOpMode {
             boolean gatesOpen = gatesRequested && fire.clear;
             robot.pollenGate.setClosed(!gatesOpen);
             robot.nectarGate.setClosed(!gatesOpen);
+            gatesOpenLastLoop = gatesOpen;
 
-            // ----- Flower bar: X toggles down / stowed; lifted slightly while the gates are open -----
+            // ----- Flower bar: dpad up toggles down / stowed; lifted slightly while the gates are open -----
             boolean dpadUpNow = gamepad1.dpad_up || gamepad2.dpad_up;
             if (dpadUpNow && !dpadUpLast) robot.flowerBar.toggle();
             dpadUpLast = dpadUpNow;
@@ -327,17 +346,19 @@ public class MainHorsTeleOp extends LinearOpMode {
             xLast = xNow;
             robot.flowerBar.setShooting(!robot.pollenGate.isClosed() || !robot.nectarGate.isClosed());
 
-            // ----- Intake: right trigger in, Y out -----
+            // ----- Intake: right trigger in, Y out; a stalled intake reverses briefly -----
+            double intakeRequest = 0.0;
             if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD) {
-                robot.intake.intake();
+                intakeRequest = IntakeController.INTAKE_POWER;
             } else if (gamepad1.y || gamepad2.y) {
-                robot.intake.outtake();
-            } else {
-                robot.intake.stop();
+                intakeRequest = IntakeController.OUTTAKE_POWER;
             }
+            robot.intake.setPower(robot.intakeJam.power(intakeRequest));
 
             // ----- Telemetry: the driving display, five lines and nothing else -----
-            telemetry.addData("Fire", fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason);
+            String fireText = fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason;
+            if (robot.intakeJam.reversing()) fireText += " | INTAKE JAM: reversing";
+            telemetry.addData("Fire", fireText);
             addPoseTelemetry();
             addShooterTelemetry("Pollen", robot.pollenShooter);
             addShooterTelemetry("Nectar", robot.nectarShooter);

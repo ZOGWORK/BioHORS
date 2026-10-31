@@ -151,6 +151,17 @@ public final class MechanismConstants {
     public static double INTAKE_SENSE_SETTLE_S = 0.4;           // PLACEHOLDER: ignore the spin-up after starting
     public static double INTAKE_SENSE_DEBOUNCE_S = 0.15;        // CARRIED OVER: MAINHORS26's SPEED_STABLE_HOLD_SECONDS
     public static double INTAKE_SENSE_FILTER_ALPHA = 0.3;       // PLACEHOLDER: speed smoothing per loop
+    // ===== Teleop intake jam reverse (IntakeJamGuard) =====
+    // A jam is the intake held inward but nearly stopped: far slower than a FULL robot
+    // (INTAKE_LOADED_TICKS_PER_S), so a full hopper is never read as a jam.
+    /** Below this average intake speed, ticks/s, the intake counts as stalled. PLACEHOLDER: a quarter of
+     *  the free speed. NEEDS MEASUREMENT: hold a pollen against the rollers and read "Intake speed". */
+    public static double INTAKE_JAM_TICKS_PER_S = 700.0;
+    /** The stall must last this long before the intake reverses, seconds. PLACEHOLDER. */
+    public static double INTAKE_JAM_DETECT_S = 0.25;
+    /** How long a jam reverse runs before pulling in again, seconds. PLACEHOLDER. */
+    public static double INTAKE_JAM_REVERSE_S = 0.3;
+
     /** In auto, stop waiting for more pollen once none has come in for this long. PLACEHOLDER. */
     public static double COLLECT_NO_PROGRESS_S = 0.5;
 
