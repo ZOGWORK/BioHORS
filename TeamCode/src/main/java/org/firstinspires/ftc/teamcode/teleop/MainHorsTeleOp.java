@@ -7,6 +7,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import java.util.List;
+
 import org.firstinspires.ftc.teamcode.aim.AimController;
 import org.firstinspires.ftc.teamcode.aim.AimVelocityFilter;
 import org.firstinspires.ftc.teamcode.aim.Alliance;
@@ -14,11 +16,16 @@ import org.firstinspires.ftc.teamcode.aim.DistanceSpeedTable;
 import org.firstinspires.ftc.teamcode.aim.FieldTargets;
 import org.firstinspires.ftc.teamcode.aim.FireGate;
 import org.firstinspires.ftc.teamcode.aim.PoseHandoff;
+import org.firstinspires.ftc.teamcode.aim.PoseSanity;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
 import org.firstinspires.ftc.teamcode.subsystems.DriveController;
+import org.firstinspires.ftc.teamcode.subsystems.IntakeController;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
+import org.firstinspires.ftc.teamcode.utilities.EndgameAlerts;
+import org.firstinspires.ftc.teamcode.utilities.LowBatteryWarning;
+import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
 
 /**
  * The MainHORS teleop: the MainHORS control scheme on this robot, plus odometry aim.
@@ -26,11 +33,13 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
  * Controls (gamepad1; gamepad2 mirrors the mechanism buttons):
  *   Left stick ............ drive (forward / strafe)
  *   Right stick X ......... turn (overridden while aiming)
- *   Left trigger (hold) ... AIM: turn the robot to face our hive's cell on this half of the field
+ *   Left trigger (hold) ... AIM: turn the robot to face our hive's cell on this half of the field,
+ *                           and spin both shooters up (see "Spin-up while aiming" below)
  *   Right bumper (hold) ... slow mode (0.45x)
- *   Right trigger ......... intake in
+ *   Right trigger ......... intake in (a stalled intake reverses briefly on its own: IntakeJamGuard)
  *   Y (hold) .............. outtake
- *   Dpad down ............. toggle both shooters on/off (each at its own target)
+ *   Dpad down ............. toggle both shooters on/off (each at its own target), for spinning
+ *                           without aiming
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
  *   Left bumper / A ....... NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
  *   B ..................... request / cancel both gates open (the flower bar lifts slightly while open)
@@ -62,7 +71,36 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
  *     (aim/FireGate) is clear: pose valid, on target, every switched-on shooter at speed. They
  *     close on their own when it is not, and telemetry says why. B again cancels the request.
  *
- * Shooters start OFF and gates CLOSED. Tuning values are placeholders (MechanismConstants,
+ * Spin-up while aiming:
+ *   - Holding aim with a usable pose switches both shooters on, without dpad down. Letting go
+ *     switches them off again, unless dpad down has them on.
+ *   - A volley is not cut short: while B's gate request stands, the aim's spin-up holds, even with
+ *     the trigger released, until B cancels. Holding it only while the gates were OPEN let a speed
+ *     dip shut them, end the spin-up, and then reopen them into stopped flywheels (the interlock
+ *     ignores a shooter that is off).
+ *   - With the pose invalid, aiming does not spin up: the interlock would keep the gates shut anyway.
+ *
+ * Intake jam: while right trigger pulls in, an intake that stalls (both encoders far below a full
+ * robot's speed) runs outward for a moment, then pulls in again. The Fire line says INTAKE JAM.
+ *
+ * Match cues: three short rumbles as the endgame starts and one long one FINAL_WARNING_S before
+ * the end (EndgameAlerts, timed from PLAY); through the endgame the Fire line counts down
+ * (ENDGAME n s). The Fire line adds LOW BATTERY while the battery has
+ * stayed under LowBatteryWarning.LOW_V for a second.
+ *
+ * More cues and guards:
+ *   - Idle: with neither dpad down nor aim asking for them, both flywheels turn at
+ *     MechanismConstants.SHOOTER_IDLE_RPM (the display says IDLE), so a spin-up starts part way.
+ *     Idle is OFF to the fire interlock: the gates never open on it.
+ *   - A gate request (B) is dropped after REQUEST_IDLE_S with no volley, no aim and no spin-up, so a
+ *     forgotten request cannot fire the moment the robot happens to face the hive.
+ *   - A pose off the field or one that jumped further than the robot can drive in a loop is
+ *     INVALID (aim off, gates shut) until X resets it (aim/PoseSanity).
+ *   - SLOW LOOP on the Fire line when the average loop is over SLOW_LOOP_MS.
+ *   - The rpm trims carry over to the next teleop (the blackboard); back during INIT clears them.
+ *   - INIT shows a pre-match check (utilities/PreMatchCheck).
+ *
+ * Shooters start OFF (then idle) and gates CLOSED. Tuning values are placeholders (MechanismConstants,
  * AimController).
  */
 @TeleOp(name = "MainHORS TeleOp", group = "Linear OpMode")
@@ -95,6 +133,16 @@ public class MainHorsTeleOp extends LinearOpMode {
     private static final double MAX_VELOCITY_DT_S = 0.25;
     // The Loop line's average covers this many loops (about 1 s at the 20 ms sim tick). SET BY HAND.
     private static final int LOOP_TIME_WINDOW = 50;
+    /** A gate request with no volley, no aim and no spin-up for this long is dropped, seconds. SET BY HAND. */
+    public static double REQUEST_IDLE_S = 3.0;
+    /** Average loop time above which the Fire line says SLOW LOOP, ms. SET BY HAND: twice the 20 ms
+     *  an FTC loop is written for; aim and the shooter loops degrade past it. */
+    public static double SLOW_LOOP_MS = 40.0;
+    /** How long the Fire line says a request was dropped, seconds. SET BY HAND. */
+    private static final double DROPPED_SHOWN_S = 1.5;
+    // Where the trims are kept between OpModes.
+    static final String KEY_POLLEN_TRIM = "biohors.pollenTrimRpm";
+    static final String KEY_NECTAR_TRIM = "biohors.nectarTrimRpm";
 
     private BioHorsRobot robot;
     private Localizer localizer;
@@ -109,6 +157,11 @@ public class MainHorsTeleOp extends LinearOpMode {
     private double pollenTrimRpm = 0.0;
     private double nectarTrimRpm = 0.0;
     private boolean gatesRequested = false;
+    // Shooters on from dpad down (stays until pressed again), and on from aiming (see the class doc).
+    private boolean shootersToggledOn = false;
+    private boolean aimSpinUp = false;
+    private boolean shootersFiring = false;   // on for shooting (not merely idling)
+    private PoseSanity poseSanity;
 
     // Edge-detect state (a press fires once, not every loop).
     private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast;
@@ -127,9 +180,15 @@ public class MainHorsTeleOp extends LinearOpMode {
                 MechanismConstants.NECTAR_SPEED_TABLE_DISTANCE_IN, MechanismConstants.NECTAR_SPEED_TABLE_RPM);
         AimVelocityFilter velocityFilter = new AimVelocityFilter(AIM_VELOCITY_ALPHA,
                 Math.max(Constants.MAX_FORWARD_IN_PER_S, Constants.MAX_STRAFE_IN_PER_S));
+        poseSanity = new PoseSanity(Math.max(Constants.MAX_FORWARD_IN_PER_S, Constants.MAX_STRAFE_IN_PER_S));
+        pollenTrimRpm = savedTrim(KEY_POLLEN_TRIM);
+        nectarTrimRpm = savedTrim(KEY_NECTAR_TRIM);
 
         Alliance saved = PoseHandoff.savedAlliance();
+        double poseAgeS = PoseHandoff.savedPoseAgeS();
         double[] savedPose = PoseHandoff.savedPose();
+        PoseHandoff.clearPose(); // taken once: a later teleop without an auto must not reuse it
+        boolean poseTooOld = savedPose == null && !Double.isNaN(poseAgeS);
         if (saved != null) alliance = saved;
         poseFromAuto = savedPose != null;
         if (poseFromAuto) {
@@ -152,11 +211,25 @@ public class MainHorsTeleOp extends LinearOpMode {
             // Track the mechanism buttons during INIT too, so a button still held at PLAY (the
             // dpad from picking the alliance, say) is not read as a fresh press on the first loop.
             seedEdgeDetectors();
+            if (gamepad1.back && (pollenTrimRpm != 0.0 || nectarTrimRpm != 0.0)) {
+                pollenTrimRpm = 0.0;
+                nectarTrimRpm = 0.0;
+                saveTrims();
+            }
             localizer.update();
             targetCell = FieldTargets.cellForHalf(localizer.pose().y(), targetCell);
             telemetry.addData("Alliance", "%s  (dpad left = RED, dpad right = BLUE)", alliance);
-            telemetry.addData("Start pose", poseFromAuto ? "from auto" : "default (unmeasured)");
+            telemetry.addData("Start pose", poseFromAuto ? "from auto"
+                    : poseTooOld ? String.format(java.util.Locale.ROOT,
+                            "default: the auto's pose is %.0f s old, not used", poseAgeS)
+                    : "default (unmeasured)");
             addPoseTelemetry();
+            telemetry.addData("Trims", "pollen %+.0f, nectar %+.0f rpm (from the last teleop; back = clear)",
+                    pollenTrimRpm, nectarTrimRpm);
+            List<String> checks = PreMatchCheck.lines(robot);
+            telemetry.addData("Check", PreMatchCheck.allOk(checks) ? "ALL OK" : "FIX BEFORE PLAY");
+            for (String c : checks) telemetry.addLine("  " + c);
+            telemetry.addLine("  " + (poseFromAuto ? "OK auto pose waiting (used)" : "-- no auto pose: default start"));
             telemetry.addData("Status", "Initialized -- shooters OFF, gates CLOSED");
             telemetry.update();
         }
@@ -166,6 +239,12 @@ public class MainHorsTeleOp extends LinearOpMode {
         }
 
         ElapsedTime loopTimer = new ElapsedTime();
+        ElapsedTime sincePlay = new ElapsedTime();
+        ElapsedTime requestIdle = new ElapsedTime();
+        ElapsedTime sinceDropped = new ElapsedTime();
+        boolean requestDropped = false;
+        EndgameAlerts alerts = new EndgameAlerts();
+        LowBatteryWarning battery = new LowBatteryWarning();
         Pose lastPose = localizer.pose();
         ElapsedTime sinceRumble = new ElapsedTime();
         sinceRumble.reset();
@@ -184,12 +263,16 @@ public class MainHorsTeleOp extends LinearOpMode {
 
             localizer.update();
             Pose pose = localizer.pose();
-            boolean poseOk = poseUsable(pose);
+            double dt = loopTimer.seconds();
+            loopTimer.reset();
+            // Pinpoint READY and real numbers, and a pose the robot could really have.
+            // Judged on the time since the last pose it checked, not this loop's dt: travel while
+            // the pose was unusable is not a jump.
+            if (poseUsable(pose)) poseSanity.check(pose.x(), pose.y(), sincePlay.seconds());
+            boolean poseOk = poseUsable(pose) && poseSanity.fault().isEmpty();
 
             // ----- Field velocity for the aim feedforward and lead: the Pinpoint's own, else the
             // pose change over the loop; smoothed and clamped. None usable: zero this loop. -----
-            double dt = loopTimer.seconds();
-            loopTimer.reset();
             double rawVx = Double.NaN;
             double rawVy = Double.NaN;
             if (poseOk) {
@@ -248,15 +331,19 @@ public class MainHorsTeleOp extends LinearOpMode {
                         gamepad1.right_stick_x, scale);
             }
 
-            // ----- Shooters: dpad down toggles both, dpad left/right trims pollen. Each target is
-            // its distance table's rpm plus its trim. -----
+            // ----- Shooters: on while dpad down has them toggled on, or while aiming (held through
+            // an open volley). Dpad left/right trims pollen. Each target is its distance table's rpm
+            // plus its trim. -----
             boolean dpadDownNow = gamepad1.dpad_down || gamepad2.dpad_down;
-            if (dpadDownNow && !dpadDownLast) {
-                boolean on = !robot.pollenShooter.isShooterOn();
-                robot.pollenShooter.setShooterOn(on);
-                robot.nectarShooter.setShooterOn(on);
-            }
+            if (dpadDownNow && !dpadDownLast) shootersToggledOn = !shootersToggledOn;
             dpadDownLast = dpadDownNow;
+            aimSpinUp = aiming || (aimSpinUp && gatesRequested);
+            boolean shootersOn = shootersToggledOn || aimSpinUp;
+            // Idle: the motors turn slowly, but to the fire interlock and the display they are OFF.
+            boolean idling = !shootersOn && MechanismConstants.SHOOTER_IDLE_ENABLED;
+            shootersFiring = shootersOn;
+            robot.pollenShooter.setShooterOn(shootersOn || idling);
+            robot.nectarShooter.setShooterOn(shootersOn || idling);
 
             double pollenTableRpm = pollenSpeedTable.rpmAt(distanceIn, MechanismConstants.POLLEN_SHOOTER.targetRpm);
             double nectarTableRpm = nectarSpeedTable.rpmAt(distanceIn, MechanismConstants.NECTAR_SHOOTER.targetRpm);
@@ -280,8 +367,14 @@ public class MainHorsTeleOp extends LinearOpMode {
             if (aNow && !aLast) nectarTrimRpm = trimmed(nectarTrimRpm, MechanismConstants.NECTAR_TRIM_STEP_RPM, nectarTableRpm);
             aLast = aNow;
 
-            applyTarget(robot.pollenShooter, pollenTableRpm, pollenTrimRpm, pollenTrimRpm != pollenTrimBefore);
-            applyTarget(robot.nectarShooter, nectarTableRpm, nectarTrimRpm, nectarTrimRpm != nectarTrimBefore);
+            if (pollenTrimRpm != pollenTrimBefore || nectarTrimRpm != nectarTrimBefore) saveTrims();
+            if (idling) {
+                robot.pollenShooter.setTargetRpm(MechanismConstants.SHOOTER_IDLE_RPM);
+                robot.nectarShooter.setTargetRpm(MechanismConstants.SHOOTER_IDLE_RPM);
+            } else {
+                applyTarget(robot.pollenShooter, pollenTableRpm, pollenTrimRpm, pollenTrimRpm != pollenTrimBefore);
+                applyTarget(robot.nectarShooter, nectarTableRpm, nectarTrimRpm, nectarTrimRpm != nectarTrimBefore);
+            }
 
             robot.updateMechanisms();
 
@@ -289,7 +382,7 @@ public class MainHorsTeleOp extends LinearOpMode {
             // Read both flags every loop so neither stays latched.
             boolean pollenReached = robot.pollenShooter.justReachedTarget();
             boolean nectarReached = robot.nectarShooter.justReachedTarget();
-            if ((pollenReached || nectarReached)
+            if (shootersOn && (pollenReached || nectarReached)
                     && (!rumbledOnce || sinceRumble.seconds() >= RUMBLE_COOLDOWN_S)) {
                 try {
                     gamepad1.rumble(220);
@@ -302,15 +395,28 @@ public class MainHorsTeleOp extends LinearOpMode {
 
             // ----- Gates: B requests / cancels both; they open only while the interlock is clear -----
             boolean bNow = gamepad1.b || gamepad2.b;
-            if (bNow && !bLast) gatesRequested = !gatesRequested;
+            if (bNow && !bLast) {
+                gatesRequested = !gatesRequested;
+                requestIdle.reset();
+                requestDropped = false;
+            }
             bLast = bNow;
             FireGate.Decision fire = FireGate.decide(poseOk, headingErrorRad, AimController.ON_TARGET_TOLERANCE_RAD,
-                    fireState(robot.pollenShooter), fireState(robot.nectarShooter));
+                    fireState(robot.pollenShooter, shootersOn), fireState(robot.nectarShooter, shootersOn));
             boolean gatesOpen = gatesRequested && fire.clear;
+            // A request is only waiting for something while a volley runs, the driver aims, or a
+            // switched-on shooter is still spinning up. Otherwise it is forgotten: drop it.
+            boolean spinningUp = shootersOn && (!robot.pollenShooter.isAtTarget() || !robot.nectarShooter.isAtTarget());
+            if (!gatesRequested || gatesOpen || aimHeld || spinningUp) requestIdle.reset();
+            if (gatesRequested && requestIdle.seconds() >= REQUEST_IDLE_S) {
+                gatesRequested = false;
+                requestDropped = true;
+                sinceDropped.reset();
+            }
             robot.pollenGate.setClosed(!gatesOpen);
             robot.nectarGate.setClosed(!gatesOpen);
 
-            // ----- Flower bar: X toggles down / stowed; lifted slightly while the gates are open -----
+            // ----- Flower bar: dpad up toggles down / stowed; lifted slightly while the gates are open -----
             boolean dpadUpNow = gamepad1.dpad_up || gamepad2.dpad_up;
             if (dpadUpNow && !dpadUpLast) robot.flowerBar.toggle();
             dpadUpLast = dpadUpNow;
@@ -322,22 +428,45 @@ public class MainHorsTeleOp extends LinearOpMode {
                 localizer.setPose(resetPose(alliance));
                 lastPose = null;            // no velocity across the jump
                 velocityFilter.reset();
+                poseSanity.reset();         // the driver has put the pose right: trust it again
                 gamepad1.rumble(120);
             }
             xLast = xNow;
             robot.flowerBar.setShooting(!robot.pollenGate.isClosed() || !robot.nectarGate.isClosed());
 
-            // ----- Intake: right trigger in, Y out -----
+            // ----- Intake: right trigger in, Y out; a stalled intake reverses briefly -----
+            double intakeRequest = 0.0;
             if (gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD) {
-                robot.intake.intake();
+                intakeRequest = IntakeController.INTAKE_POWER;
             } else if (gamepad1.y || gamepad2.y) {
-                robot.intake.outtake();
-            } else {
-                robot.intake.stop();
+                intakeRequest = IntakeController.OUTTAKE_POWER;
             }
+            robot.intake.setPower(robot.intakeJam.power(intakeRequest));
 
             // ----- Telemetry: the driving display, five lines and nothing else -----
-            telemetry.addData("Fire", fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason);
+            // ----- Match cues and the battery -----
+            EndgameAlerts.Cue cue = alerts.update(sincePlay.seconds());
+            if (cue == EndgameAlerts.Cue.ENDGAME) {
+                gamepad1.rumbleBlips(3);
+                gamepad2.rumbleBlips(3);
+            } else if (cue == EndgameAlerts.Cue.FINAL_WARNING) {
+                gamepad1.rumble(800);
+                gamepad2.rumble(800);
+            }
+            battery.update(robot.batteryVolts(), dt);
+            double leftS = EndgameAlerts.remainingS(sincePlay.seconds());
+
+            String fireText = fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason;
+            if (robot.intakeJam.reversing()) fireText += " | INTAKE JAM: reversing";
+            if (leftS <= EndgameAlerts.ENDGAME_S) {
+                fireText += String.format(java.util.Locale.ROOT, " | ENDGAME %.0f s", Math.max(0.0, Math.ceil(leftS)));
+            }
+            if (requestDropped && sinceDropped.seconds() < DROPPED_SHOWN_S) fireText += " | B request dropped";
+            if (loopTimes.hasSample() && loopTimes.averageMs() > SLOW_LOOP_MS) {
+                fireText += String.format(java.util.Locale.ROOT, " | SLOW LOOP %.0f ms", loopTimes.averageMs());
+            }
+            if (battery.low()) fireText += String.format(java.util.Locale.ROOT, " | LOW BATTERY %.1f V", battery.volts());
+            telemetry.addData("Fire", fireText);
             addPoseTelemetry();
             addShooterTelemetry("Pollen", robot.pollenShooter);
             addShooterTelemetry("Nectar", robot.nectarShooter);
@@ -413,20 +542,41 @@ public class MainHorsTeleOp extends LinearOpMode {
         }
     }
 
-    private static FireGate.Shooter fireState(ShooterController s) {
-        return new FireGate.Shooter(s.getLabel(), s.isShooterOn(), s.isAtTarget(), s.getTargetRpm(), s.getCurrentRpm());
+    /** What the interlock sees: a shooter merely idling counts as OFF, never as ready. */
+    private static FireGate.Shooter fireState(ShooterController s, boolean firing) {
+        return new FireGate.Shooter(s.getLabel(), firing && s.isShooterOn(), s.isAtTarget(), s.getTargetRpm(), s.getCurrentRpm());
+    }
+
+    /** A trim carried over from the last teleop, or 0. */
+    private static double savedTrim(String key) {
+        Object t = blackboard.get(key);
+        return t instanceof Double && Double.isFinite((Double) t) ? (Double) t : 0.0;
+    }
+
+    private void saveTrims() {
+        blackboard.put(KEY_POLLEN_TRIM, pollenTrimRpm);
+        blackboard.put(KEY_NECTAR_TRIM, nectarTrimRpm);
     }
 
     private void addPoseTelemetry() {
         Pose p = localizer.pose();
-        boolean ok = poseUsable(p);
+        String why = !poseUsable(p) ? "(INVALID)"
+                : poseSanity != null && !poseSanity.fault().isEmpty()
+                        ? "(INVALID: " + poseSanity.fault() + ", press X at the reset spot)" : "";
         telemetry.addData("Pose", "x=%.1f y=%.1f h=%.1f deg %s",
-                p.x(), p.y(), Math.toDegrees(p.heading()), ok ? "" : "(INVALID)");
+                p.x(), p.y(), Math.toDegrees(p.heading()), why);
     }
 
-    /** {@code current / target rpm STATE}: OFF, SPINNING UP (on, not at target) or OK. */
+    /**
+     * {@code current / target rpm STATE}: OFF, SPINNING UP (on, not at target) or OK; ENCODER? once
+     * the encoder check has found the wheel driven but silent (it then runs on feedforward alone).
+     */
     private void addShooterTelemetry(String label, ShooterController s) {
-        String state = !s.isShooterOn() ? "OFF" : s.isAtTarget() ? "OK" : "SPINNING UP";
+        String state = s.encoderReversed() ? "ENCODER REVERSED? (reads backwards)"
+                : s.encoderFault() ? "ENCODER? (no speed reading)"
+                : !s.isShooterOn() ? "OFF"
+                : !shootersFiring ? "IDLE"
+                : s.isAtTarget() ? "OK" : "SPINNING UP";
         telemetry.addData(label, "%.0f / %.0f rpm %s", s.getCurrentRpm(), s.getTargetRpm(), state);
     }
 

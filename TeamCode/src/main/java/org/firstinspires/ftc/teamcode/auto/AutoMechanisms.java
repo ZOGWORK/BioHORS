@@ -62,6 +62,7 @@ public class AutoMechanisms {
     private int volleyCount;
     private int volleysFired;
     private int volleysSkipped;
+    private int spinUpFailures;
 
     /** atShootingPose: whether the robot is at a scoring spot now (ShootingPose); the gate opens only then. */
     public AutoMechanisms(BioHorsRobot robot, int preload, BooleanSupplier atShootingPose) {
@@ -164,7 +165,17 @@ public class AutoMechanisms {
             case IDLE:
                 break;
             case SPIN_UP:
-                boolean atSpeed = robot.pollenShooter.isAtTarget() || pollenTimer.seconds() >= ScoreCommand.SPINUP_TIMEOUT_S;
+                boolean timedOut = pollenTimer.seconds() >= ScoreCommand.SPINUP_TIMEOUT_S;
+                if (timedOut && !robot.pollenShooter.isAtTarget()
+                        && !robot.pollenShooter.atLeastFractionOfTarget(MechanismConstants.SPINUP_MIN_FRACTION)) {
+                    // Never got near speed (a dead motor or encoder): the shots would fall short.
+                    robot.pollenGate.setClosed(true);
+                    volleysSkipped++;
+                    spinUpFailures++;
+                    pollenShooter = PollenState.IDLE;
+                    break;
+                }
+                boolean atSpeed = robot.pollenShooter.isAtTarget() || timedOut;
                 boolean barClear = pollenTimer.seconds() >= MechanismConstants.FLOWER_BAR_SETTLE_S;
                 if (atSpeed && barClear) {
                     if (Double.isNaN(readyAt)) readyAt = pollenTimer.seconds();
@@ -295,5 +306,10 @@ public class AutoMechanisms {
 
     public int volleysSkipped() {
         return volleysSkipped;
+    }
+
+    /** Volleys skipped because the flywheel never got near its speed (counted in volleysSkipped too). */
+    public int spinUpFailures() {
+        return spinUpFailures;
     }
 }

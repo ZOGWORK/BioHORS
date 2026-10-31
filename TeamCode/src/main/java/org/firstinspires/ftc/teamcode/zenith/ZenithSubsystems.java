@@ -33,9 +33,35 @@ public final class ZenithSubsystems {
             return follower;
         }
 
+        private org.firstinspires.ftc.teamcode.auto.PinpointWatchdog watchdog;
+        private Runnable stopMotors;
+        private boolean halted;
+
+        /**
+         * Halts the drive for the rest of the auto once the watchdog trips (odometry lost): the
+         * follower stops and is no longer updated, and the drive motors are held at zero.
+         */
+        public void watch(org.firstinspires.ftc.teamcode.auto.PinpointWatchdog watchdog, Runnable stopMotors) {
+            this.watchdog = watchdog;
+            this.stopMotors = stopMotors;
+        }
+
+        /** True once the watchdog has halted the drive. */
+        public boolean halted() {
+            return halted;
+        }
+
         /** The follower updates once per loop, here: the SolversLib scheduler calls periodic every loop. */
         @Override
         public void periodic() {
+            if (watchdog != null && watchdog.update()) {
+                if (!halted) {
+                    halted = true;
+                    follower.stop();
+                }
+                stopMotors.run();
+                return;
+            }
             follower.update();
         }
 
@@ -52,13 +78,23 @@ public final class ZenithSubsystems {
         private final PollenEstimate pollen;
         private final ElapsedTime loop = new ElapsedTime();
         private boolean runningIn = false;
+        private java.util.function.BooleanSupplier halted = () -> false;
 
         public Intake(BioHorsRobot robot, PollenEstimate pollen) {
             this.robot = robot;
             this.pollen = pollen;
         }
 
+        /** Once this is true (the auto halted) no command can turn the intake on. */
+        public void haltWhen(java.util.function.BooleanSupplier halted) {
+            this.halted = halted;
+        }
+
         public void in() {
+            if (halted.getAsBoolean()) {
+                stop();
+                return;
+            }
             runningIn = true;
             robot.intake.intake();
         }
@@ -70,6 +106,10 @@ public final class ZenithSubsystems {
          */
         public void feed() {
             runningIn = false;
+            if (halted.getAsBoolean()) {
+                robot.intake.stop();
+                return;
+            }
             robot.intake.intake();
         }
 
@@ -113,12 +153,23 @@ public final class ZenithSubsystems {
     public static class Launcher extends SubsystemBase {
         private final BioHorsRobot robot;
 
+        private java.util.function.BooleanSupplier halted = () -> false;
+
         public Launcher(BioHorsRobot robot) {
             this.robot = robot;
             robot.pollenGate.setClosed(true);
         }
 
+        /**
+         * Once this is true (the auto halted) the shooters, the intake and the gates are held off
+         * every loop, and no command can turn them on again.
+         */
+        public void haltWhen(java.util.function.BooleanSupplier halted) {
+            this.halted = halted;
+        }
+
         public void spinUp() {
+            if (halted.getAsBoolean()) return;
             // The auto's speed for its scoring spots (MechanismConstants.AUTO_POLLEN_RPM), not teleop's.
             robot.pollenShooter.setTargetRpm(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_POLLEN_RPM);
             robot.pollenShooter.setShooterOn(true);
@@ -132,7 +183,26 @@ public final class ZenithSubsystems {
             return robot.pollenShooter.isShooterOn() && robot.pollenShooter.isAtTarget();
         }
 
+        /** Fast enough to fire after a spin-up timeout (MechanismConstants.SPINUP_MIN_FRACTION). */
+        public boolean nearSpeed() {
+            return robot.pollenShooter.atLeastFractionOfTarget(
+                    org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.SPINUP_MIN_FRACTION);
+        }
+
+        private int spinUpFailures;
+
+        /** A volley gave up: the flywheel never got near its speed. */
+        public void spinUpFailed() {
+            spinUpFailures++;
+        }
+
+        /** Volleys skipped this run because the flywheel never got near its speed. */
+        public int spinUpFailures() {
+            return spinUpFailures;
+        }
+
         public void openGate() {
+            if (halted.getAsBoolean()) return;
             robot.pollenGate.setClosed(false);
         }
 
@@ -153,7 +223,14 @@ public final class ZenithSubsystems {
         /** Both shooters' velocity loops run every loop (the nectar one stays off in auto). */
         @Override
         public void periodic() {
-            robot.updateMechanisms();
+            if (halted.getAsBoolean()) {
+                robot.pollenShooter.setShooterOn(false);
+                robot.nectarShooter.setShooterOn(false);
+                robot.pollenGate.setClosed(true);
+                robot.nectarGate.setClosed(true);
+                robot.intake.stop();
+            }
+            robot.updateMechanisms();   // with the shooters off this writes zero power
         }
     }
 }

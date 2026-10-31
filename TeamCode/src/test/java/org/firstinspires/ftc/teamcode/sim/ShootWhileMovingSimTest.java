@@ -95,7 +95,8 @@ class ShootWhileMovingSimTest {
         double[] gateAt = new double[260];
         OpModeRunResult result = run(sim, TELEOP, 200, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
-            g1.b = tick >= 2 && tick < 5;              // shooters off: only the aim can block
+            g1.dpad_down = tick >= 2 && tick < 5;      // shooters on (NO SHOOTER ON otherwise)
+            g1.b = tick >= 2 && tick < 5;              // spun up by tick 50: only the aim blocks there
             g1.left_trigger = tick >= 60 ? 1f : 0f;    // then aim
         }, (tick, s) -> gateAt[tick] = s.pollenGatePlant.getPosition());
 
@@ -111,16 +112,17 @@ class ShootWhileMovingSimTest {
     void anOpenGateClosesOnItsOwnWhenTheAimIsLost() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, -13.0, -63.0, Math.PI / 2.0);
-        double[] gateAt = new double[260];
-        OpModeRunResult result = run(sim, TELEOP, 200, (phase, tick, g1, g2) -> {
+        double[] gateAt = new double[400];
+        OpModeRunResult result = run(sim, TELEOP, 330, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_down = tick >= 2 && tick < 5;                    // shooters on
             g1.b = tick >= 2 && tick < 5;
-            g1.right_stick_x = tick >= 30 && tick < 60 ? 0.5f : 0f; // the driver turns away
-            g1.left_trigger = tick >= 80 ? 1f : 0f;                  // then aims back, B untouched
+            g1.right_stick_x = tick >= 160 && tick < 190 ? 0.5f : 0f; // the driver turns away
+            g1.left_trigger = tick >= 210 ? 1f : 0f;                  // then aims back, B untouched
         }, (tick, s) -> gateAt[tick] = s.pollenGatePlant.getPosition());
 
-        assertEquals(GATE_OPEN, gateAt[25], 0.02, "on target with the shooters off: open");
-        assertEquals(GATE_CLOSED, gateAt[75], 0.02, "turned away: closed on its own");
+        assertEquals(GATE_OPEN, gateAt[155], 0.02, "on target with the shooters at speed: open");
+        assertEquals(GATE_CLOSED, gateAt[205], 0.02, "turned away: closed on its own");
         assertTrue(anyLine(result, "Fire", "BLOCKED: AIM"), "telemetry should name the aim error");
         // The request still stands: back on target, the gate reopens with no second B press.
         assertEquals(GATE_OPEN, sim.pollenGatePlant.getPosition(), 0.02, "back on target: open again");
@@ -141,6 +143,7 @@ class ShootWhileMovingSimTest {
                     if (phase != OpModePhase.ACTIVE) return;
                     if (n[0]++ == 0) sim.pinpoint.forceFault(GoBildaPinpointDriver.DeviceStatus.FAULT_NO_PODS_DETECTED);
                     g1.b = tick >= 2 && tick < 5;
+                    g1.dpad_down = tick >= 2 && tick < 5;   // on (not idling), so the line shows the firing rpm
                 })
                 .eachTick(sim::step)
                 .run();
@@ -365,6 +368,7 @@ class ShootWhileMovingSimTest {
         sim.placeAt(x, y, h);
         OpMode.blackboard.put("biohors.alliance", "RED");
         OpMode.blackboard.put("biohors.pose", new double[] {x, y, h});
+        OpMode.blackboard.put("biohors.poseTimer", new org.horizon36596.simloop.sim.SimElapsedTime(new org.horizon36596.simloop.sim.FakeTimer())); // saved just now
     }
 
     private static OpModeRunResult run(BioHorsSim sim, String opMode, int activeTicks, GamepadScript gamepads,

@@ -147,6 +147,36 @@ at a pickup once, after it arrives, a fresh reading shows nothing new for `COLLE
 To check on the robot: run the intake in, empty, and read "Intake speed" in the auto's telemetry
 for `INTAKE_FREE_TICKS_PER_S`. `INTAKE_SENSOR_ENABLED = false` falls back to the time estimate.
 
+## 4d. Teleop intake jam reverse
+
+`IntakeJamGuard`: while right trigger pulls in, if both intake motors' average speed stays below
+`INTAKE_JAM_TICKS_PER_S` (700 ticks/s, PLACEHOLDER: a quarter of the free speed) for
+`INTAKE_JAM_DETECT_S` (0.25 s), the intake runs outward for `INTAKE_JAM_REVERSE_S` (0.3 s), then
+pulls in again. It waits `INTAKE_SENSE_SETTLE_S` after every start, so the spin-up is not a jam.
+Letting go of the trigger ends a reverse at once.
+
+The threshold must stay well below a FULL robot (2100 ticks/s, 4c), or a full hopper gets spat out.
+To set it: hold a pollen hard against the rollers, read "Intake speed" in the auto's telemetry, and
+put the threshold about halfway between that and 2100. Done when a real jam clears and a full
+robot held on the trigger never reverses.
+
+## 4e. Failsafe thresholds
+
+| Item | Current | Where | How | Done when |
+|---|---|---|---|---|
+| Auto spin-up minimum | 80 % of target at the timeout | `MechanismConstants.SPINUP_MIN_FRACTION` | Film shots at 80 % speed | Shots at that speed still score, or raise it |
+| Shooter encoder check | pushed at >= 0.3 power, < 50 rpm for 0.5 s | `SHOOTER_ENCODER_CHECK_POWER`, `_DEAD_RPM`, `_DEAD_S` | Time a cold spin-up to 50 rpm | `_DEAD_S` well above it; no false `ENCODER?` all practice |
+| Pinpoint watchdog | 5 loops not READY, or never READY 1 s after PLAY | `auto/PinpointWatchdog` | Unplug the Pinpoint mid-route on blocks (wheels off the floor) | The drive stops, `AUTO HALTED` shows |
+| Low battery | under 11.5 V for 1 s | `utilities/LowBatteryWarning` | Note the voltage at which shots start falling short | The warning shows before that |
+| Teleop / endgame length | 120 s / 30 s, last warning at 10 s | `utilities/EndgameAlerts` | Check the BIOBUZZ game manual | Matches the manual |
+| Auto pose handoff | used if saved < 60 s ago | `aim/PoseHandoff.MAX_POSE_AGE_S` | Time a real auto-to-teleop transition | Comfortably above it |
+| Idle flywheel speed | 800 rpm, on | `MechanismConstants.SHOOTER_IDLE_RPM`, `SHOOTER_IDLE_ENABLED` | Time spin-up from idle vs from rest; watch the battery | Spin-up clearly shorter, battery fine |
+| Forgotten gate request | dropped after 3 s idle | `MainHorsTeleOp.REQUEST_IDLE_S` | Drive practice | Never drops a request the driver still wanted |
+| Slow loop warning | average over 40 ms | `MainHorsTeleOp.SLOW_LOOP_MS` | Read the Loop line on the robot | Normal loops sit well under it |
+| Pose sanity | 6 in past a wall, or a jump over 1.5 x top speed x dt + 3 in | `aim/PoseSanity` | Drive flat out and spin hard in practice | Never trips on real driving |
+| Pre-match battery | 12.5 V or more | `utilities/PreMatchCheck.MIN_START_V` | Read fresh batteries | Fresh ones pass, used ones fail |
+| Late cutoffs (state machine auto) | leave garden by 20.5 s, skip last volley from 25.2 s | `TwoTipStateMachineAuto.LEAVE_GARDEN_BY_S`, `SKIP_LAST_VOLLEY_AFTER_S` | Check if BIOBUZZ scores parking; time the real route | Set from the real timings |
+
 ## 5. Auto timing and the pollen estimate
 
 | Item | Current | Where | How | Done when |

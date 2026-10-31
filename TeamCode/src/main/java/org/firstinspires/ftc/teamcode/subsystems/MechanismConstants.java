@@ -151,6 +151,42 @@ public final class MechanismConstants {
     public static double INTAKE_SENSE_SETTLE_S = 0.4;           // PLACEHOLDER: ignore the spin-up after starting
     public static double INTAKE_SENSE_DEBOUNCE_S = 0.15;        // CARRIED OVER: MAINHORS26's SPEED_STABLE_HOLD_SECONDS
     public static double INTAKE_SENSE_FILTER_ALPHA = 0.3;       // PLACEHOLDER: speed smoothing per loop
+    // ===== Teleop idle flywheel speed =====
+    /** Between volleys the teleop keeps both flywheels turning slowly, so aiming spins them up
+     *  sooner. false: they stop, as before. Idle never counts as ON for the fire interlock. */
+    public static boolean SHOOTER_IDLE_ENABLED = true;
+    /** The idle speed, flywheel rpm. PLACEHOLDER: about half the firing speed; NEEDS MEASUREMENT
+     *  (time the spin-up from idle; lower it if the battery suffers). */
+    public static double SHOOTER_IDLE_RPM = 800.0;
+
+    // ===== Shooter encoder check (ShooterController) =====
+    /** Only judged while the motor is given at least this power. SET BY HAND: well above the
+     *  ~0.27 a 1600 rpm target needs at full speed, so only a hard push counts. */
+    public static double SHOOTER_ENCODER_CHECK_POWER = 0.3;
+    /** Below this reading, rpm, the encoder counts as silent. SET BY HAND: a turning flywheel reads
+     *  hundreds of rpm within a fraction of a second. */
+    public static double SHOOTER_ENCODER_DEAD_RPM = 50.0;
+    /** Silent for this long while pushed, seconds, means dead. PLACEHOLDER: NEEDS MEASUREMENT (time a
+     *  cold spin-up to 50 rpm on the robot; this must be well above it). */
+    public static double SHOOTER_ENCODER_DEAD_S = 0.5;
+
+    // ===== Auto spin-up check =====
+    /** At the spin-up timeout, the auto fires only if the pollen flywheel has reached at least this
+     *  fraction of its target; below it (a dead motor or encoder) the volley is skipped and the pollen
+     *  stay aboard. PLACEHOLDER: NEEDS MEASUREMENT (film a shot at 80 % speed: does it still score?). */
+    public static double SPINUP_MIN_FRACTION = 0.8;
+
+    // ===== Teleop intake jam reverse (IntakeJamGuard) =====
+    // A jam is the intake held inward but nearly stopped: far slower than a FULL robot
+    // (INTAKE_LOADED_TICKS_PER_S), so a full hopper is never read as a jam.
+    /** Below this average intake speed, ticks/s, the intake counts as stalled. PLACEHOLDER: a quarter of
+     *  the free speed. NEEDS MEASUREMENT: hold a pollen against the rollers and read "Intake speed". */
+    public static double INTAKE_JAM_TICKS_PER_S = 700.0;
+    /** The stall must last this long before the intake reverses, seconds. PLACEHOLDER. */
+    public static double INTAKE_JAM_DETECT_S = 0.25;
+    /** How long a jam reverse runs before pulling in again, seconds. PLACEHOLDER. */
+    public static double INTAKE_JAM_REVERSE_S = 0.3;
+
     /** In auto, stop waiting for more pollen once none has come in for this long. PLACEHOLDER. */
     public static double COLLECT_NO_PROGRESS_S = 0.5;
 

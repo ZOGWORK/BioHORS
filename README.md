@@ -45,21 +45,48 @@ Shooter/gate names, directions, and tuning values live in
 |---|---|
 | Left stick | Drive (forward / strafe) |
 | Right stick X | Turn (overridden while aiming) |
-| Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field |
+| Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field, and spin both shooters up (no dpad down needed; a volley under way keeps them up after you let go) |
 | Right bumper (hold) | Slow mode, 0.45x |
-| Right trigger | Intake in |
+| Right trigger | Intake in (a stalled intake reverses for 0.3 s on its own; the Fire line says `INTAKE JAM`) |
 | Y (hold) | Outtake |
-| Dpad down | Toggle both shooters on/off, each at its own target (start OFF) |
+| Dpad down | Toggle both shooters on/off, each at its own target (start OFF), to keep them spinning without aiming |
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
 | Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
-| B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target and every switched-on shooter is at speed (telemetry names what blocks) |
+| B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target, at least one shooter is on and every switched-on shooter is at speed (telemetry names what blocks) |
 | X | **Reset the pose** (wipes Pinpoint drift): back the robot flat against your alliance's wall at the park spot by the loading zone, intake facing the field, then press X |
 | Dpad up | Flower bar down / stowed |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
-alliance and final pose are picked up automatically (the SDK blackboard); if not, the teleop
-assumes it starts at the auto's park spot (back to the west wall by the loading zone, intake
-facing the field; mirrored for BLUE).
+alliance and final pose are picked up automatically (the SDK blackboard), once, and only if the
+auto saved the pose under a minute ago; if not, the teleop assumes it starts at the auto's park
+spot (back to the west wall by the loading zone, intake facing the field; mirrored for BLUE), and
+INIT telemetry says why.
+
+**Driving display, extras on the Fire line:** `INTAKE JAM: reversing`, `LOW BATTERY 11.2 V` (under
+11.5 V for a second), and `ENDGAME n s` counting down the last 30 s. The gamepads rumble three
+short blips as the endgame starts and once, long, 10 s before the end. A shooter whose encoder
+reads nothing while it is pushed shows `ENCODER? (no speed reading)` and runs on its feedforward
+alone instead of winding up to full power; the gates stay shut for it. A backwards encoder
+(negative rpm while pushed forward) shows `ENCODER REVERSED?` and is handled the same way. Also on
+the Fire line: `SLOW LOOP n ms` when the loop averages over 40 ms, and `B request dropped` when a
+gate request has waited 3 s with no volley, no aim and no spin-up (so a forgotten B cannot fire the
+moment the robot faces the hive). A pose off the field or one that jumped further than the robot can
+drive in a loop is `INVALID` (aim off, gates shut) until X resets it.
+
+**Idle and trims:** with neither dpad down nor aim asking for them, both flywheels idle at 800 rpm
+(`IDLE`), so a spin-up starts part way; idle never counts as ready to fire. The rpm trims carry over
+to the next teleop; press back during INIT to clear them.
+
+**INIT check (teleop and both autos):** a pass/fail list before PLAY: Pinpoint READY, battery at
+12.5 V or more, both shooter encoders at rest; the teleop adds whether an auto pose is waiting.
+
+**Failsafes in the autos:** if the Pinpoint stops reporting READY mid-route (5 loops), or is not
+READY 1 s after PLAY, the auto halts: drive stopped, mechanisms off, gates shut (`AUTO HALTED`).
+At the spin-up timeout a volley fires only if the flywheel is at 80 % of its target or more;
+otherwise it is skipped with the pollen kept (`SHOOTER never reached speed`). The hand-written
+state machine auto also watches the clock: still at the garden at 20.5 s it leaves with what it has,
+and reaching the last volley at 25.2 s or later it skips the volley and parks (`LATE`). The Zenith
+auto runs its steps in a fixed order, so it has no such cutoff.
 
 **Aim.** No camera and no turret: holding the left trigger turns the whole chassis to face the
 hive cell on the robot's half of the field (north cell when y > 0, south when y < 0, with 2 in of

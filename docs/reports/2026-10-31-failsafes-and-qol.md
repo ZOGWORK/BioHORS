@@ -1,0 +1,90 @@
+# Failsafes and quality-of-life: report (2026-10-31)
+
+Everything is on branch `main-budt66`, in **PR #38** (not merged). All 196 TeamCode tests pass
+(4 skipped, as before). Every new feature has a test, and for each one I broke the code on purpose
+to check that its test goes red (36 breaks in total), then put it back.
+
+Greptile's second review (2/5) found three real bugs in this work, all now fixed and tested:
+- **State machine auto:** on a Pinpoint halt, the shooters kept their power.
+- **Zenith auto:** on a halt, later steps could still turn the intake on.
+- **Pose check:** driving through a Pinpoint dropout was wrongly read as a jump.
+
+A third review has been requested.
+
+## What the drivers will notice
+
+| Change | What it does |
+|---|---|
+| **Aim spins the shooters up** | Holding left trigger turns both shooters on; no dpad down needed. They stay on while B's request stands. |
+| **Idle flywheels** | Nobody asking for the shooters: both turn at 800 rpm (`IDLE` on the display), so spin-up is shorter. Idle never counts as ready to fire. Turn it off with `SHOOTER_IDLE_ENABLED = false`. |
+| **Gates need a shooter on** | B with both shooters off (or idling) no longer opens the gates: `NO SHOOTER ON`. |
+| **Forgotten B is dropped** | A gate request with no volley, no aim and no spin-up for 3 s is cancelled (`B request dropped`), so it can't fire later when the robot happens to face the hive. |
+| **Intake jam reverse** | A stalled intake (while right trigger pulls in) runs outward for 0.3 s, then pulls in again: `INTAKE JAM`. |
+| **Endgame** | Three short rumbles when the endgame starts, one long rumble 10 s before the end, and `ENDGAME n s` counting down on the Fire line. |
+| **Low battery** | `LOW BATTERY 11.2 V` on the Fire line after 1 s under 11.5 V. |
+| **Slow loop** | `SLOW LOOP n ms` when the loop averages over 40 ms. |
+| **Bad pose** | A pose off the field, or one that jumped further than the robot can drive, is `INVALID` (aim off, gates shut) until **X** resets it. |
+| **Shooter encoder faults** | A dead encoder (`ENCODER?`) or a backwards one (`ENCODER REVERSED?`) is caught. That shooter then runs on its feedforward alone instead of going to full power. The gates stay shut for it. |
+| **Trims carry over** | The rpm trims stay for the next teleop. Press **back** during INIT to clear them. |
+| **INIT check** | Before PLAY (teleop and both autos): Pinpoint READY, battery at 12.5 V or more, shooter encoders at rest; the teleop also says if an auto pose is waiting. |
+| **Auto pose** | The teleop uses the auto's final pose only if it was saved less than 60 s ago, and only once. INIT says when an old one was ignored. |
+
+The driving display is still five lines. Everything new goes on the end of the Fire line.
+
+## Auto failsafes
+
+- **Pinpoint lost:** both autos stop the drive for the rest of AUTO if the Pinpoint isn't READY for
+  5 loops after being READY, or isn't READY 1 s after PLAY. Mechanisms stop and the gates stay shut
+  (`AUTO HALTED`), and no later step can turn them back on. This is the "keep halting" choice you
+  made.
+- **Failed spin-up:** at the spin-up timeout a volley fires only if the flywheel is at 80 % of its
+  target or more. Otherwise it is skipped and the pollen kept.
+- **Running late (hand-written state machine auto only):** still at the garden at 20.5 s, it leaves
+  with what it has. Reaching the last volley at 25.2 s or later, it skips the volley and parks. The
+  Zenith auto runs its steps in a fixed order, so it has no cutoff. Adding one means changing its
+  step list in Zenith.
+
+## Needs the real robot
+
+Every new number is labelled in the code, and `docs/TUNING.md` sections 4d and 4e say how to
+measure each one. The ones that matter most:
+
+1. **Intake jam threshold** (700 ticks/s). Hold a pollen against the rollers and read the speed.
+   If the threshold ends up too close to a full robot's 2100, a full hopper gets spat out.
+2. **Spin-up minimum** (80 %). Film shots at 80 % speed: do they still score?
+3. **Idle speed** (800 rpm). Time a spin-up from idle and watch the battery.
+4. **Teleop and endgame length** (120 s / 30 s). Check the BIOBUZZ game manual.
+5. **Late cutoffs** (20.5 s / 25.2 s, from the sim). Check whether parking scores in BIOBUZZ, and
+   reset them from the real route's timing.
+6. **Encoder check** (0.5 s). Time a cold spin-up to 50 rpm; the check must be well above it.
+
+## Still open: your questions
+
+- **Pinpoint fallback using a hub gyro.** Not built yet. You said to use the older Expansion Hub's
+  built-in gyro. I need:
+  1. Which hub's IMU to use, and its name in the Robot Controller config. The SDK default is `imu`.
+  2. Which way that hub's logo and USB port face. You gave logo left, USB up for the Control Hub.
+  3. Whether the four drive motors' encoder cables are plugged in. The gyro gives heading only.
+     Aiming also needs position, which would have to come from the drive wheels.
+  With 1 and 2 alone, the fallback can only give heading. Aim would stay off.
+- **Rumbles:** the sim's gamepads don't record rumble, so the rumble calls are untested. The
+  timing logic is tested, and the endgame countdown on the Fire line is tested in the sim.
+- **PR description footer:** GitHub's tool added a "Generated by Claude Code" line to the end of
+  PR #38's description. Delete it in the GitHub editor if you want none.
+
+## Code layout
+
+- New package `utilities/`: `EndgameAlerts`, `LowBatteryWarning`, `PreMatchCheck`.
+- `aim/PoseSanity`, `auto/PinpointWatchdog`, `subsystems/IntakeJamGuard`.
+- Changed: `teleop/MainHorsTeleOp`, `aim/FireGate`, `aim/PoseHandoff`,
+  `subsystems/ShooterController`, `auto/AutoMechanisms`, `auto/TwoTipStateMachineAuto`,
+  `zenith/ScoreCommand`, `zenith/ZenithSubsystems`, `zenith/BioHorsZenithRobot`,
+  `robot/BioHorsRobot`, `subsystems/MechanismConstants`.
+- Tests that relied on the old behaviour were updated, and each update is commented: the shooters
+  now idle instead of stopping, and the gates need a shooter on.
+
+## Next steps
+
+1. Read PR #38. Greptile reviews each push; I'll fix what it raises until it scores 5/5.
+2. Merge when you're happy. I won't merge without you.
+3. Answer the gyro questions above, and I'll build the fallback.

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
 import org.firstinspires.ftc.teamcode.sim.BioHorsSim;
+import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,16 +23,22 @@ import org.junit.jupiter.params.provider.ValueSource;
 class ScoreCommandEstimateTest {
 
     private double spinup;
+    private double minFraction;
 
     @BeforeEach
     void shortenSpinUp() {
         spinup = ScoreCommand.SPINUP_TIMEOUT_S;
         ScoreCommand.SPINUP_TIMEOUT_S = 0.01;
+        // The flywheel never spins here: let any speed fire at the timeout (ScoreCommandSpinUpTest
+        // covers the check).
+        minFraction = MechanismConstants.SPINUP_MIN_FRACTION;
+        MechanismConstants.SPINUP_MIN_FRACTION = 0.0;
     }
 
     @AfterEach
     void restoreSpinUp() {
         ScoreCommand.SPINUP_TIMEOUT_S = spinup;
+        MechanismConstants.SPINUP_MIN_FRACTION = minFraction;
     }
 
     @ParameterizedTest
