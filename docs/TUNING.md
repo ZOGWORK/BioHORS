@@ -170,7 +170,7 @@ robot held on the trigger never reverses.
 | Low battery | under 11.5 V for 1 s | `utilities/LowBatteryWarning` | Note the voltage at which shots start falling short | The warning shows before that |
 | Teleop / endgame length | 120 s / 30 s, last warning at 10 s | `utilities/EndgameAlerts` | Check the BIOBUZZ game manual | Matches the manual |
 | Auto pose handoff | used if saved < 60 s ago | `aim/PoseHandoff.MAX_POSE_AGE_S` | Time a real auto-to-teleop transition | Comfortably above it |
-| Idle flywheel speed | 800 rpm, on | `MechanismConstants.SHOOTER_IDLE_RPM`, `SHOOTER_IDLE_ENABLED` | Time spin-up from idle vs from rest; watch the battery | Spin-up clearly shorter, battery fine |
+| Idle flywheel speed | 800 rpm, OFF for now | `MechanismConstants.SHOOTER_IDLE_RPM`, `SHOOTER_IDLE_ENABLED` | Time spin-up from idle vs from rest; watch the battery | Spin-up clearly shorter, battery fine |
 | Forgotten gate request | dropped after 3 s idle | `MainHorsTeleOp.REQUEST_IDLE_S` | Drive practice | Never drops a request the driver still wanted |
 | Slow loop warning | average over 40 ms | `MainHorsTeleOp.SLOW_LOOP_MS` | Read the Loop line on the robot | Normal loops sit well under it |
 | Pose sanity | 6 in past a wall, or a jump over 1.5 x top speed x dt + 3 in | `aim/PoseSanity` | Drive flat out and spin hard in practice | Never trips on real driving |

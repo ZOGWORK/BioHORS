@@ -348,21 +348,31 @@ class MainHorsTeleOpSimTest {
 
     @Test
     void shootersStartOffAndGatesStartClosed() {
-        BioHorsSim sim = new BioHorsSim();
-        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
-        double[] power = new double[2];
-        runWatching(sim, 50, GamepadScript.NONE, tick -> {
-            if (tick == 45) {
-                power[0] = sim.pollenShooter.getPower();
-                power[1] = sim.nectarShooter.getPower();
+        // Idle is off by default (MechanismConstants.SHOOTER_IDLE_ENABLED): unasked, the shooters
+        // stand still. With idle switched on they turn slowly instead.
+        for (boolean idleOn : new boolean[] {false, true}) {
+            BioHorsSim sim = new BioHorsSim();
+            startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+            if (idleOn) OpMode.blackboard.put(ConfiguredTeleOp.SHOOTER_IDLE, true);
+            double[] power = new double[2];
+            runWatching(idleOn ? ConfiguredTeleOp.CLASS : TELEOP, sim, 50, GamepadScript.NONE, tick -> {
+                if (tick == 45) {
+                    power[0] = sim.pollenShooter.getPower();
+                    power[1] = sim.nectarShooter.getPower();
+                }
+            });
+            if (idleOn) {
+                assertTrue(power[0] > 0.0, "idle on: pollen idles, not stopped");
+                assertIdlePower(power[0], "pollen at idle");
+                assertIdlePower(power[1], "nectar at idle");
+            } else {
+                assertEquals(0.0, power[0], 1e-9, "idle off: pollen stopped");
+                assertEquals(0.0, power[1], 1e-9, "idle off: nectar stopped");
             }
-        });
-        // No one has asked for the shooters: they idle (MechanismConstants.SHOOTER_IDLE_RPM).
-        assertTrue(power[0] > 0.0, "pollen idles, not stopped");
-        assertIdlePower(power[0], "pollen at idle");
-        assertIdlePower(power[1], "nectar at idle");
-        assertEquals(0.485, sim.pollenGatePlant.getPosition(), 0.02, "pollen gate closed");
-        assertEquals(0.485, sim.nectarGatePlant.getPosition(), 0.02, "nectar gate closed");
+            assertEquals(0.485, sim.pollenGatePlant.getPosition(), 0.02, "pollen gate closed");
+            assertEquals(0.485, sim.nectarGatePlant.getPosition(), 0.02, "nectar gate closed");
+            OpMode.blackboard.clear();
+        }
     }
 
     @Test
@@ -463,7 +473,7 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
-    void rightTriggerIntakesAndYOuttakes() {
+    void rightTriggerIntakesAndYNoLongerOuttakes() {
         // Powers are sampled during the run: at STOP the teleop rightly turns everything off.
         BioHorsSim in = new BioHorsSim();
         startAt(in, "RED", -13.0, -63.0, Math.PI / 2.0);
@@ -479,8 +489,9 @@ class MainHorsTeleOpSimTest {
         double[] outPower = sampleIntake(out, (phase, tick, g1, g2) -> {
             if (phase == OpModePhase.ACTIVE) g2.y = true; // operator mirror
         });
-        assertEquals(-1.0, outPower[0], 1e-9, "Y runs intakeLeft out");
-        assertEquals(-1.0, outPower[1], 1e-9, "Y runs intakeRight out");
+        // Y is the volley now: it may feed inward through open gates, but never runs the intake out.
+        assertTrue(outPower[0] >= 0.0, "Y never runs intakeLeft out: " + outPower[0]);
+        assertTrue(outPower[1] >= 0.0, "Y never runs intakeRight out: " + outPower[1]);
     }
 
     // ------------------------------------------------------------------ pose handoff
@@ -890,7 +901,8 @@ class MainHorsTeleOpSimTest {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);   // on target
         double[] gate = {Double.NaN};
-        OpModeRunResult result = runWatching(sim, 250, (phase, tick, g1, g2) -> {
+        OpMode.blackboard.put(ConfiguredTeleOp.SHOOTER_IDLE, true);   // idle is off by default
+        OpModeRunResult result = runWatching(ConfiguredTeleOp.CLASS, sim, 250, (phase, tick, g1, g2) -> {
             if (phase == OpModePhase.ACTIVE) g1.b = tick >= 150 && tick < 153;   // idle reached long since
         }, tick -> {
             if (tick == 200) gate[0] = sim.pollenGatePlant.getPosition();
@@ -941,6 +953,166 @@ class MainHorsTeleOpSimTest {
             assertEquals(1.0, powerAtEnd[0], 1e-9, (jam ? "jam cleared" : "free") + ": pulling in at the end");
             OpMode.blackboard.clear();
         }
+    }
+
+    // ------------------------------------------------------------------ Y volley
+
+    /** What one teleop run did, tick by tick, as the robot commanded it (servo targets, motor powers). */
+    static final class VolleyTrace {
+        int pollenOpenTicks, nectarOpenTicks;
+        int firstOpenTick = -1;
+        int lastOpenTick = -1;
+        int fedTicks;                  // intake at INTAKE_POWER
+        boolean fedWhileShut;          // intake pushing with both gates shut, during the volley
+        boolean intakeDuringSpinUp;    // intake running before any gate opened
+        boolean openedWhileSlow;       // a gate commanded open while a flywheel's TRUE speed was far off
+        boolean ySeqShown;
+        double pollenPowerLate = Double.NaN;
+        boolean pollenGateLate, nectarGateLate;
+    }
+
+    private static boolean commandedOpen(org.horizon36596.simloop.fakehardware.FakeServo gate, double openPos) {
+        return Math.abs(gate.getPosition() - openPos) < 1e-9;
+    }
+
+    private static VolleyTrace volleyRun(BioHorsSim sim, int activeTicks, int lateTick, GamepadScript gamepads) {
+        return volleyRun(sim, activeTicks, lateTick, false, gamepads);
+    }
+
+    /** Runs the teleop with {@code gamepads}; samples the end state at {@code lateTick}. With
+     *  {@code pollenDead} the pollen flywheel's speed is not judged (its encoder is dead on purpose). */
+    private static VolleyTrace volleyRun(BioHorsSim sim, int activeTicks, int lateTick, boolean pollenDead,
+                                         GamepadScript gamepads) {
+        VolleyTrace t = new VolleyTrace();
+        OpModeRunResult result = runWatching(sim, activeTicks, gamepads, tick -> {
+            boolean p = commandedOpen(sim.pollenGate, MechanismConstants.POLLEN_GATE_OPEN);
+            boolean n = commandedOpen(sim.nectarGate, MechanismConstants.NECTAR_GATE_OPEN);
+            if (p) t.pollenOpenTicks++;
+            if (n) t.nectarOpenTicks++;
+            if ((p || n) && t.firstOpenTick < 0) t.firstOpenTick = tick;
+            if (p || n) t.lastOpenTick = tick;
+            double intake = sim.intakeLeft.getPower();
+            if (intake == 1.0) t.fedTicks++;
+            if (t.firstOpenTick < 0 && intake != 0.0) t.intakeDuringSpinUp = true;
+            boolean slow = (!pollenDead && Math.abs(sim.pollenShooterRpm() - 1600.0) > 150.0)
+                    || Math.abs(sim.nectarShooterRpm() - 1600.0) > 150.0;
+            if ((p || n) && slow) t.openedWhileSlow = true;
+            if (tick == lateTick) {
+                t.pollenPowerLate = sim.pollenShooter.getPower();
+                t.pollenGateLate = p;
+                t.nectarGateLate = n;
+            }
+        });
+        for (List<String> sent : result.telemetry().transmissions()) {
+            t.ySeqShown |= lineIn(sent, "Fire").contains("Y SEQ");
+        }
+        return t;
+    }
+
+    @Test
+    void yFromIdleSpinsUpThenFiresOneWindowAndGoesBackToIdle() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);   // facing the south cell
+        VolleyTrace t = volleyRun(sim, 300, 290, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.y = tick >= 5 && tick < 7;
+            g1.right_trigger = tick >= 5 && tick < 30 ? 1f : 0f;   // locked out: must not feed the spin-up
+        });
+        assertTrue(t.firstOpenTick > 0, "the volley opened the gates");
+        assertFalse(t.openedWhileSlow, "never open while a flywheel is off its speed");
+        // Open only inside one fire window, and for most of it: the interlock may still shut the gates
+        // for a few ticks (the spin-up overshoots the rpm tolerance just after it arrives).
+        double windowS = org.firstinspires.ftc.teamcode.teleop.VolleySequence.FIRE_WINDOW_S;
+        assertTrue((t.lastOpenTick - t.firstOpenTick + 1) * TICK_S <= windowS + TICK_S,
+                "all the open ticks inside one window: ticks " + t.firstOpenTick + ".." + t.lastOpenTick);
+        assertTrue(t.pollenOpenTicks * TICK_S >= 0.8 * windowS, "open for most of the window: " + t.pollenOpenTicks + " ticks");
+        assertEquals(t.pollenOpenTicks, t.nectarOpenTicks, "both gates together");
+        assertEquals(t.pollenOpenTicks, t.fedTicks, 1, "the intake feeds exactly while the gates are open");
+        assertFalse(t.intakeDuringSpinUp, "the right trigger is locked out during the volley");
+        assertTrue(t.ySeqShown, "the Fire line says Y SEQ");
+        assertFalse(t.pollenGateLate, "gates shut after the window");
+        assertIdlePower(t.pollenPowerLate, "no dpad down before: the shooters go back to off (or idle)");
+    }
+
+    @Test
+    void theVolleyNeverOpensAGateTheInterlockBlocks() {
+        // Off target: the window comes and goes with the gates shut.
+        BioHorsSim off = new BioHorsSim();
+        startAt(off, "RED", -40.0, -40.0, 0.0);   // facing +X, about 45 deg off the south cell
+        VolleyTrace offT = volleyRun(off, 250, 245, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.y = tick >= 5 && tick < 7;
+        });
+        assertEquals(0, offT.pollenOpenTicks + offT.nectarOpenTicks, "aim off: no gate ever opens");
+        assertEquals(0, offT.fedTicks, "and nothing is fed against shut gates");
+        assertTrue(offT.ySeqShown);
+        OpMode.blackboard.clear();
+
+        // Pose invalid.
+        BioHorsSim lost = new BioHorsSim();
+        startAt(lost, "RED", -13.0, -63.0, Math.PI / 2.0);
+        boolean[] faulted = {false};
+        VolleyTrace lostT = volleyRun(lost, 250, 245, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            if (!faulted[0]) {
+                lost.pinpoint.forceFault(GoBildaPinpointDriver.DeviceStatus.FAULT_NO_PODS_DETECTED);
+                faulted[0] = true;
+            }
+            g1.y = tick >= 5 && tick < 7;
+        });
+        assertEquals(0, lostT.pollenOpenTicks + lostT.nectarOpenTicks, "pose invalid: no gate ever opens");
+    }
+
+    @Test
+    void aSecondYCancelsTheVolley() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        VolleyTrace t = volleyRun(sim, 200, 190, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.y = tick == 5 || tick == 8;   // press, release, press
+        });
+        assertEquals(0, t.pollenOpenTicks + t.nectarOpenTicks, "cancelled during spin-up: never fires");
+        assertIdlePower(t.pollenPowerLate, "cancelled: back to off (or idle)");
+    }
+
+    @Test
+    void bIsIgnoredDuringTheVolleyAndDpadShootersStayOnAfter() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        VolleyTrace t = volleyRun(sim, 260, 250, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_down = tick >= 2 && tick < 5;    // shooters on, at speed long before the volley
+            g1.y = tick >= 150 && tick < 152;
+            g1.b = tick >= 160 && tick < 163;        // inside the window: must not become a request
+        });
+        assertTrue(t.firstOpenTick >= 150, "the volley fired: " + t.firstOpenTick);
+        assertFalse(t.pollenGateLate, "after the window the gates shut: B during the volley was ignored");
+        assertTrue(t.pollenPowerLate > 0.2, String.format(
+                "dpad down had them on before: still spinning at the firing target (power %.2f)", t.pollenPowerLate));
+    }
+
+    @Test
+    void aStandingBRequestSurvivesTheVolleyEnding() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        VolleyTrace t = volleyRun(sim, 260, 250, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.dpad_down = tick >= 2 && tick < 5;
+            g1.b = tick >= 140 && tick < 143;        // the driver's own request: gates open
+            g1.y = tick >= 150 && tick < 152;        // a volley on top, ends about tick 200
+        });
+        assertTrue(t.pollenGateLate && t.nectarGateLate, "the driver's B request still holds the gates open");
+    }
+
+    @Test
+    void withADeadPollenEncoderTheVolleyFiresNectarOnly() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        sim.pollenShooter.setMeasuredShaftSpeedFraction(0.0);
+        VolleyTrace t = volleyRun(sim, 250, 245, true, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.y = tick >= 5 && tick < 7;
+        });
+        assertEquals(0, t.pollenOpenTicks, "the faulted pollen gate never opens");
+        assertTrue(t.nectarOpenTicks > 0, "the healthy nectar shooter fires alone");
+        assertFalse(t.openedWhileSlow, "nectar only once it is at speed");
     }
 
     // ------------------------------------------------------------------ flower bar speed cap
@@ -1037,6 +1209,31 @@ class MainHorsTeleOpSimTest {
         assertEquals(1.0, power[1], 1e-9, "released and pulled again: intaking again");
     }
 
+    @Test
+    void aYVolleyDoesNotClearAJamGiveUpWhileTheTriggerIsHeld() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);   // on target, so the volley does fire
+        double[] power = {Double.NaN, Double.NaN};
+        boolean[] fedAfterGiveUp = {false};
+        OpModeRunResult result = runWatching(sim, 400, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.right_trigger = 1f;                  // held the whole time
+            g1.y = tick >= 235 && tick < 237;       // a volley after the guard has given up
+        }, tick -> {
+            if (tick == 40) {
+                sim.intakeLeft.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+                sim.intakeRight.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+            }
+            if (tick == 230) power[0] = sim.intakeLeft.getPower();
+            if (tick > 230 && sim.intakeLeft.getPower() != 0.0) fedAfterGiveUp[0] = true;
+            if (tick == 390) power[1] = sim.intakeLeft.getPower();
+        });
+        assertEquals(0.0, power[0], 1e-9, "given up before the volley");
+        assertFalse(fedAfterGiveUp[0], "neither the volley nor the held trigger restarts a given-up intake");
+        assertEquals(0.0, power[1], 1e-9, "still stopped after the volley");
+        assertTrue(line(result, "Fire").contains("INTAKE JAMMED: clear by hand"), line(result, "Fire"));
+    }
+
     // ------------------------------------------------------------------ X hold
 
     @Test
@@ -1127,8 +1324,8 @@ class MainHorsTeleOpSimTest {
 
         List<String> first = driving.get(0);
         assertEquals(DRIVING_CAPTIONS, captions(first), "first driving screen: " + first);
-        assertTrue(lineIn(first, "Pollen").endsWith(" rpm IDLE"), "shooters start idling: " + first);
-        assertTrue(lineIn(first, "Nectar").endsWith(" rpm IDLE"), "shooters start idling: " + first);
+        assertTrue(lineIn(first, "Pollen").endsWith(" rpm OFF"), "shooters start off (idle is off): " + first);
+        assertTrue(lineIn(first, "Nectar").endsWith(" rpm OFF"), "shooters start off (idle is off): " + first);
 
         boolean spinningUpShown = false;
         for (List<String> sent : driving) spinningUpShown |= lineIn(sent, "Pollen").endsWith(" rpm SPINNING UP");
