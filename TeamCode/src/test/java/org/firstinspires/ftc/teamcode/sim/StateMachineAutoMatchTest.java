@@ -136,6 +136,7 @@ class StateMachineAutoMatchTest {
         double[] before = new double[2], atFault = new double[2], settled = new double[2];
         double[] worstMoveAfterIn = {0.0};
         double[] worstDrivePower = {0.0};
+        double[] worstMechanismPower = {0.0};
         boolean[] gateOpened = {false};
         double half = TICK_S / 2;
         onTick = (sim, t) -> {
@@ -151,6 +152,12 @@ class StateMachineAutoMatchTest {
                     worstDrivePower[0] = Math.max(worstDrivePower[0], Math.abs(m.getPower()));
                 }
             }
+            // The mechanisms stop too: intake, both shooters (the pollen one spins between volleys).
+            if (t > FAULT_AT_S + 0.5) {
+                worstMechanismPower[0] = Math.max(worstMechanismPower[0], Math.max(
+                        Math.max(Math.abs(sim.intakeLeft.getPower()), Math.abs(sim.intakeRight.getPower())),
+                        Math.max(Math.abs(sim.pollenShooter.getPower()), Math.abs(sim.nectarShooter.getPower()))));
+            }
             if (Math.abs(t - (FAULT_AT_S + 1.0)) < half) { settled[0] = sim.drivePlant.getX(); settled[1] = sim.drivePlant.getY(); }
             if (t > FAULT_AT_S + 1.0) {
                 worstMoveAfterIn[0] = Math.max(worstMoveAfterIn[0],
@@ -165,6 +172,8 @@ class StateMachineAutoMatchTest {
         assertTrue(Math.hypot(atFault[0] - before[0], atFault[1] - before[1]) > 3.0,
                 "the robot should be driving when the Pinpoint faults (else this tests nothing)");
         assertEquals(0.0, worstDrivePower[0], 1e-9, "from 0.2 s after the fault the drive motors are off");
+        // (0.5 s in: the shooter's power smoothing takes a few loops to reach zero.)
+        assertEquals(0.0, worstMechanismPower[0], 1e-3, "from 0.5 s after the fault the intake and shooters are off");
         assertTrue(worstMoveAfterIn[0] < 0.1, String.format(Locale.ROOT,
                 "once it has coasted to rest the robot must stay put: moved %.2f in%n%s", worstMoveAfterIn[0], r.report));
         assertFalse(gateOpened[0], "no gate may open without a pose");

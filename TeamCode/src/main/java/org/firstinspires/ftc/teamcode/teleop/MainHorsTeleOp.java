@@ -266,7 +266,9 @@ public class MainHorsTeleOp extends LinearOpMode {
             double dt = loopTimer.seconds();
             loopTimer.reset();
             // Pinpoint READY and real numbers, and a pose the robot could really have.
-            if (poseUsable(pose)) poseSanity.check(pose.x(), pose.y(), dt);
+            // Judged on the time since the last pose it checked, not this loop's dt: travel while
+            // the pose was unusable is not a jump.
+            if (poseUsable(pose)) poseSanity.check(pose.x(), pose.y(), sincePlay.seconds());
             boolean poseOk = poseUsable(pose) && poseSanity.fault().isEmpty();
 
             // ----- Field velocity for the aim feedforward and lead: the Pinpoint's own, else the

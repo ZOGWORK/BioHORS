@@ -78,13 +78,23 @@ public final class ZenithSubsystems {
         private final PollenEstimate pollen;
         private final ElapsedTime loop = new ElapsedTime();
         private boolean runningIn = false;
+        private java.util.function.BooleanSupplier halted = () -> false;
 
         public Intake(BioHorsRobot robot, PollenEstimate pollen) {
             this.robot = robot;
             this.pollen = pollen;
         }
 
+        /** Once this is true (the auto halted) no command can turn the intake on. */
+        public void haltWhen(java.util.function.BooleanSupplier halted) {
+            this.halted = halted;
+        }
+
         public void in() {
+            if (halted.getAsBoolean()) {
+                stop();
+                return;
+            }
             runningIn = true;
             robot.intake.intake();
         }
@@ -96,6 +106,10 @@ public final class ZenithSubsystems {
          */
         public void feed() {
             runningIn = false;
+            if (halted.getAsBoolean()) {
+                robot.intake.stop();
+                return;
+            }
             robot.intake.intake();
         }
 
@@ -139,12 +153,23 @@ public final class ZenithSubsystems {
     public static class Launcher extends SubsystemBase {
         private final BioHorsRobot robot;
 
+        private java.util.function.BooleanSupplier halted = () -> false;
+
         public Launcher(BioHorsRobot robot) {
             this.robot = robot;
             robot.pollenGate.setClosed(true);
         }
 
+        /**
+         * Once this is true (the auto halted) the shooters, the intake and the gates are held off
+         * every loop, and no command can turn them on again.
+         */
+        public void haltWhen(java.util.function.BooleanSupplier halted) {
+            this.halted = halted;
+        }
+
         public void spinUp() {
+            if (halted.getAsBoolean()) return;
             // The auto's speed for its scoring spots (MechanismConstants.AUTO_POLLEN_RPM), not teleop's.
             robot.pollenShooter.setTargetRpm(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_POLLEN_RPM);
             robot.pollenShooter.setShooterOn(true);
@@ -177,6 +202,7 @@ public final class ZenithSubsystems {
         }
 
         public void openGate() {
+            if (halted.getAsBoolean()) return;
             robot.pollenGate.setClosed(false);
         }
 
@@ -197,7 +223,14 @@ public final class ZenithSubsystems {
         /** Both shooters' velocity loops run every loop (the nectar one stays off in auto). */
         @Override
         public void periodic() {
-            robot.updateMechanisms();
+            if (halted.getAsBoolean()) {
+                robot.pollenShooter.setShooterOn(false);
+                robot.nectarShooter.setShooterOn(false);
+                robot.pollenGate.setClosed(true);
+                robot.nectarGate.setClosed(true);
+                robot.intake.stop();
+            }
+            robot.updateMechanisms();   // with the shooters off this writes zero power
         }
     }
 }

@@ -163,7 +163,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 follower.stop();
                 mech.stopAll();
             }
-            robot.drive.stop();
+            // robot.stop() writes zero to the drive and intake and runs the shooter loops switched
+            // off; mech.update() (which would) is skipped while halted.
+            robot.stop();
             telemetry.addData("AUTO HALTED", watchdog.reason());
             telemetry.addData("State", "%s (halted, %.1f s total)", state, matchTimer.seconds());
             return;

@@ -55,6 +55,9 @@ public class BioHorsZenithRobot implements ZenithRobot {
         flowerBar = new ZenithSubsystems.FlowerBar(hardware);
         watchdog = new org.firstinspires.ftc.teamcode.auto.PinpointWatchdog(hardware::pinpointReady);
         drive.watch(watchdog, hardware.drive::stop);
+        // Halted: the mechanisms stop too, and later steps cannot turn them back on.
+        intake.haltWhen(watchdog::tripped);
+        launcher.haltWhen(watchdog::tripped);
     }
 
     @Override

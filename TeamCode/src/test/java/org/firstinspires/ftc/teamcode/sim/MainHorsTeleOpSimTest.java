@@ -753,6 +753,31 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
+    void drivingThroughAPinpointOutageIsNotAPoseJump() {
+        // The Pinpoint drops out for a second while the driver drives on by hand; when it comes back
+        // the pose has moved on by that second's driving. That is not a jump.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, -40.0, Math.PI / 2.0);   // facing +Y, room to drive north
+        boolean[] everJumped = {false};
+        double[] y = new double[2];
+        OpModeRunResult result = runWatching(sim, 150, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.left_stick_y = tick >= 20 && tick < 90 ? -0.6f : 0f;   // drive north through the outage
+            if (tick == 40) sim.pinpoint.forceFault(GoBildaPinpointDriver.DeviceStatus.FAULT_NO_PODS_DETECTED);
+            if (tick == 90) sim.pinpoint.clearFault();
+        }, tick -> {
+            if (tick == 40) y[0] = sim.drivePlant.getY();
+            if (tick == 90) y[1] = sim.drivePlant.getY();
+        });
+        for (List<String> sent : result.telemetry().transmissions()) {
+            everJumped[0] |= lineIn(sent, "Pose").contains("POSE JUMPED");
+        }
+        assertTrue(y[1] - y[0] > 10.0, "the robot really drove during the outage: " + (y[1] - y[0]) + " in");
+        assertFalse(everJumped[0], "driving through the outage must not read as a jump");
+        assertFalse(line(result, "Pose").contains("INVALID"), "valid again: " + line(result, "Pose"));
+    }
+
+    @Test
     void aSlowLoopIsShown() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);

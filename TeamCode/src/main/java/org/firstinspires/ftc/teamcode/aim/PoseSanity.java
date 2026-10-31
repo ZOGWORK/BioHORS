@@ -5,9 +5,11 @@ package org.firstinspires.ftc.teamcode.aim;
  * pose (a pod knocked loose, a glitch, a wrong reset), and the teleop would aim and fire on it.
  *
  * A pose fails when it is more than OFF_FIELD_MARGIN_IN outside the field, or when it moved further
- * in one loop than the robot can drive (top speed x dt x JUMP_SPEED_FACTOR + JUMP_MARGIN_IN). A
+ * since the last pose it checked than the robot can drive in that time (top speed x elapsed x
+ * JUMP_SPEED_FACTOR + JUMP_MARGIN_IN; elapsed counts any loops in between that it did not check, so
+ * driving while the pose was unusable is not a jump). A
  * failure is latched: the pose counts as invalid until {@link #reset()} (the teleop's X reset).
- * Field frame, inches. Pure logic: the teleop passes the pose and the loop's dt.
+ * Field frame, inches. Pure logic: the teleop passes the pose and a clock reading, seconds.
  */
 public class PoseSanity {
 
@@ -24,6 +26,7 @@ public class PoseSanity {
     private final double maxSpeedInPerS;
     private double lastX = Double.NaN;
     private double lastY = Double.NaN;
+    private double lastS = Double.NaN;
     private String fault = "";
 
     /** @param maxSpeedInPerS the robot's top speed, in/s */
@@ -31,19 +34,20 @@ public class PoseSanity {
         this.maxSpeedInPerS = maxSpeedInPerS;
     }
 
-    /** Once per loop with the pose and the loop's dt. Returns true while the pose is believable. */
-    public boolean check(double x, double y, double dtS) {
+    /** With each usable pose and the time now, seconds. Returns true while the pose is believable. */
+    public boolean check(double x, double y, double nowS) {
         if (!fault.isEmpty()) return false;
         if (!Double.isFinite(x) || !Double.isFinite(y)) return false; // not a number: not ours to latch
         double limit = FIELD_HALF_IN + OFF_FIELD_MARGIN_IN;
         if (Math.abs(x) > limit || Math.abs(y) > limit) {
             fault = "OFF FIELD";
-        } else if (Double.isFinite(lastX) && dtS > 0) {
+        } else if (Double.isFinite(lastX) && nowS > lastS) {
             double moved = Math.hypot(x - lastX, y - lastY);
-            if (moved > maxSpeedInPerS * dtS * JUMP_SPEED_FACTOR + JUMP_MARGIN_IN) fault = "POSE JUMPED";
+            if (moved > maxSpeedInPerS * (nowS - lastS) * JUMP_SPEED_FACTOR + JUMP_MARGIN_IN) fault = "POSE JUMPED";
         }
         lastX = x;
         lastY = y;
+        lastS = nowS;
         return fault.isEmpty();
     }
 
@@ -52,6 +56,7 @@ public class PoseSanity {
         fault = "";
         lastX = Double.NaN;
         lastY = Double.NaN;
+        lastS = Double.NaN;
     }
 
     /** Why the pose is not believed ("" if it is). */
