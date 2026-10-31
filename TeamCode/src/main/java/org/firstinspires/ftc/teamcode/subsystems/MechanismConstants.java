@@ -186,6 +186,8 @@ public final class MechanismConstants {
     public static double INTAKE_JAM_DETECT_S = 0.25;
     /** How long a jam reverse runs before pulling in again, seconds. PLACEHOLDER. */
     public static double INTAKE_JAM_REVERSE_S = 0.3;
+    /** Reverses in a row that do not clear a jam before the guard stops the intake. SET BY HAND. */
+    public static int INTAKE_JAM_GIVE_UP_REVERSES = 3;
 
     /** In auto, stop waiting for more pollen once none has come in for this long. PLACEHOLDER. */
     public static double COLLECT_NO_PROGRESS_S = 0.5;

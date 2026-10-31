@@ -18,13 +18,16 @@ public final class ConfiguredTeleOp extends MainHorsTeleOp {
     static final String BALL_SPEED = "sim.teleop.ballGroundSpeedInPerS";
     static final String POLLEN_TABLE_DISTANCE = "sim.teleop.pollenTableDistanceIn";
     static final String POLLEN_TABLE_RPM = "sim.teleop.pollenTableRpm";
+    static final String BAR_AUTO_STOW = "sim.teleop.barAutoStow";
 
     @Override
     public void runOpMode() {
         double savedBall = AimController.BALL_GROUND_SPEED_IN_PER_S;
         double[] savedDistance = MechanismConstants.POLLEN_SPEED_TABLE_DISTANCE_IN;
         double[] savedRpm = MechanismConstants.POLLEN_SPEED_TABLE_RPM;
+        boolean savedAutoStow = BAR_AUTO_STOW_ENABLED;
         try {
+            if (blackboard.containsKey(BAR_AUTO_STOW)) BAR_AUTO_STOW_ENABLED = (Boolean) blackboard.get(BAR_AUTO_STOW);
             if (blackboard.containsKey(BALL_SPEED)) {
                 AimController.BALL_GROUND_SPEED_IN_PER_S = (Double) blackboard.get(BALL_SPEED);
             }
@@ -37,6 +40,7 @@ public final class ConfiguredTeleOp extends MainHorsTeleOp {
             AimController.BALL_GROUND_SPEED_IN_PER_S = savedBall;
             MechanismConstants.POLLEN_SPEED_TABLE_DISTANCE_IN = savedDistance;
             MechanismConstants.POLLEN_SPEED_TABLE_RPM = savedRpm;
+            BAR_AUTO_STOW_ENABLED = savedAutoStow;
         }
     }
 }
