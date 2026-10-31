@@ -68,8 +68,10 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
  * Spin-up while aiming:
  *   - Holding aim with a usable pose switches both shooters on, without dpad down. Letting go
  *     switches them off again, unless dpad down has them on.
- *   - A volley is not cut short: once the gates are open, the aim's spin-up holds until they close
- *     (B cancels, or the interlock blocks), even with the trigger released.
+ *   - A volley is not cut short: while B's gate request stands, the aim's spin-up holds, even with
+ *     the trigger released, until B cancels. Holding it only while the gates were OPEN let a speed
+ *     dip shut them, end the spin-up, and then reopen them into stopped flywheels (the interlock
+ *     ignores a shooter that is off).
  *   - With the pose invalid, aiming does not spin up: the interlock would keep the gates shut anyway.
  *
  * Intake jam: while right trigger pulls in, an intake that stalls (both encoders far below a full
@@ -125,7 +127,6 @@ public class MainHorsTeleOp extends LinearOpMode {
     // Shooters on from dpad down (stays until pressed again), and on from aiming (see the class doc).
     private boolean shootersToggledOn = false;
     private boolean aimSpinUp = false;
-    private boolean gatesOpenLastLoop = false;
 
     // Edge-detect state (a press fires once, not every loop).
     private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast;
@@ -271,7 +272,7 @@ public class MainHorsTeleOp extends LinearOpMode {
             boolean dpadDownNow = gamepad1.dpad_down || gamepad2.dpad_down;
             if (dpadDownNow && !dpadDownLast) shootersToggledOn = !shootersToggledOn;
             dpadDownLast = dpadDownNow;
-            aimSpinUp = aiming || (aimSpinUp && gatesOpenLastLoop);
+            aimSpinUp = aiming || (aimSpinUp && gatesRequested);
             boolean shootersOn = shootersToggledOn || aimSpinUp;
             robot.pollenShooter.setShooterOn(shootersOn);
             robot.nectarShooter.setShooterOn(shootersOn);
@@ -327,7 +328,6 @@ public class MainHorsTeleOp extends LinearOpMode {
             boolean gatesOpen = gatesRequested && fire.clear;
             robot.pollenGate.setClosed(!gatesOpen);
             robot.nectarGate.setClosed(!gatesOpen);
-            gatesOpenLastLoop = gatesOpen;
 
             // ----- Flower bar: dpad up toggles down / stowed; lifted slightly while the gates are open -----
             boolean dpadUpNow = gamepad1.dpad_up || gamepad2.dpad_up;

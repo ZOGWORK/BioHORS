@@ -505,6 +505,49 @@ class MainHorsTeleOpSimTest {
         assertEquals(0.0, afterCancel[1], 1e-9, "and with the gates shut the aim spin-up ends");
     }
 
+    /** A drag on both flywheels, as pollen passing through slows them. PLACEHOLDER (a test load). */
+    static final double VOLLEY_DIP_TORQUE_FRACTION = -0.15;
+
+    @Test
+    void aSpeedDipAfterTheTriggerIsReleasedNeverFeedsStoppedShooters() {
+        // Aim, request the gates, let go of the trigger mid-volley; then the pollen passing through
+        // drags both flywheels below target, so the interlock shuts the gates. The request still
+        // stands, so the shooters must stay on and the gates reopen only once they are back at speed.
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double gateHalfway = (MechanismConstants.POLLEN_GATE_OPEN + MechanismConstants.POLLEN_GATE_CLOSED) / 2.0;
+        int[] openWithShootersOff = {0};
+        boolean[] closedDuringDip = {false};
+        double[] atEnd = new double[2];
+        runWatching(sim, 300, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.left_trigger = tick < 150 ? 1f : 0f;
+            g1.b = tick >= 140 && tick < 143;
+        }, tick -> {
+            double drag = tick >= 170 && tick < 185 ? VOLLEY_DIP_TORQUE_FRACTION : 0.0;
+            sim.pollenShooter.setExternalTorqueFraction(drag);
+            sim.nectarShooter.setExternalTorqueFraction(drag);
+            boolean gateOpen = sim.pollenGatePlant.getPosition() > gateHalfway;
+            // The gate servo lags, so a brief close shows as the gate leaving full open.
+            if (tick >= 170 && tick < 200
+                    && sim.pollenGatePlant.getPosition() < MechanismConstants.POLLEN_GATE_OPEN - 0.01) {
+                closedDuringDip[0] = true;
+            }
+            if (tick >= 150 && gateOpen && sim.pollenShooter.getPower() < 0.01
+                    && sim.nectarShooter.getPower() < 0.01) {
+                openWithShootersOff[0]++;
+            }
+            if (tick == 295) {
+                atEnd[0] = sim.pollenGatePlant.getPosition();
+                atEnd[1] = sim.pollenShooterRpm();
+            }
+        });
+        assertTrue(closedDuringDip[0], "the dip should make the interlock shut the gates (else this tests nothing)");
+        assertEquals(0, openWithShootersOff[0], "ticks with the gates open and both shooters off");
+        assertEquals(MechanismConstants.POLLEN_GATE_OPEN, atEnd[0], 0.02, "back at speed, the volley resumes");
+        assertEquals(1600.0, atEnd[1], 100.0, "with pollen at its target");
+    }
+
     @Test
     void withThePoseInvalidAimingDoesNotSpinUp() {
         BioHorsSim sim = new BioHorsSim();
