@@ -16,6 +16,13 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * without a restart.
  *
  * Spin direction is set on the motor in the OpMode, not here.
+ *
+ * Encoder check: if the motor is driven at SHOOTER_ENCODER_CHECK_POWER or more for
+ * SHOOTER_ENCODER_DEAD_S and the encoder reads under SHOOTER_ENCODER_DEAD_RPM, the encoder (or the
+ * motor) is dead. The loop would otherwise wind up to full power forever; from then on the shooter
+ * runs on its feedforward alone (the power the target needs, no PID) and {@link #encoderFault()} is
+ * true. It stays latched until the OpMode ends. A wheel that never reads speed is never at target,
+ * so the fire interlock keeps the gates shut: a dead motor and a dead encoder look the same.
  */
 public class ShooterController {
 
@@ -71,6 +78,8 @@ public class ShooterController {
     private double lastAppliedPower = 0.0;
 
     private boolean shooterOn = false;
+    private double encoderSilentS = 0.0;
+    private boolean encoderFault = false;
     private boolean lastAtTarget = false;
     private boolean justReachedTargetFlag = false;
 
@@ -121,6 +130,11 @@ public class ShooterController {
         setTargetRpm(Math.max(0.0, targetRpm + delta));
     }
 
+    /** True when switched on and spinning at {@code fraction} of the target or more. */
+    public boolean atLeastFractionOfTarget(double fraction) {
+        return shooterOn && targetRpm > 0 && currentRpm >= fraction * targetRpm;
+    }
+
     public boolean isAtTarget() {
         return Math.abs(targetRpm - currentRpm) <= config.rpmTolerance;
     }
@@ -143,6 +157,11 @@ public class ShooterController {
 
     public double getLastAppliedPower() {
         return lastAppliedPower;
+    }
+
+    /** True once the encoder check has found the wheel driven but silent (latched). */
+    public boolean encoderFault() {
+        return encoderFault;
     }
 
     public boolean justReachedTarget() {
@@ -184,8 +203,18 @@ public class ShooterController {
         double ff = (targetTicksPerSec / maxTicksPerSec) * config.kF;
         if (targetRpm > 0) ff += config.kS * (config.ffReferenceVoltage / Math.max(voltage, 1e-3));
 
-        // PIDF output, clamped.
-        double out = ff + (config.kP * error) + (config.kI * integralSum) + (config.kD * deriv);
+        // Encoder check: driven hard, but the encoder says the wheel is not turning.
+        if (!encoderFault && shooterOn && Math.abs(lastAppliedPower) >= MechanismConstants.SHOOTER_ENCODER_CHECK_POWER
+                && Math.abs(currentRpmNow) < MechanismConstants.SHOOTER_ENCODER_DEAD_RPM) {
+            encoderSilentS += dt;
+            if (encoderSilentS >= MechanismConstants.SHOOTER_ENCODER_DEAD_S) encoderFault = true;
+        } else {
+            encoderSilentS = 0.0;
+        }
+
+        // PIDF output, clamped. With a dead encoder: the feedforward alone, no feedback to wind up.
+        double out = encoderFault ? ff
+                : ff + (config.kP * error) + (config.kI * integralSum) + (config.kD * deriv);
         out = Math.max(-1.0, Math.min(1.0, out));
 
         if (!shooterOn) out = 0.0;

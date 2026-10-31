@@ -45,6 +45,9 @@ public class BioHorsRobot {
     public final GateController nectarGate;
     public final FlowerBarController flowerBar;
 
+    /** The battery voltage sensor, for the low-battery warning. Null if the config has none. */
+    private final VoltageSensor battery;
+
     /** The Pinpoint, for its device status. Null if the config has none. */
     public final GoBildaPinpointDriver pinpoint;
 
@@ -79,6 +82,8 @@ public class BioHorsRobot {
             batterySensor = hardwareMap.voltageSensor.iterator().next();
         } catch (Exception ignored) {
         }
+
+        battery = batterySensor;
 
         // Directions: right drive reversed (same as pedro/Constants). Shooter directions come
         // from MechanismConstants and still need verifying on the robot.
@@ -115,6 +120,16 @@ public class BioHorsRobot {
         flowerBar = new FlowerBarController(flowerLeftServo, flowerRightServo,
                 MechanismConstants.FLOWER_BAR_STOWED, MechanismConstants.FLOWER_BAR_DOWN,
                 MechanismConstants.FLOWER_BAR_SHOOTING);
+    }
+
+    /** Battery volts, or NaN if there is no voltage sensor or it fails. */
+    public double batteryVolts() {
+        if (battery == null) return Double.NaN;
+        try {
+            return battery.getVoltage();
+        } catch (Exception e) {
+            return Double.NaN;
+        }
     }
 
     /** True when the Pinpoint reports READY. False if it is missing, calibrating or faulted. */

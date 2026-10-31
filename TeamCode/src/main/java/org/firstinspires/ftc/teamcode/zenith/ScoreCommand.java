@@ -13,7 +13,9 @@ import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
  * "stationary" in autos/robot.json), so the follower holds the score pose.
  *
  * Sequence: lift the flower bar clear of the shots and spin the pollen shooter up (or give up
- * waiting after SPINUP_TIMEOUT_S); once both are done (the bar gets FLOWER_BAR_SETTLE_S) and the
+ * waiting after SPINUP_TIMEOUT_S, firing then only if the flywheel is at SPINUP_MIN_FRACTION of its
+ * target: below that the motor or its encoder is dead, the shots would fall short, and the volley is
+ * skipped with the pollen aboard); once both are done (the bar gets FLOWER_BAR_SETTLE_S) and the
  * robot is at a scoring spot (auto/ShootingPose), open the pollen gate and run the intake inward to feed pollen past the gate for count * FEED_S_PER_PIECE,
  * then close the gate and stop the intake. The shooter is left spinning for the next volley. If the
  * robot is not at a scoring spot within ShootingPose.WAIT_FOR_POSE_S of being ready, the volley is
@@ -71,7 +73,13 @@ public class ScoreCommand extends CommandBase {
     @Override
     public void execute() {
         if (!feeding) {
-            boolean atSpeed = launcher.atSpeed() || timer.seconds() >= SPINUP_TIMEOUT_S;
+            boolean timedOut = timer.seconds() >= SPINUP_TIMEOUT_S;
+            if (timedOut && !launcher.atSpeed() && !launcher.nearSpeed()) {
+                launcher.spinUpFailed();   // never got near speed: keep the gate shut, skip the volley
+                done = true;
+                return;
+            }
+            boolean atSpeed = launcher.atSpeed() || timedOut;
             boolean barClear = timer.seconds() >= MechanismConstants.FLOWER_BAR_SETTLE_S;
             if (atSpeed && barClear) {
                 if (Double.isNaN(readyAt)) readyAt = timer.seconds();

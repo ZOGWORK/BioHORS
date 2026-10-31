@@ -58,9 +58,17 @@ class FireGateTest {
     }
 
     @Test
-    void anOffShooterDoesNotBlock() {
+    void anOffShooterDoesNotBlockWhileAnotherIsOn() {
         assertTrue(FireGate.decide(true, ON_TARGET, TOL, atSpeed("Pollen"), off("Nectar")).clear);
-        assertTrue(FireGate.decide(true, ON_TARGET, TOL, off("Pollen"), off("Nectar")).clear);
+        assertTrue(FireGate.decide(true, ON_TARGET, TOL, off("Pollen"), atSpeed("Nectar")).clear);
+    }
+
+    @Test
+    void everyShooterOffBlocks() {
+        FireGate.Decision d = FireGate.decide(true, ON_TARGET, TOL, off("Pollen"), off("Nectar"));
+        assertFalse(d.clear, "open gates with both flywheels stopped would feed pollen into nothing");
+        assertEquals("NO SHOOTER ON", d.blockedReason);
+        assertFalse(FireGate.decide(true, ON_TARGET, TOL).clear, "no shooters at all");
     }
 
     @Test

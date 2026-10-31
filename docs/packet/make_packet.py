@@ -520,7 +520,7 @@ def build():
                      ['Dpad down', 'Both shooters on / off without aiming; their rpm follows the distance-to-rpm table (flat until measured)'],
                      ['Dpad left / right', 'Pollen rpm trim - / +'],
                      ['Left bumper / A', 'Nectar rpm trim - / +'],
-                     ['B', 'Request the gates open: they open only while the pose is valid, the aim is on target and '
+                     ['B', 'Request the gates open: they open only while the pose is valid, the aim is on target, a shooter is on and '
                       'every switched-on shooter is at speed; telemetry says what is blocking'],
                      ['<b>X</b>', '<b>Reset the pose</b> (wipes Pinpoint drift): back the robot flat against your '
                       'alliance\'s wall at the park spot by the loading zone, intake facing the field, then press X'],

@@ -33,9 +33,35 @@ public final class ZenithSubsystems {
             return follower;
         }
 
+        private org.firstinspires.ftc.teamcode.auto.PinpointWatchdog watchdog;
+        private Runnable stopMotors;
+        private boolean halted;
+
+        /**
+         * Halts the drive for the rest of the auto once the watchdog trips (odometry lost): the
+         * follower stops and is no longer updated, and the drive motors are held at zero.
+         */
+        public void watch(org.firstinspires.ftc.teamcode.auto.PinpointWatchdog watchdog, Runnable stopMotors) {
+            this.watchdog = watchdog;
+            this.stopMotors = stopMotors;
+        }
+
+        /** True once the watchdog has halted the drive. */
+        public boolean halted() {
+            return halted;
+        }
+
         /** The follower updates once per loop, here: the SolversLib scheduler calls periodic every loop. */
         @Override
         public void periodic() {
+            if (watchdog != null && watchdog.update()) {
+                if (!halted) {
+                    halted = true;
+                    follower.stop();
+                }
+                stopMotors.run();
+                return;
+            }
             follower.update();
         }
 
@@ -130,6 +156,24 @@ public final class ZenithSubsystems {
 
         public boolean atSpeed() {
             return robot.pollenShooter.isShooterOn() && robot.pollenShooter.isAtTarget();
+        }
+
+        /** Fast enough to fire after a spin-up timeout (MechanismConstants.SPINUP_MIN_FRACTION). */
+        public boolean nearSpeed() {
+            return robot.pollenShooter.atLeastFractionOfTarget(
+                    org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.SPINUP_MIN_FRACTION);
+        }
+
+        private int spinUpFailures;
+
+        /** A volley gave up: the flywheel never got near its speed. */
+        public void spinUpFailed() {
+            spinUpFailures++;
+        }
+
+        /** Volleys skipped this run because the flywheel never got near its speed. */
+        public int spinUpFailures() {
+            return spinUpFailures;
         }
 
         public void openGate() {

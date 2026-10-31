@@ -160,6 +160,17 @@ To set it: hold a pollen hard against the rollers, read "Intake speed" in the au
 put the threshold about halfway between that and 2100. Done when a real jam clears and a full
 robot held on the trigger never reverses.
 
+## 4e. Failsafe thresholds
+
+| Item | Current | Where | How | Done when |
+|---|---|---|---|---|
+| Auto spin-up minimum | 80 % of target at the timeout | `MechanismConstants.SPINUP_MIN_FRACTION` | Film shots at 80 % speed | Shots at that speed still score, or raise it |
+| Shooter encoder check | pushed at >= 0.3 power, < 50 rpm for 0.5 s | `SHOOTER_ENCODER_CHECK_POWER`, `_DEAD_RPM`, `_DEAD_S` | Time a cold spin-up to 50 rpm | `_DEAD_S` well above it; no false `ENCODER?` all practice |
+| Pinpoint watchdog | 5 loops not READY, or never READY 1 s after PLAY | `auto/PinpointWatchdog` | Unplug the Pinpoint mid-route on blocks (wheels off the floor) | The drive stops, `AUTO HALTED` shows |
+| Low battery | under 11.5 V for 1 s | `teleop/LowBatteryWarning` | Note the voltage at which shots start falling short | The warning shows before that |
+| Teleop / endgame length | 120 s / 30 s, last warning at 10 s | `teleop/EndgameAlerts` | Check the BIOBUZZ game manual | Matches the manual |
+| Auto pose handoff | used if saved < 60 s ago | `aim/PoseHandoff.MAX_POSE_AGE_S` | Time a real auto-to-teleop transition | Comfortably above it |
+
 ## 5. Auto timing and the pollen estimate
 
 | Item | Current | Where | How | Done when |

@@ -39,6 +39,7 @@ public class BioHorsZenithRobot implements ZenithRobot {
     private ZenithSubsystems.Launcher launcher;
     private ZenithSubsystems.FlowerBar flowerBar;
     private PollenEstimate pollen;
+    private org.firstinspires.ftc.teamcode.auto.PinpointWatchdog watchdog;
     private Alliance alliance = Alliance.RED;
 
     @Override
@@ -52,13 +53,15 @@ public class BioHorsZenithRobot implements ZenithRobot {
         intake = new ZenithSubsystems.Intake(hardware, pollen);
         launcher = new ZenithSubsystems.Launcher(hardware);
         flowerBar = new ZenithSubsystems.FlowerBar(hardware);
+        watchdog = new org.firstinspires.ftc.teamcode.auto.PinpointWatchdog(hardware::pinpointReady);
+        drive.watch(watchdog, hardware.drive::stop);
     }
 
     @Override
     public void registerCommands(AutoFromFile opMode) {
         // The gate opens only at a scoring spot (auto/ShootingPose), wherever the follower really is.
         BioHorsCommands.register(intake, launcher, flowerBar, pollen,
-                () -> ShootingPose.at(alliance, drive.follower().pose()));
+                () -> !watchdog.tripped() && ShootingPose.at(alliance, drive.follower().pose()));
     }
 
     @Override
@@ -100,7 +103,17 @@ public class BioHorsZenithRobot implements ZenithRobot {
 
     @Override
     public void afterLoop(AutoFromFile opMode) {
+        if (watchdog.tripped()) opMode.telemetry.addData("AUTO HALTED", watchdog.reason());
         opMode.telemetry.addData("Pollen (estimate)", pollen.held());
+        if (launcher != null && launcher.spinUpFailures() > 0) {
+            opMode.telemetry.addData("SHOOTER", "never reached speed: %d volley(s) skipped, pollen kept",
+                    launcher.spinUpFailures());
+        }
+    }
+
+    @Override
+    public void onStart(AutoFromFile opMode) {
+        watchdog.start(); // the never-READY timer counts from PLAY
     }
 
     @Override

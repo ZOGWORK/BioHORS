@@ -52,14 +52,26 @@ Shooter/gate names, directions, and tuning values live in
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF), to keep them spinning without aiming |
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
 | Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
-| B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target and every switched-on shooter is at speed (telemetry names what blocks) |
+| B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target, at least one shooter is on and every switched-on shooter is at speed (telemetry names what blocks) |
 | X | **Reset the pose** (wipes Pinpoint drift): back the robot flat against your alliance's wall at the park spot by the loading zone, intake facing the field, then press X |
 | Dpad up | Flower bar down / stowed |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
-alliance and final pose are picked up automatically (the SDK blackboard); if not, the teleop
-assumes it starts at the auto's park spot (back to the west wall by the loading zone, intake
-facing the field; mirrored for BLUE).
+alliance and final pose are picked up automatically (the SDK blackboard), once, and only if the
+auto saved the pose under a minute ago; if not, the teleop assumes it starts at the auto's park
+spot (back to the west wall by the loading zone, intake facing the field; mirrored for BLUE), and
+INIT telemetry says why.
+
+**Driving display, extras on the Fire line:** `INTAKE JAM: reversing`, `LOW BATTERY 11.2 V` (under
+11.5 V for a second), and `ENDGAME n s` counting down the last 30 s. The gamepads rumble three
+short blips as the endgame starts and once, long, 10 s before the end. A shooter whose encoder
+reads nothing while it is pushed shows `ENCODER? (no speed reading)` and runs on its feedforward
+alone instead of winding up to full power; the gates stay shut for it.
+
+**Failsafes in the autos:** if the Pinpoint stops reporting READY mid-route (5 loops), or is not
+READY 1 s after PLAY, the auto halts: drive stopped, mechanisms off, gates shut (`AUTO HALTED`).
+At the spin-up timeout a volley fires only if the flywheel is at 80 % of its target or more;
+otherwise it is skipped with the pollen kept (`SHOOTER never reached speed`).
 
 **Aim.** No camera and no turret: holding the left trigger turns the whole chassis to face the
 hive cell on the robot's half of the field (north cell when y > 0, south when y < 0, with 2 in of

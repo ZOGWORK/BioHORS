@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.zenith.ScoreCommand;
 import org.horizon36596.simloop.opmode.RecordingTelemetry;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -19,10 +20,46 @@ import org.junit.jupiter.api.Test;
 class AutoMechanismsTest {
 
     private final boolean savedEnabled = MechanismConstants.INTAKE_SENSOR_ENABLED;
+    private final double savedMinFraction = MechanismConstants.SPINUP_MIN_FRACTION;
+
+    /**
+     * Nothing here steps the sim, so the fake flywheel never spins: the spin-up check is switched
+     * off (any speed will do at the timeout) except in the test of the check itself.
+     */
+    @BeforeEach
+    void anySpeedWillDo() {
+        MechanismConstants.SPINUP_MIN_FRACTION = 0.0;
+    }
 
     @AfterEach
     void restore() {
         MechanismConstants.INTAKE_SENSOR_ENABLED = savedEnabled;
+        MechanismConstants.SPINUP_MIN_FRACTION = savedMinFraction;
+    }
+
+    @Test
+    void aFlywheelThatNeverSpinsUpSkipsTheVolleyAndKeepsThePollen() throws InterruptedException {
+        MechanismConstants.SPINUP_MIN_FRACTION = savedMinFraction;
+        double savedSpin = ScoreCommand.SPINUP_TIMEOUT_S;
+        ScoreCommand.SPINUP_TIMEOUT_S = 0.05;
+        try {
+            BioHorsRobot robot = robot();
+            AutoMechanisms mech = new AutoMechanisms(robot, 4, () -> true);   // at a scoring spot
+            mech.pollen().sensed(4);
+            mech.volley(4);
+            long deadline = System.nanoTime() + 3_000_000_000L;
+            while (!mech.volleyDone() && System.nanoTime() < deadline) {
+                mech.update();
+                assertTrue(robot.pollenGate.isClosed(), "the gate opened onto a stopped flywheel");
+                Thread.sleep(5);
+            }
+            assertTrue(mech.volleyDone(), "the volley should give up at the timeout");
+            assertEquals(1, mech.volleysSkipped());
+            assertEquals(1, mech.spinUpFailures());
+            assertEquals(4, mech.pollen().held(), "the pollen stay aboard for a later volley");
+        } finally {
+            ScoreCommand.SPINUP_TIMEOUT_S = savedSpin;
+        }
     }
 
     static BioHorsRobot robot() {

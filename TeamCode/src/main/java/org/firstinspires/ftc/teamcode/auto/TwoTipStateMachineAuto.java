@@ -88,6 +88,8 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     private Follower follower;
     private ForesightConfig foresight;
     private AutoMechanisms mech;
+    private PinpointWatchdog watchdog;
+    private boolean halted;
     private Alliance alliance = Alliance.RED;
     private State state = State.DRIVE_OUT;
     private boolean spunUpOnTheWay;
@@ -121,7 +123,10 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         follower = Constants.createFollower(hardwareMap, foresight);
         follower.setPose(p(START));
         // The gate opens only at a scoring spot (ShootingPose), wherever the follower really is.
-        mech = new AutoMechanisms(robot, PRELOAD, () -> ShootingPose.at(alliance, follower.pose()));
+        // No pose, no scoring-spot check: a tripped watchdog keeps the gate shut.
+        watchdog = new PinpointWatchdog(robot::pinpointReady);
+        mech = new AutoMechanisms(robot, PRELOAD,
+                () -> !watchdog.tripped() && ShootingPose.at(alliance, follower.pose()));
         publish();
     }
 
@@ -133,10 +138,23 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     private void startAuto() {
         matchTimer.reset();
+        watchdog.start();
         enter(State.DRIVE_OUT);
     }
 
     private void loopOnce() {
+        if (watchdog.update()) {
+            // Odometry lost: stop driving for the rest of the auto, mechanisms off, gates shut.
+            if (!halted) {
+                halted = true;
+                follower.stop();
+                mech.stopAll();
+            }
+            robot.drive.stop();
+            telemetry.addData("AUTO HALTED", watchdog.reason());
+            telemetry.addData("State", "%s (halted, %.1f s total)", state, matchTimer.seconds());
+            return;
+        }
         follower.update();
         run();
         mech.update();
@@ -148,6 +166,9 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         telemetry.addData("Intake speed", "%.0f ticks/s, slowdown %.0f %%", robot.intakeLoad.speedTicksPerS(),
                 100 * robot.intakeLoad.slowdown());
         telemetry.addData("Intake / pollen shooter", "%s / %s", mech.intakeState(), mech.pollenState());
+        if (mech.spinUpFailures() > 0) {
+            telemetry.addData("SHOOTER", "never reached speed: %d volley(s) skipped, pollen kept", mech.spinUpFailures());
+        }
     }
 
     private void finish() {
@@ -365,5 +386,10 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     public AutoMechanisms mechanisms() {
         return mech;
+    }
+
+    /** True once the Pinpoint watchdog has halted the auto. */
+    public boolean halted() {
+        return halted;
     }
 }

@@ -9,7 +9,9 @@ import java.util.Locale;
  *   - the pose is valid (Pinpoint READY, finite numbers);
  *   - the aim is on target: the heading error (to the lead-shifted aim point) is finite and within
  *     the tolerance;
- *   - every shooter that is switched ON is at its target rpm. A shooter that is off is ignored.
+ *   - every shooter that is switched ON is at its target rpm. A shooter that is off is ignored,
+ *     but at least one must be on: open gates with every flywheel stopped would feed pollen into
+ *     nothing ("NO SHOOTER ON").
  *
  * Fails closed: anything it cannot check (a non-finite heading error or tolerance, a null shooter)
  * blocks. There is deliberately no override. Pure logic, no hardware: the teleop passes the inputs
@@ -69,14 +71,21 @@ public final class FireGate {
         if (shooters == null) {
             append(why, "NO SHOOTER STATE");
         } else {
+            boolean anyOn = false;
+            boolean anyUnknown = false;
             for (Shooter s : shooters) {
                 if (s == null) {
+                    anyUnknown = true;
                     append(why, "NO SHOOTER STATE");
-                } else if (s.on && !s.atTarget) {
-                    append(why, String.format(Locale.ROOT, "%s flywheel %+.0f rpm",
-                            s.label, s.currentRpm - s.targetRpm));
+                } else {
+                    anyOn |= s.on;
+                    if (s.on && !s.atTarget) {
+                        append(why, String.format(Locale.ROOT, "%s flywheel %+.0f rpm",
+                                s.label, s.currentRpm - s.targetRpm));
+                    }
                 }
             }
+            if (!anyOn && !anyUnknown) append(why, "NO SHOOTER ON");
         }
         return why.length() == 0 ? new Decision(true, "") : new Decision(false, why.toString());
     }

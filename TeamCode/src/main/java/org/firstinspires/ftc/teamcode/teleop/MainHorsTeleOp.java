@@ -77,6 +77,11 @@ import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
  * Intake jam: while right trigger pulls in, an intake that stalls (both encoders far below a full
  * robot's speed) runs outward for a moment, then pulls in again. The Fire line says INTAKE JAM.
  *
+ * Match cues: three short rumbles as the endgame starts and one long one FINAL_WARNING_S before
+ * the end (EndgameAlerts, timed from PLAY); through the endgame the Fire line counts down
+ * (ENDGAME n s). The Fire line adds LOW BATTERY while the battery has
+ * stayed under LowBatteryWarning.LOW_V for a second.
+ *
  * Shooters start OFF and gates CLOSED. Tuning values are placeholders (MechanismConstants,
  * AimController).
  */
@@ -147,7 +152,10 @@ public class MainHorsTeleOp extends LinearOpMode {
                 Math.max(Constants.MAX_FORWARD_IN_PER_S, Constants.MAX_STRAFE_IN_PER_S));
 
         Alliance saved = PoseHandoff.savedAlliance();
+        double poseAgeS = PoseHandoff.savedPoseAgeS();
         double[] savedPose = PoseHandoff.savedPose();
+        PoseHandoff.clearPose(); // taken once: a later teleop without an auto must not reuse it
+        boolean poseTooOld = savedPose == null && !Double.isNaN(poseAgeS);
         if (saved != null) alliance = saved;
         poseFromAuto = savedPose != null;
         if (poseFromAuto) {
@@ -173,7 +181,10 @@ public class MainHorsTeleOp extends LinearOpMode {
             localizer.update();
             targetCell = FieldTargets.cellForHalf(localizer.pose().y(), targetCell);
             telemetry.addData("Alliance", "%s  (dpad left = RED, dpad right = BLUE)", alliance);
-            telemetry.addData("Start pose", poseFromAuto ? "from auto" : "default (unmeasured)");
+            telemetry.addData("Start pose", poseFromAuto ? "from auto"
+                    : poseTooOld ? String.format(java.util.Locale.ROOT,
+                            "default: the auto's pose is %.0f s old, not used", poseAgeS)
+                    : "default (unmeasured)");
             addPoseTelemetry();
             telemetry.addData("Status", "Initialized -- shooters OFF, gates CLOSED");
             telemetry.update();
@@ -184,6 +195,9 @@ public class MainHorsTeleOp extends LinearOpMode {
         }
 
         ElapsedTime loopTimer = new ElapsedTime();
+        ElapsedTime sincePlay = new ElapsedTime();
+        EndgameAlerts alerts = new EndgameAlerts();
+        LowBatteryWarning battery = new LowBatteryWarning();
         Pose lastPose = localizer.pose();
         ElapsedTime sinceRumble = new ElapsedTime();
         sinceRumble.reset();
@@ -356,8 +370,24 @@ public class MainHorsTeleOp extends LinearOpMode {
             robot.intake.setPower(robot.intakeJam.power(intakeRequest));
 
             // ----- Telemetry: the driving display, five lines and nothing else -----
+            // ----- Match cues and the battery -----
+            EndgameAlerts.Cue cue = alerts.update(sincePlay.seconds());
+            if (cue == EndgameAlerts.Cue.ENDGAME) {
+                gamepad1.rumbleBlips(3);
+                gamepad2.rumbleBlips(3);
+            } else if (cue == EndgameAlerts.Cue.FINAL_WARNING) {
+                gamepad1.rumble(800);
+                gamepad2.rumble(800);
+            }
+            battery.update(robot.batteryVolts(), dt);
+            double leftS = EndgameAlerts.remainingS(sincePlay.seconds());
+
             String fireText = fire.clear ? "READY" : "BLOCKED: " + fire.blockedReason;
             if (robot.intakeJam.reversing()) fireText += " | INTAKE JAM: reversing";
+            if (leftS <= EndgameAlerts.ENDGAME_S) {
+                fireText += String.format(java.util.Locale.ROOT, " | ENDGAME %.0f s", Math.max(0.0, Math.ceil(leftS)));
+            }
+            if (battery.low()) fireText += String.format(java.util.Locale.ROOT, " | LOW BATTERY %.1f V", battery.volts());
             telemetry.addData("Fire", fireText);
             addPoseTelemetry();
             addShooterTelemetry("Pollen", robot.pollenShooter);
@@ -445,9 +475,13 @@ public class MainHorsTeleOp extends LinearOpMode {
                 p.x(), p.y(), Math.toDegrees(p.heading()), ok ? "" : "(INVALID)");
     }
 
-    /** {@code current / target rpm STATE}: OFF, SPINNING UP (on, not at target) or OK. */
+    /**
+     * {@code current / target rpm STATE}: OFF, SPINNING UP (on, not at target) or OK; ENCODER? once
+     * the encoder check has found the wheel driven but silent (it then runs on feedforward alone).
+     */
     private void addShooterTelemetry(String label, ShooterController s) {
-        String state = !s.isShooterOn() ? "OFF" : s.isAtTarget() ? "OK" : "SPINNING UP";
+        String state = s.encoderFault() ? "ENCODER? (no speed reading)"
+                : !s.isShooterOn() ? "OFF" : s.isAtTarget() ? "OK" : "SPINNING UP";
         telemetry.addData(label, "%.0f / %.0f rpm %s", s.getCurrentRpm(), s.getTargetRpm(), state);
     }
 

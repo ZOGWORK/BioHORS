@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
+import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 
 import org.horizon36596.simloop.opmode.OpModeRunResult;
 import org.horizon36596.simloop.opmode.OpModeRunner;
@@ -237,6 +240,55 @@ class ZenithAutoMatchTest {
         String report;
     }
 
+    /** Called every tick after the world moved, with the sim and the seconds since the run began (INIT included). Tests set it. */
+    private java.util.function.BiConsumer<BioHorsSim, Double> onTick = (s, t) -> { };
+
+    // ------------------------------------------------------------------ odometry failsafe
+
+    /** When the Pinpoint faults, seconds from the start of the run (INIT included): mid-way round
+     *  the hive to the flower, after the preload volley. SET BY HAND (from the state timings). */
+    static final double FAULT_AT_S = 4.5;
+
+    @Test
+    void aPinpointFaultMidRouteHaltsTheDriveAndKeepsTheGatesShut() throws IOException {
+        double[] before = new double[2], atFault = new double[2], settled = new double[2];
+        double[] worstMoveAfterIn = {0.0};
+        double[] worstDrivePower = {0.0};
+        boolean[] gateOpened = {false};
+        double half = TICK_S / 2;
+        onTick = (sim, t) -> {
+            if (Math.abs(t - (FAULT_AT_S - 0.5)) < half) { before[0] = sim.drivePlant.getX(); before[1] = sim.drivePlant.getY(); }
+            if (Math.abs(t - FAULT_AT_S) < half) {
+                atFault[0] = sim.drivePlant.getX();
+                atFault[1] = sim.drivePlant.getY();
+                sim.pinpoint.forceFault(GoBildaPinpointDriver.DeviceStatus.FAULT_NO_PODS_DETECTED);
+            }
+            // The motors stop within FAULT_LOOPS loops; the robot then coasts to rest (the plant's lag).
+            if (t > FAULT_AT_S + 0.2) {
+                for (org.horizon36596.simloop.fakehardware.FakeMotor m : sim.driveMotors) {
+                    worstDrivePower[0] = Math.max(worstDrivePower[0], Math.abs(m.getPower()));
+                }
+            }
+            if (Math.abs(t - (FAULT_AT_S + 1.0)) < half) { settled[0] = sim.drivePlant.getX(); settled[1] = sim.drivePlant.getY(); }
+            if (t > FAULT_AT_S + 1.0) {
+                worstMoveAfterIn[0] = Math.max(worstMoveAfterIn[0],
+                        Math.hypot(sim.drivePlant.getX() - settled[0], sim.drivePlant.getY() - settled[1]));
+            }
+            if (t > FAULT_AT_S + 0.3 && sim.pollenGatePlant.getPosition() > (MechanismConstants.POLLEN_GATE_OPEN
+                    + MechanismConstants.POLLEN_GATE_CLOSED) / 2.0) {
+                gateOpened[0] = true;
+            }
+        };
+        Result r = runMatch("two-tip", "RED", "pinpoint-fault");
+        assertTrue(Math.hypot(atFault[0] - before[0], atFault[1] - before[1]) > 3.0,
+                "the robot should be driving when the Pinpoint faults (else this tests nothing)");
+        assertEquals(0.0, worstDrivePower[0], 1e-9, "from 0.2 s after the fault the drive motors are off");
+        assertTrue(worstMoveAfterIn[0] < 0.1, String.format(Locale.ROOT,
+                "once it has coasted to rest the robot must stay put: moved %.2f in%n%s", worstMoveAfterIn[0], r.report));
+        assertFalse(gateOpened[0], "no gate may open without a pose");
+        assertEquals(4, r.match.launched(), "only the preload volley, fired before the fault");
+    }
+
     private Result runMatch(String auto, String alliance, String suffix) throws IOException {
         return runMatch(auto, alliance, suffix, false);
     }
@@ -283,6 +335,7 @@ class ZenithAutoMatchTest {
         org.psilynx.psikit.core.wpi.math.Pose2d[] route = StateMachineAutoMatchTest.plannedRoute(
                 red ? org.firstinspires.ftc.teamcode.aim.Alliance.RED : org.firstinspires.ftc.teamcode.aim.Alliance.BLUE);
         boolean[] routeLogged = {false};
+        double[] elapsed = {0.0};
         OpModeRunResult result = OpModeRunner.forTeamClass(TracedZenithAuto.class, sim.hardwareMap)
                 // Robot code, SolversLib, Pedro and Zenith's runtime all read the sim clock; Zenith's
                 // runtime has to share SolversLib's loader because its classes extend SolversLib's.
@@ -296,6 +349,8 @@ class ZenithAutoMatchTest {
                 .eachTick(dt -> {
                     sim.step(dt);
                     match.step(dt);
+                    elapsed[0] += dt;
+                    onTick.accept(sim, elapsed[0]);
                     if (!routeLogged[0]) {
                         org.psilynx.psikit.core.Logger.recordOutput("Auto/PlannedRoute",
                                 org.psilynx.psikit.core.wpi.math.Pose2d.struct, route);
