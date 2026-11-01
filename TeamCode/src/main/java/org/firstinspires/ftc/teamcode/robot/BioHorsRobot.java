@@ -57,18 +57,19 @@ public class BioHorsRobot {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
-        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
         frontRight = hardwareMap.get(DcMotor.class, "frontRight");
         backRight = hardwareMap.get(DcMotor.class, "backRight");
+        frontLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+        backLeft = hardwareMap.get(DcMotor.class, "backLeft");
+
         DcMotorEx intakeLeft = hardwareMap.get(DcMotorEx.class, "intakeLeft");
         DcMotorEx intakeRight = hardwareMap.get(DcMotorEx.class, "intakeRight");
-        DcMotor pollenShooterMotor = hardwareMap.get(DcMotor.class, MechanismConstants.POLLEN_SHOOTER_NAME);
-        DcMotor nectarShooterMotor = hardwareMap.get(DcMotor.class, MechanismConstants.NECTAR_SHOOTER_NAME);
-        Servo pollenGateServo = hardwareMap.get(Servo.class, MechanismConstants.POLLEN_GATE_NAME);
-        Servo nectarGateServo = hardwareMap.get(Servo.class, MechanismConstants.NECTAR_GATE_NAME);
-        Servo flowerLeftServo = hardwareMap.get(Servo.class, MechanismConstants.FLOWER_BAR_LEFT_NAME);
-        Servo flowerRightServo = hardwareMap.get(Servo.class, MechanismConstants.FLOWER_BAR_RIGHT_NAME);
+        DcMotor pollenShooterMotor = hardwareMap.get(DcMotor.class, MechanismConstants.POLLEN_SHOOTER_NAME); //shooterRight
+        DcMotor nectarShooterMotor = hardwareMap.get(DcMotor.class, MechanismConstants.NECTAR_SHOOTER_NAME); //shooterLeft
+        Servo pollenGateServo = hardwareMap.get(Servo.class, MechanismConstants.POLLEN_GATE_NAME); //gateRight
+        Servo nectarGateServo = hardwareMap.get(Servo.class, MechanismConstants.NECTAR_GATE_NAME); //gateLeft
+        Servo flowerLeftServo = hardwareMap.get(Servo.class, MechanismConstants.FLOWER_BAR_LEFT_NAME); //flowerLeft
+        Servo flowerRightServo = hardwareMap.get(Servo.class, MechanismConstants.FLOWER_BAR_RIGHT_NAME); //flowerRight
 
         GoBildaPinpointDriver pp = null;
         try {
@@ -85,12 +86,12 @@ public class BioHorsRobot {
 
         battery = batterySensor;
 
-        // Directions: right drive reversed (same as pedro/Constants). Shooter directions come
-        // from MechanismConstants and still need verifying on the robot.
-        frontLeft.setDirection(DcMotor.Direction.FORWARD);
-        backLeft.setDirection(DcMotor.Direction.FORWARD);
-        frontRight.setDirection(DcMotor.Direction.REVERSE);
-        backRight.setDirection(DcMotor.Direction.REVERSE);
+        // Directions: left drive reversed (same as pedro/Constants; all four flipped after testing
+        // on the robot). Shooter directions come from MechanismConstants and still need verifying.
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.FORWARD);
+        backRight.setDirection(DcMotor.Direction.FORWARD);
         pollenShooterMotor.setDirection(MechanismConstants.POLLEN_SHOOTER_DIRECTION);
         nectarShooterMotor.setDirection(MechanismConstants.NECTAR_SHOOTER_DIRECTION);
         intakeLeft.setDirection(DcMotor.Direction.FORWARD);
