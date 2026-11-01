@@ -89,12 +89,12 @@ public class BioHorsRobot {
         // Directions: left drive reversed (same as pedro/Constants; all four flipped after testing
         // on the robot). Shooter directions come from MechanismConstants and still need verifying.
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        backLeft.setDirection(DcMotor.Direction.FORWARD);
         frontRight.setDirection(DcMotor.Direction.FORWARD);
         backRight.setDirection(DcMotor.Direction.FORWARD);
         pollenShooterMotor.setDirection(MechanismConstants.POLLEN_SHOOTER_DIRECTION);
         nectarShooterMotor.setDirection(MechanismConstants.NECTAR_SHOOTER_DIRECTION);
-        intakeLeft.setDirection(DcMotor.Direction.FORWARD);
+        intakeLeft.setDirection(DcMotor.Direction.REVERSE);
         intakeRight.setDirection(DcMotor.Direction.REVERSE);
 
         // Drive brakes so the robot holds still when sticks center; intakes plain.
