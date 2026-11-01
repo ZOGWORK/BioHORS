@@ -125,6 +125,16 @@ public final class BioHorsSim {
     public final PositionalServoPlant flowerLeftPlant;
     public final PositionalServoPlant flowerRightPlant;
 
+    /**
+     * Puts the same load on both intake rollers, as a fraction of motor torque in the pulling-in
+     * direction (negative resists intaking). intakeRight is reversed in software (BioHorsRobot), so
+     * on the metal it turns the other way and its load takes the opposite raw sign.
+     */
+    public void setIntakeLoad(double torqueFractionIn) {
+        intakeLeft.setExternalTorqueFraction(torqueFractionIn);
+        intakeRight.setExternalTorqueFraction(-torqueFractionIn);
+    }
+
     public BioHorsSim() {
         for (int i = 0; i < 4; i++) {
             driveMotors[i] = new FakeMotor(DRIVE_MAX_TICKS_PER_S, DRIVE_RESPONSE_PER_S, DRIVE_TICKS_PER_REV);

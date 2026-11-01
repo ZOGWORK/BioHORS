@@ -95,7 +95,7 @@ public class BioHorsRobot {
         pollenShooterMotor.setDirection(MechanismConstants.POLLEN_SHOOTER_DIRECTION);
         nectarShooterMotor.setDirection(MechanismConstants.NECTAR_SHOOTER_DIRECTION);
         intakeLeft.setDirection(DcMotor.Direction.FORWARD);
-        intakeRight.setDirection(DcMotor.Direction.FORWARD);
+        intakeRight.setDirection(DcMotor.Direction.REVERSE);
 
         // Drive brakes so the robot holds still when sticks center; intakes plain.
         // ShooterController sets the shooter modes itself.
