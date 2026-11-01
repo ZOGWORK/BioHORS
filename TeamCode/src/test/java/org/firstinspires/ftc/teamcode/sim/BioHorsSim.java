@@ -71,11 +71,11 @@ public final class BioHorsSim {
         @Override public double maxVelocityTicksPerSecond() { return DRIVE_MAX_TICKS_PER_S; }
         @Override public double maxAccel() { return DRIVE_RESPONSE_PER_S; }
         /**
-         * Which way each motor is BOLTED IN, [FL, FR, BL, BR]. The code reverses the left pair in
-         * software (BioHorsRobot, pedro/Constants), so on the metal the left pair is mirrored.
-         * MEASURED: all four drive directions were flipped after driving the real robot.
+         * Which way each motor is BOLTED IN, [FL, FR, BL, BR]. The code reverses frontLeft only in
+         * software (BioHorsRobot, pedro/Constants), so on the metal frontLeft is the mirrored one.
+         * MEASURED: the drive directions were set by driving the real robot.
          */
-        @Override public double[] wheelMountingSigns() { return new double[] {-1.0, 1.0, -1.0, 1.0}; }
+        @Override public double[] wheelMountingSigns() { return new double[] {-1.0, 1.0, 1.0, 1.0}; }
         // MEASURED FROM CAD: the perimeter's inside faces (autos/field sizeIn, FIRST's field CAD)
         @Override public double fieldHalfWidth() { return 70.674; }
         @Override public double fieldHalfHeight() { return 70.674; }
@@ -127,11 +127,11 @@ public final class BioHorsSim {
 
     /**
      * Puts the same load on both intake rollers, as a fraction of motor torque in the pulling-in
-     * direction (negative resists intaking). intakeRight is reversed in software (BioHorsRobot), so
-     * on the metal it turns the other way and its load takes the opposite raw sign.
+     * direction (negative resists intaking). Both intake motors are reversed in software
+     * (BioHorsRobot), so on the metal they turn the other way and their loads take the opposite raw sign.
      */
     public void setIntakeLoad(double torqueFractionIn) {
-        intakeLeft.setExternalTorqueFraction(torqueFractionIn);
+        intakeLeft.setExternalTorqueFraction(-torqueFractionIn);
         intakeRight.setExternalTorqueFraction(-torqueFractionIn);
     }
 

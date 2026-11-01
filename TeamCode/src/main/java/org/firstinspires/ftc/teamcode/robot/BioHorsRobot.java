@@ -86,8 +86,8 @@ public class BioHorsRobot {
 
         battery = batterySensor;
 
-        // Directions: left drive reversed (same as pedro/Constants; all four flipped after testing
-        // on the robot). Shooter directions come from MechanismConstants and still need verifying.
+        // Directions: frontLeft reversed, the other three forward (same as pedro/Constants; set by
+        // testing on the robot). Shooter directions come from MechanismConstants and still need verifying.
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         backLeft.setDirection(DcMotor.Direction.FORWARD);
         frontRight.setDirection(DcMotor.Direction.FORWARD);

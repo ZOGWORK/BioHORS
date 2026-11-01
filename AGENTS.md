@@ -215,7 +215,7 @@ the wrong reason costs the team more than a plain stop does.
   both spinning the same physical direction, at different speeds. Two independent gate servos, one per
   shooter. No turret: aiming turns the whole chassis. A Logitech webcam exists but v1 code uses no camera.
 - **Hardware names** (must match the Robot Controller config, and the fakes in every sim test):
-  - Drive: `frontLeft`, `backLeft`, `frontRight`, `backRight` (left side REVERSE in software)
+  - Drive: `frontLeft`, `backLeft`, `frontRight`, `backRight` (only `frontLeft` REVERSE in software, set by driving the robot)
   - Intake: `intakeLeft`, `intakeRight`
   - Shooters: `shooterRight` = pollen, `shooterLeft` = nectar (pollen side assumed, not yet confirmed)
   - Gates: `gateRight` = pollen, `gateLeft` = nectar (confirmed)
