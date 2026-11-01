@@ -443,8 +443,7 @@ public final class BiobuzzMatch {
         // The pollen really aboard press on the intake rollers: running inward, both motors slow
         // (the robot's IntakeLoadSensor reads this through their encoders). Applied next tick.
         double load = intakeIn ? -INTAKE_LOAD_PER_PIECE * held : 0.0;
-        sim.intakeLeft.setExternalTorqueFraction(load);
-        sim.intakeRight.setExternalTorqueFraction(load);
+        sim.setIntakeLoad(load);
 
         logField(x, y, h);
         Logger.recordOutput("Match/held", held);
