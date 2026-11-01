@@ -30,7 +30,7 @@ with `autos/` or `TeamCode/src/test/`.
 
 | Item | Current | Where | How | Done when |
 |---|---|---|---|---|
-| X / Y pod offsets | `0.0`, `0.0` in (PLACEHOLDER) | `pedro/Constants.java` `localizerConfig` | Tuning OpMode, **Pinpoint Tuner** | Spin the robot in place 10 times: pose drifts < 1 in |
+| X / Y pod offsets | `-2.84` (MEASURED FROM CAD), `-5.1` in (APPROX, CAD screenshot) | `pedro/Constants.java` `localizerConfig` | Tuning OpMode, **Pinpoint Tuner** | Spin the robot in place 10 times: pose drifts < 1 in |
 | Pod directions | both `FORWARD` (PLACEHOLDER) | same | Pinpoint Tuner | Push forward: x goes up; push left: y goes up |
 | Sim copy of the offsets | `0.0`, `0.0` | `TeamCode/src/test/.../sim/BioHorsSim.java` `X/Y_POD_OFFSET_IN` | Copy the measured values | Sim and robot agree |
 
