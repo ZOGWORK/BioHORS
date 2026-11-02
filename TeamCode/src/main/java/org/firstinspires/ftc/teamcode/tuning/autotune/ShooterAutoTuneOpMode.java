@@ -64,6 +64,21 @@ abstract class ShooterAutoTuneOpMode extends LinearOpMode {
 
         ShooterController.Config cfg = config();
         double targetTicksPerSec = AutoTuneGains.rpmToTicksPerSec(cfg.targetRpm, cfg.ticksPerRev);
+
+        telemetry.addLine("=== FtcAutoTune: " + label() + " shooter ===");
+        telemetry.addLine("Robot on blocks, NO POLLEN loaded.");
+        telemetry.addData("Motor", "%s (%s)", motorName(), direction());
+        telemetry.addData("Target", "%.0f RPM (%.1f ticks/s), from MechanismConstants",
+                cfg.targetRpm, targetTicksPerSec);
+        telemetry.addLine("TuningConfig is read at START: edit it on Pulse now.");
+        telemetry.addLine("Edits after START need a restart of this OpMode.");
+        telemetry.addLine("Press START. The relay test runs automatically.");
+        telemetry.update();
+
+        waitForStart();
+        if (isStopRequested()) return;
+
+        // Built after START so TuningConfig edits made during INIT are the ones the test runs with.
         PIDMaster pid = new PIDMaster(
                 hardwareMap, motorName(), direction() == DcMotorSimple.Direction.REVERSE, false,
                 targetTicksPerSec,
@@ -72,17 +87,6 @@ abstract class ShooterAutoTuneOpMode extends LinearOpMode {
                 TuningConfig.RELAY_TEST_TIMEOUT_S, TuningConfig.FEEDFORWARD_TEST_POWERS,
                 TuningConfig.FEEDFORWARD_SETTLE_TIME_S, TuningConfig.TUNE_INTEGRAL_TERM,
                 cfg.ticksPerRev);
-
-        telemetry.addLine("=== FtcAutoTune: " + label() + " shooter ===");
-        telemetry.addLine("Robot on blocks, NO POLLEN loaded.");
-        telemetry.addData("Motor", "%s (%s)", motorName(), direction());
-        telemetry.addData("Target", "%.0f RPM (%.1f ticks/s), from MechanismConstants",
-                cfg.targetRpm, targetTicksPerSec);
-        telemetry.addLine("Press START. The relay test runs automatically.");
-        telemetry.update();
-
-        waitForStart();
-        if (isStopRequested()) return;
         // PIDMaster's relay timeout is checked against getRuntime(), which counts from INIT.
         resetRuntime();
 
