@@ -576,7 +576,8 @@ public class MainHorsTeleOp extends LinearOpMode {
             double leftS = EndgameAlerts.remainingS(sincePlay.seconds());
 
             String fireText = fire.clear ? "READY" : "NOT READY: " + fire.blockedReason;
-            if (gatesOpen) fireText += " | GATES OPEN";
+            // From the gates as commanded: a faulted shooter's gate stays shut even when asked open.
+            if (!robot.pollenGate.isClosed() || !robot.nectarGate.isClosed()) fireText += " | GATES OPEN";
             if (volley.running()) fireText += " | Y SEQ";
             if (robot.intakeJam.reversing()) fireText += " | INTAKE JAM: reversing";
             if (robot.intakeJam.givenUp()) fireText += " | INTAKE JAMMED: clear by hand";

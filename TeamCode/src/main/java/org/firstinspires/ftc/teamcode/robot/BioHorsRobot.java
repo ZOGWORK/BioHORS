@@ -133,13 +133,14 @@ public class BioHorsRobot {
         // Both shooters' feedforward uses the one cached reading, not a sensor read each.
         pollenShooter.setVoltageSource(this::batteryVolts);
         nectarShooter.setVoltageSource(this::batteryVolts);
+        // Positions are read at each command, so Panels edits reach the servos.
         pollenGate = new GateController("Pollen", pollenGateServo,
-                MechanismConstants.POLLEN_GATE_OPEN, MechanismConstants.POLLEN_GATE_CLOSED);
+                () -> MechanismConstants.POLLEN_GATE_OPEN, () -> MechanismConstants.POLLEN_GATE_CLOSED);
         nectarGate = new GateController("Nectar", nectarGateServo,
-                MechanismConstants.NECTAR_GATE_OPEN, MechanismConstants.NECTAR_GATE_CLOSED);
+                () -> MechanismConstants.NECTAR_GATE_OPEN, () -> MechanismConstants.NECTAR_GATE_CLOSED);
         flowerBar = new FlowerBarController(flowerLeftServo, flowerRightServo,
-                MechanismConstants.FLOWER_BAR_STOWED, MechanismConstants.FLOWER_BAR_DOWN,
-                MechanismConstants.FLOWER_BAR_SHOOTING);
+                () -> MechanismConstants.FLOWER_BAR_STOWED, () -> MechanismConstants.FLOWER_BAR_DOWN,
+                () -> MechanismConstants.FLOWER_BAR_SHOOTING);
     }
 
     /**
