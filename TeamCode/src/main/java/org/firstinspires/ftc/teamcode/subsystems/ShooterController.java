@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.util.function.DoubleSupplier;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
@@ -68,6 +70,12 @@ public class ShooterController {
     private final DcMotorEx motor;
     private final Telemetry telemetry; // nullable
     private final VoltageSensor voltageSensor; // nullable
+    /** A power change smaller than this is not written to the motor (a hub command each). A move
+     *  to exactly zero is always written. SET BY HAND: 0.002 of full power, about 12 rpm of
+     *  feedforward on a 6000 rpm motor, inside every shooter's rpm tolerance. */
+    public static double POWER_WRITE_EPSILON = 0.002;
+    private double lastWrittenPower = Double.NaN;
+    private DoubleSupplier voltageSource; // nullable: when set, used instead of reading the sensor
     private final ElapsedTime timer = new ElapsedTime();
 
     // --- Internal state ---
@@ -110,6 +118,12 @@ public class ShooterController {
 
         timer.reset();
         lastPos = this.motor.getCurrentPosition();
+    }
+
+    /** Take the battery voltage from {@code source} (a shared, cached reading) instead of reading
+     *  the sensor every update. */
+    public void setVoltageSource(DoubleSupplier source) {
+        voltageSource = source;
     }
 
     public String getLabel() {
@@ -249,9 +263,16 @@ public class ShooterController {
 
         // Power smoothing (alpha = 1 => no smoothing).
         double smoothedOut = config.powerSmoothingAlpha * out + (1.0 - config.powerSmoothingAlpha) * lastAppliedPower;
+        // Switched off: the smoothed tail ends at a real zero, not a residue under POWER_WRITE_EPSILON.
+        if (out == 0.0 && Math.abs(smoothedOut) < POWER_WRITE_EPSILON) smoothedOut = 0.0;
 
         try {
-            motor.setPower(smoothedOut);
+            boolean changed = Double.isNaN(lastWrittenPower) || (smoothedOut == 0.0
+                    ? lastWrittenPower != 0.0 : Math.abs(smoothedOut - lastWrittenPower) >= POWER_WRITE_EPSILON);
+            if (changed) {
+                motor.setPower(smoothedOut);
+                lastWrittenPower = smoothedOut;
+            }
         } catch (Exception e) {
             if (telemetry != null) telemetry.addData(config.label + ".power", "setPower failed: " + e.getMessage());
         }
@@ -269,7 +290,10 @@ public class ShooterController {
 
     private double getBatteryVoltage() {
         try {
-            if (voltageSensor != null) {
+            if (voltageSource != null) {
+                double v = voltageSource.getAsDouble();
+                if (v > 1e-3) return v;
+            } else if (voltageSensor != null) {
                 double v = voltageSensor.getVoltage();
                 if (v > 1e-3) return v;
             }
