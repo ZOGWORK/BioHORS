@@ -46,9 +46,9 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
  *   Left bumper / A ....... NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
  *   B ..................... request / cancel both gates open (the flower bar lifts slightly while open)
- *   X (hold) .............. RESET the pose: back the robot flat against the alliance's wall at the
- *                           loading zone's edge (the auto's park spot), intake facing the field, and
- *                           HOLD X for RESET_HOLD_S: the pose becomes RESET_X/Y/HEADING (mirrored for
+ *   X (hold) .............. RESET the pose: push the robot into the alliance's corner beyond the
+ *                           loading zone (RED: north-west), back flat on the side wall and its side
+ *                           flat on the end wall, intake facing the field, and HOLD X for RESET_HOLD_S: the pose becomes RESET_X/Y/HEADING (mirrored for
  *                           BLUE), wiping the Pinpoint's drift, and the pad rumbles. A tap does
  *                           nothing: the reset also tells PoseSanity to trust the pose again, so a
  *                           fat-fingered press mid-field would aim on a wrong pose unchecked.
@@ -159,11 +159,11 @@ public class MainHorsTeleOp extends LinearOpMode {
     public static double DEFAULT_START_Y_IN = 49.0;    // SET BY HAND (the team, 2026-10-30; = waypoints.json park). NEEDS MEASUREMENT
     public static double DEFAULT_START_HEADING_RAD = 0.0; // the intake facing the field (east), back to the west wall
 
-    // Where X resets the pose to (RED; BLUE is the point mirror): the robot backed flat against
-    // the west wall at the park spot, the intake facing the field. The wall fixes x and the
-    // heading exactly; y is the park's, by eye against the loading zone's edge.
+    // Where X resets the pose to (RED; BLUE is the point mirror): the robot pushed into the
+    // north-west corner, back flat against the west wall and left side flat against the north
+    // wall, the intake facing the field (east). Two walls fix x, y and the heading; nothing is by eye.
     public static double RESET_X_IN = -62.87;          // MEASURED FROM CAD: FIRST's CAD west wall -70.674 + the back's 7.8
-    public static double RESET_Y_IN = 49.0;            // SET BY HAND (= waypoints.json park). NEEDS MEASUREMENT
+    public static double RESET_Y_IN = 61.75;           // MEASURED FROM CAD: FIRST's CAD north wall 70.674 - half the 17.84 width
     public static double RESET_HEADING_RAD = 0.0;      // square to the west wall, facing the field
 
     // Smoothing of the aim velocity (AimVelocityFilter): 1 = raw, smaller = smoother but laggier.
@@ -511,8 +511,8 @@ public class MainHorsTeleOp extends LinearOpMode {
             dpadUpLast = dpadUpNow;
 
             // ----- X held RESET_HOLD_S: reset the pose to the reset spot (wipes Pinpoint drift). The
-            // driver puts the robot there first: back to the west wall by the loading zone, intake
-            // facing the field. Once per hold; a tap does nothing. -----
+            // driver puts the robot there first: pushed into the corner past the loading zone, back
+            // on the west wall, side on the north wall, intake facing the field. Once per hold; a tap does nothing. -----
             boolean xNow = gamepad1.x || gamepad2.x;
             if (xNow && !xLast) {
                 xHold.reset();

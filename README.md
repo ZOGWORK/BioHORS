@@ -53,7 +53,7 @@ Shooter/gate names, directions, and tuning values live in
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
 | Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
 | B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target, at least one shooter is on and every switched-on shooter is at speed (telemetry names what blocks) |
-| X (hold 0.5 s) | **Reset the pose** (wipes Pinpoint drift): back the robot flat against your alliance's wall at the park spot by the loading zone, intake facing the field, then hold X until the pad rumbles. A tap does nothing |
+| X (hold 0.5 s) | **Reset the pose** (wipes Pinpoint drift): push the robot into your alliance's corner past the loading zone (RED: north-west, BLUE: south-east), back flat on the side wall and its side flat on the end wall, intake facing the field, then hold X until the pad rumbles. A tap does nothing |
 | Dpad up | Flower bar down / stowed. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
