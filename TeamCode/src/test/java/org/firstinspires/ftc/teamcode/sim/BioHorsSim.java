@@ -59,7 +59,7 @@ public final class BioHorsSim {
 
     // ----- Pinpoint: where the pods really sit. Must match what pedro/Constants tells it. -----
     static final double X_POD_OFFSET_IN = -2.84;                // MEASURED FROM CAD (same as Constants)
-    static final double Y_POD_OFFSET_IN = 0.0;                  // PLACEHOLDER (same as Constants)
+    static final double Y_POD_OFFSET_IN = -5.1;                 // APPROX, from a CAD screenshot (same as Constants)
     static final double POD_TICKS_PER_MM = 19.89436789;         // SPEC (goBILDA 4-bar pod)
 
     /** The chassis. */

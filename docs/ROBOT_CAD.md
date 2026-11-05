@@ -25,7 +25,7 @@ floor at z = -1.105 in. The robot frame used everywhere else (Pedro, Zenith, the
 | Drive wheels | 104 mm, at forward +5.2 / -5.2 in, left +/-6.48 in | sim: wheel base 10.39, track width 12.96 |
 | Pinpoint | forward -5.2, left -0.32 in | (reference) |
 | X (forward) pod wheel | 2.84 in to the right of the drive centre | `pedro/Constants` `xPodOffset` -2.84 |
-| Y (strafe) pod | **not in the CAD** | NEEDS MEASUREMENT |
+| Y (strafe) pod wheel | on the centreline, in the X pod's column: 5.1 in behind the drive centre (APPROX, from a top-view screenshot of the updated CAD, 2026-11-01) | `pedro/Constants` `yPodOffset` -5.1 |
 | Intake mouth | 13.2 in wide (between the flower mech side plates), 4.6 in deep, centre 11.9 in ahead | `autos/robot.json` intake mouth |
 | Flower mech bar | 0.8 to 1.5 in above the floor, built to slide into a flower's retrieval opening | flower pickup poses |
 | Shooters | nectar on the left, pollen on the right, one motor each, 1:1 | `MechanismConstants` |
@@ -37,8 +37,8 @@ floor at z = -1.105 in. The robot frame used everywhere else (Pedro, Zenith, the
 
 1. **Start size.** With the flower bar out the robot is 22 in long, over an 18 in start box. Does the
    flower mech fold in for the start? If it does, `startIn` becomes the 17.44 in frame.
-2. **Y pod.** The strafe odometry pod is not in the CAD; its forward offset (`yPodOffset`) is still a
-   placeholder.
+2. **Y pod.** The updated CAD shows the strafe pod, but only a screenshot was read, so `yPodOffset`
+   (-5.1 in) is APPROX. Measure it in Onshape, or confirm it with the Pinpoint Tuner.
 3. **Flower bar into the foot.** The bar is built to enter the retrieval opening, but the field file
    treats the foot as solid, so the auto stops the bar 0.5 in short. Find the seated pose on a real field.
 
