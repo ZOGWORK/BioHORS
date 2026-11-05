@@ -48,14 +48,14 @@ Shooter/gate names, directions, and tuning values live in
 | Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field, and spin both shooters up (no dpad down needed; a volley under way keeps them up after you let go) |
 | Right bumper (hold) | Slow mode, 0.45x. **While aiming:** each press nudges the aim 1° right instead |
 | Right trigger | Intake in (a stalled intake reverses for 0.3 s on its own; the Fire line says `INTAKE JAM`. After 3 reverses that do not clear it the intake stops: `INTAKE JAMMED: clear by hand`, until you let go) |
-| Y | **Volley**: spins both shooters up; once they are at speed (or after 2 s if they never get there) both gates open and the intake runs for 1 s, then the gates close and the intake stops. No pose or aim check; it does not aim. B and the intake trigger are locked out while it runs. Y again cancels. Fire line: `Y SEQ`. There is no outtake button |
+| Y | **Volley**: spins both shooters up; once they are at speed (or after 2 s if they never get there) both gates open and the intake runs for 1 s, then the gates close and the intake stops. No pose or aim check; it does not aim. B and the intake trigger are locked out while it runs. Y again cancels. Fire line: `Y SEQ` |
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF), to keep them spinning without aiming |
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
 | Left bumper | **Nectar** shooter target RPM − (50 rpm). **While aiming:** each press nudges the aim 1° left instead. The nudge (up to ±10°) stays until an X reset; the Pose line shows it |
-| A | Nothing |
+| A (hold) | **Outtake**: both intake motors run out. Wins over right trigger; locked out while the Y volley runs |
 | B | Toggle both gates open / closed. No pose, aim or speed check: you decide. The Fire line still says `READY`, or `NOT READY: ...` with the reason, so you know whether the shot would score |
 | X (hold 0.5 s) | **Reset the pose** (wipes Pinpoint drift): push the robot into your alliance's corner past the loading zone (RED: north-west, BLUE: south-east), back flat on the side wall and its side flat on the end wall, intake facing the field, then hold X until the pad rumbles. A tap does nothing |
-| Dpad up | Flower bar down / up. Both servos start at 0.5; the first press puts it down (left 0.35 / right 0.65), the next up (left 0.65 / right 0.35). The right servo is reversed, so the two always add up to 1. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
+| Dpad up | Flower bar down / stowed. It starts stowed (0.05); the first press puts it down (0.80), the next stows it. The right servo is reversed, so it gets 1 minus the left's number. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
 alliance and final pose are picked up automatically (the SDK blackboard), once, and only if the

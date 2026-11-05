@@ -522,8 +522,8 @@ class MainHorsTeleOpSimTest {
         BioHorsSim start = new BioHorsSim();
         startAt(start, "RED", -13.0, -63.0, Math.PI / 2.0);
         double[] startLate = servosAt(start, 30, 25, GamepadScript.NONE);
-        assertEquals(MechanismConstants.FLOWER_BAR_START, startLate[2], 0.02, "untouched, the bar stays centred");
-        assertEquals(MechanismConstants.FLOWER_BAR_START, startLate[3], 0.02, "both servos centred");
+        assertEquals(MechanismConstants.FLOWER_BAR_START, startLate[2], 0.02, "untouched, the bar stays at its start");
+        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_START, startLate[3], 0.02, "the reversed right servo mirrors it");
         OpMode.blackboard.clear();
 
         BioHorsSim shoot = new BioHorsSim();
@@ -940,6 +940,26 @@ class MainHorsTeleOpSimTest {
         assertTrue(line(result, "Pollen").endsWith(" / 800 rpm IDLE"), line(result, "Pollen"));
         assertTrue(line(result, "Fire").startsWith("Fire : NOT READY") && line(result, "Fire").contains("NO SHOOTER ON"),
                 "idle counts as off: " + line(result, "Fire"));
+    }
+
+    /** A held runs the intake out, and wins over right trigger; let go, the trigger pulls in again. */
+    @Test
+    void aHeldOuttakesOverTheTrigger() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double[] power = {Double.NaN, Double.NaN, Double.NaN};
+        runWatching(sim, 80, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.right_trigger = tick >= 30 ? 1f : 0f;
+            g2.a = tick >= 10 && tick < 50;   // operator holds A
+        }, tick -> {
+            if (tick == 20) power[0] = sim.intakeLeft.getPower();   // A alone
+            if (tick == 40) power[1] = sim.intakeLeft.getPower();   // A and the trigger
+            if (tick == 70) power[2] = sim.intakeLeft.getPower();   // trigger alone
+        });
+        assertEquals(org.firstinspires.ftc.teamcode.subsystems.IntakeController.OUTTAKE_POWER, power[0], 1e-9, "A held: outtake");
+        assertEquals(org.firstinspires.ftc.teamcode.subsystems.IntakeController.OUTTAKE_POWER, power[1], 1e-9, "A wins over the trigger");
+        assertTrue(power[2] > 0, "let go of A: the trigger pulls in again, " + power[2]);
     }
 
     // ------------------------------------------------------------------ intake jam
