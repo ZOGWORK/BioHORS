@@ -57,6 +57,7 @@ public class BioHorsRobot {
     private final List<LynxModule> hubs;
     private final ElapsedTime sinceBatteryRead = new ElapsedTime();
     private double cachedVolts = Double.NaN;
+    private boolean voltsReadOnce = false;   // a failed read (NaN) also waits for the period
     private boolean manualBulkReads = false;
 
     /** The Pinpoint, for its device status. Null if the config has none. */
@@ -158,7 +159,8 @@ public class BioHorsRobot {
      *  or it fails. */
     public double batteryVolts() {
         if (battery == null) return Double.NaN;
-        if (Double.isNaN(cachedVolts) || sinceBatteryRead.seconds() >= BATTERY_READ_PERIOD_S) {
+        if (!voltsReadOnce || sinceBatteryRead.seconds() >= BATTERY_READ_PERIOD_S) {
+            voltsReadOnce = true;
             try {
                 cachedVolts = battery.getVoltage();
             } catch (Exception e) {

@@ -134,6 +134,8 @@ class MainHorsTeleOpSimTest {
         assertTrue(Math.abs(wrap(sim.drivePlant.getHeading() - cell)) > Math.toRadians(3.5),
                 "and visibly off the plain auto-aim heading");
         assertTrue(line(result, "Pose").contains("nudge -6 deg"), "the Pose line shows it: " + line(result, "Pose"));
+        // The fire interlock judges the nudged heading: held there and at speed, it is clear.
+        assertEquals("Fire : READY", line(result, "Fire"), "on the nudged heading the interlock is clear");
         double nectarTargetRpm = Double.parseDouble(line(result, "Nectar").replaceAll(".*/ (-?[0-9.]+) rpm.*", "$1"));
         assertEquals(MechanismConstants.NECTAR_SHOOTER.targetRpm, nectarTargetRpm, 1.0,
                 "the left bumper did not trim nectar while aiming");
