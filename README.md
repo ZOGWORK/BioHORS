@@ -46,14 +46,14 @@ Shooter/gate names, directions, and tuning values live in
 | Left stick | Drive (forward / strafe) |
 | Right stick X | Turn (overridden while aiming) |
 | Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field, and spin both shooters up (no dpad down needed; a volley under way keeps them up after you let go) |
-| Right bumper (hold) | Slow mode, 0.45x |
+| Right bumper (hold) | Slow mode, 0.45x. **While aiming:** each press nudges the aim 1° right instead |
 | Right trigger | Intake in (a stalled intake reverses for 0.3 s on its own; the Fire line says `INTAKE JAM`. After 3 reverses that do not clear it the intake stops: `INTAKE JAMMED: clear by hand`, until you let go) |
 | Y | **Volley**: spins both shooters up, then requests both gates for a 1 s window once they are at speed, then lets go (gives up after 2 s if they never get there). The interlock still decides; it does not aim. B and the intake trigger are locked out while it runs; the intake feeds only while the gates are open. Y again cancels. Fire line: `Y SEQ`. There is no outtake button |
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF), to keep them spinning without aiming |
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
-| Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm) |
+| Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm). **While aiming:** each left bumper press nudges the aim 1° left instead. The nudge (up to ±10°) stays until an X reset; the Pose line shows it |
 | B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target, at least one shooter is on and every switched-on shooter is at speed (telemetry names what blocks) |
-| X (hold 0.5 s) | **Reset the pose** (wipes Pinpoint drift): back the robot flat against your alliance's wall at the park spot by the loading zone, intake facing the field, then hold X until the pad rumbles. A tap does nothing |
+| X (hold 0.5 s) | **Reset the pose** (wipes Pinpoint drift): push the robot into your alliance's corner past the loading zone (RED: north-west, BLUE: south-east), back flat on the side wall and its side flat on the end wall, intake facing the field, then hold X until the pad rumbles. A tap does nothing |
 | Dpad up | Flower bar down / stowed. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its

@@ -17,6 +17,13 @@ public class DriveController {
     private final DcMotor backLeft;
     private final DcMotor backRight;
 
+    /** A power change smaller than this is not written: each motor write is a hub command of
+     *  about a millisecond, and while aiming the yaw changes a hair every loop. A move to exactly
+     *  zero is always written. SET BY HAND. */
+    public static double POWER_WRITE_EPSILON = 0.005;
+    // Last power written to frontLeft, frontRight, backLeft, backRight; NaN = nothing written yet.
+    private final double[] lastPower = {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+
     // ===== Drive shaping config (starting points, tune to this robot) =====
     public static double STICK_DEADBAND = 0.05; // PLACEHOLDER
     public static double TRANSLATION_EXPO = 1.6; // PLACEHOLDER; 1.0 = linear, >1 more precision near center
@@ -76,18 +83,28 @@ public class DriveController {
         backLeftPower *= speedScale;
         backRightPower *= speedScale;
 
-        frontLeft.setPower(frontLeftPower);
-        frontRight.setPower(frontRightPower);
-        backLeft.setPower(backLeftPower);
-        backRight.setPower(backRightPower);
+        write(0, frontLeft, frontLeftPower);
+        write(1, frontRight, frontRightPower);
+        write(2, backLeft, backLeftPower);
+        write(3, backRight, backRightPower);
     }
 
     /** Stop the drive immediately. */
     public void stop() {
-        frontLeft.setPower(0.0);
-        frontRight.setPower(0.0);
-        backLeft.setPower(0.0);
-        backRight.setPower(0.0);
+        write(0, frontLeft, 0.0);
+        write(1, frontRight, 0.0);
+        write(2, backLeft, 0.0);
+        write(3, backRight, 0.0);
+    }
+
+    /** Writes a motor's power unless it is within POWER_WRITE_EPSILON of the last one written. */
+    private void write(int i, DcMotor motor, double power) {
+        double last = lastPower[i];
+        boolean changed = Double.isNaN(last)
+                || (power == 0.0 ? last != 0.0 : Math.abs(power - last) >= POWER_WRITE_EPSILON);
+        if (!changed) return;
+        motor.setPower(power);
+        lastPower[i] = power;
     }
 
     // ===== Helpers =====
