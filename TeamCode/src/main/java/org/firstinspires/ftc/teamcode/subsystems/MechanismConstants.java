@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 /**
@@ -12,6 +14,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
  *
  * Nothing here is measured yet. Do not treat any value as tuned.
  */
+@Configurable
 public final class MechanismConstants {
 
     private MechanismConstants() {
@@ -72,8 +75,13 @@ public final class MechanismConstants {
         NECTAR_SHOOTER.label = "Nectar";
         applySharedPlaceholders(NECTAR_SHOOTER);
         // SET BY HAND: the team's test target (Oct 27), the same start as pollen. Nectar is
-        // expected to settle at its own speed after a field test; trim it with X / A.
+        // expected to settle at its own speed after a field test; trim it down with left bumper.
         NECTAR_SHOOTER.targetRpm = 1600.0;
+        // SET BY HAND (the team, 2026-11-05): nectar fell short of its target on the robot. The
+        // shared kF 1.0 is the no-load free speed, and the small kI cannot make up a loaded
+        // flywheel's gap, so nectar's feedforward goes up 20 %. Tune live in Panels
+        // (MechanismConstants > NECTAR_SHOOTER > kF), then copy the value here.
+        NECTAR_SHOOTER.kF = 1.2;
         // ---- Nectar tuned values: paste the "Nectar" lines the Shooter Tuner OpMode prints here ----
     }
 
@@ -126,14 +134,15 @@ public final class MechanismConstants {
     public static double NECTAR_GATE_OPEN = 0.67;    // PLACEHOLDER
     public static double NECTAR_GATE_CLOSED = 0.485; // PLACEHOLDER
 
-    // ===== Flower bar servo positions (both servos get the same number) =====
-    // PLACEHOLDER: arbitrary until set on the robot. STOWED folds the bar up (the robot at its
-    // shortest, as it starts the match); DOWN puts it out and low for a flower's opening;
-    // SHOOTING is DOWN raised slightly, so shots clear it.
-    public static double FLOWER_BAR_STOWED = 0.05;   // PLACEHOLDER: folded well back, so the bar and its side plates sit
-                                                     // inside the frame and clear of the wall when the robot runs close to it
-    public static double FLOWER_BAR_DOWN = 0.80;     // PLACEHOLDER
-    public static double FLOWER_BAR_SHOOTING = 0.65; // PLACEHOLDER
+    // ===== Flower bar servo positions =====
+    // The number is the LEFT servo's. The right servo faces the other way and is REVERSE, so it
+    // gets 1 - this (left 0.35 = right 0.65): the two always add up to 1. START is where both sit
+    // at init, until the first command; STOWED is the bar UP; DOWN is out and low for a flower's
+    // opening; SHOOTING (autos only) is DOWN raised a little, so shots clear it.
+    public static double FLOWER_BAR_START = 0.5;     // SET BY HAND (the team, 2026-11-05): both servos centred
+    public static double FLOWER_BAR_STOWED = 0.65;   // SET BY HAND (the team, 2026-11-05): UP, left 0.65 / right 0.35
+    public static double FLOWER_BAR_DOWN = 0.35;     // SET BY HAND (the team, 2026-11-05): left 0.35 / right 0.65
+    public static double FLOWER_BAR_SHOOTING = 0.40; // PLACEHOLDER: a little up from DOWN
     // ===== Pollen count from the intake's speed (IntakeLoadSensor) =====
     // Both intake motors have encoders. Pollen aboard press on the rollers, so the intake slows.
     public static final int HOPPER_CAPACITY = 4;                // SET BY HAND: confirmed by the team (G407)

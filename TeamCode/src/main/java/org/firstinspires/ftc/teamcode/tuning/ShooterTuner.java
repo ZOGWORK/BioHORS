@@ -48,8 +48,13 @@ public class ShooterTuner extends LinearOpMode {
 
     static final double V_REF = 12.0;
     static final double[] SWEEP_POWERS = {0.2, 0.4, 0.6, 0.8, 1.0};
-    static final double SETTLE_WINDOW_S = 0.3;
-    static final double SETTLE_SPREAD = 0.005;   // steady = spread over the window under 0.5 %
+    // Steady = the mean speed of the last SETTLE_WINDOW_S/2 is within SETTLE_DRIFT of the half
+    // before it (or SETTLE_FLOOR_TPS ticks/s). Judged on means, not single readings: the hub reports
+    // a 28-tick motor's speed in steps of about 20 ticks/s, so a reading-to-reading spread check
+    // (the old one: 0.5 % or 10 ticks/s) never passed on the robot. SET BY HAND.
+    static final double SETTLE_WINDOW_S = 0.6;
+    static final double SETTLE_DRIFT = 0.01;
+    static final double SETTLE_FLOOR_TPS = 20.0;
     static final double SETTLE_MIN_S = 0.8;
     static final double SETTLE_MAX_S = 6.0;   // a heavy flywheel spins up slowly; 5 points stay under a minute
 
@@ -363,14 +368,15 @@ public class ShooterTuner extends LinearOpMode {
             double now = clock.seconds();
             window.add(new double[] {now, motor.getVelocity(), volts()});
             while (!window.isEmpty() && window.get(0)[0] < now - SETTLE_WINDOW_S) window.remove(0);
-            double lo = Double.MAX_VALUE, hi = -Double.MAX_VALUE, mean = 0, v = 0;
+            double mean = 0, v = 0, older = 0, newer = 0;
+            int nOlder = 0, nNewer = 0;
             for (double[] w : window) {
-                lo = Math.min(lo, w[1]);
-                hi = Math.max(hi, w[1]);
                 mean += w[1] / window.size();
                 v += w[2] / window.size();
+                if (w[0] < now - SETTLE_WINDOW_S / 2) { older += w[1]; nOlder++; } else { newer += w[1]; nNewer++; }
             }
-            boolean steady = now >= SETTLE_MIN_S && hi - lo <= Math.max(SETTLE_SPREAD * Math.abs(mean), 10.0);
+            boolean steady = now >= SETTLE_MIN_S && nOlder > 0 && nNewer > 0
+                    && Math.abs(newer / nNewer - older / nOlder) <= Math.max(SETTLE_DRIFT * Math.abs(mean), SETTLE_FLOOR_TPS);
             telemetry.addData("Tuning", "%s: %.0f ticks/s", what, mean);
             telemetry.update();
             if (steady) return new double[] {mean, v, 1};

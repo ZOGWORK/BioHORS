@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.pedro;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.pedropathing.algorithm.Foresight;
 import com.pedropathing.algorithm.ForesightConfig;
 import com.pedropathing.controllers.Controller;
@@ -27,38 +29,23 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * (one forward / X pod, one strafe / Y pod), the same setup the team runs.
  *
  * ============================================================================
- * TODO: MEASURE / VERIFY THE PINPOINT ITEMS BELOW. Pod offsets, pod type,
- * and pod directions are robot-specific and cannot be guessed:
- *  - Run the Quickstart's Pinpoint Tuner (Tuning OpMode) on the robot. It
- *    finds the pod directions and the X/Y offsets for you.
- *  - Pod type: set to goBILDA_4_BAR_POD below. If your pods are the
- *    swingarm style instead, change it to goBILDA_SWINGARM_POD.
- *  - Offsets are in INCHES, measured from the Pinpoint to each pod's
- *    contact point along the robot's axes (the tuner reports them).
+ * The Pinpoint items below were MEASURED with the Pinpoint Tuner (Tuning
+ * OpMode) on 2026-11-05. Re-run it if a pod is moved. Offsets are INCHES.
  * ============================================================================
  */
+@Configurable
 public class Constants {
 
     // ---- Pinpoint localizer config (2 odometry pods) ----
     public static PinpointConfig localizerConfig = new PinpointConfig(c -> {
         c.name.set("pinpoint");
-        // TODO: confirm pod type -- 4-bar pods here; swingarm pods use
-        // GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_SWINGARM_POD.
+        // MEASURED: Pedro Pinpoint Tuner on the robot, 2026-11-05 (pod type, both directions and
+        // both offsets, inches). The CAD guesses it replaced: x -2.84, y -5.1.
         c.podType.set(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        // TODO: MEASURE THESE with the Pinpoint Tuner (inches).
-        // MEASURED FROM CAD (33950 Robot.step): the X (forward) pod sits 2.84 in to the right of
-        // the drive centre (5.1 in behind it). goBILDA's convention is left-positive, so -2.84.
-        // VERIFY sign and value with the Pinpoint Tuner.
-        c.xPodOffset.set(-2.84);
-        // APPROX, from a top-view CAD screenshot (2026-11-01): the Y (strafe) pod sits in the same
-        // fore-aft column as the X pod, on the centreline, so it is the X pod's 5.1 in behind the
-        // drive centre. goBILDA's convention is forward-positive, so -5.1. Reading the picture
-        // gave 4.9 in for both pods (about +/-0.3 in). VERIFY with the Pinpoint Tuner.
-        c.yPodOffset.set(-5.1);
-        // TODO: VERIFY with the Pinpoint Tuner -- flip to REVERSED if the
-        // pose drives backwards on either axis.
-        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD); // PLACEHOLDER
-        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD); // PLACEHOLDER
+        c.xPodOffset.set(-0.03132589454725972);
+        c.yPodOffset.set(-4.65472814604992);
+        c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        c.yPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD);
         c.globalDistanceUnit.set(DistanceUnit.INCH);
         c.offsetUnits.set(DistanceUnit.INCH);
     });
@@ -69,10 +56,10 @@ public class Constants {
         c.frontRightName.set("frontRight");
         c.backLeftName.set("backLeft");
         c.backRightName.set("backRight");
-        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
-        c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD); // MEASURED: driving the real robot
-        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE); // MEASURED: Pedro Mecanum Tuner, 2026-11-05
+        c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD); // MEASURED: driving the real robot; Pedro Mecanum Tuner, 2026-11-05
+        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD); // MEASURED: Pedro Mecanum Tuner, 2026-11-05
+        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD); // MEASURED: Pedro Mecanum Tuner, 2026-11-05
     });
 
     /** Pinpoint localizer: 2 odometry pods + IMU heading. */

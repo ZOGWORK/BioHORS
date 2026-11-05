@@ -7,9 +7,10 @@ import com.qualcomm.robotcore.hardware.Servo;
  * intake can pull pollen out of it. Two servos drive it, mounted facing away from each other, so
  * one is set to REVERSE: the same position then turns both the same way and the bar stays level.
  *
- * Three positions (servo units in [0, 1], MechanismConstants, all PLACEHOLDER):
+ * Positions (the left servo's number; the right one gets 1 - it, MechanismConstants):
  * <ul>
- *   <li>STOWED: folded up. The robot is at its shortest (it starts the match like this).</li>
+ *   <li>START: both servos centred, at init, until the first command.</li>
+ *   <li>STOWED: the bar up. The robot is at its shortest.</li>
  *   <li>DOWN: out and low, for collecting from a flower. The robot is at its longest.</li>
  *   <li>SHOOTING: raised slightly from DOWN while launching, so the shots clear it.</li>
  * </ul>
@@ -37,7 +38,8 @@ public class FlowerBarController {
         this.shootingPos = shootingPos;
         left.setDirection(Servo.Direction.FORWARD);
         right.setDirection(Servo.Direction.REVERSE);  // mirrored mount
-        apply();
+        left.setPosition(MechanismConstants.FLOWER_BAR_START);
+        right.setPosition(MechanismConstants.FLOWER_BAR_START);
     }
 
     public void setDown(boolean down) {

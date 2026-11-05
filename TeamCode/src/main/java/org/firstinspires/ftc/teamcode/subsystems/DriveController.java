@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 /**
@@ -10,6 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
  * If the drive feels twitchy or dead near center, tune STICK_DEADBAND,
  * TRANSLATION_EXPO, and YAW_EXPO here.
  */
+@Configurable
 public class DriveController {
 
     private final DcMotor frontLeft;

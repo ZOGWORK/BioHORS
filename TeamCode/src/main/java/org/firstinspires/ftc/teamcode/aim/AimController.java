@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.aim;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 /**
  * Turns the whole chassis to face a field point. There is no turret, so aiming is chassis yaw.
  *
@@ -9,6 +11,7 @@ package org.firstinspires.ftc.teamcode.aim;
  *
  * Pure math, no hardware: the teleop decides whether the pose is trustworthy before using it.
  */
+@Configurable
 public class AimController {
 
     // Which way the shooter fires, relative to the robot's front, radians CCW.

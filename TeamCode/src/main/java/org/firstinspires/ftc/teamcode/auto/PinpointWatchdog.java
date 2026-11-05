@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.auto;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.function.BooleanSupplier;
@@ -16,6 +18,7 @@ import java.util.function.Supplier;
  * Both autos call {@link #update()} once per loop and, when it returns true, stop the drive and keep
  * the gates shut (the scoring-spot check cannot be trusted without a pose).
  */
+@Configurable
 public class PinpointWatchdog {
 
     /** Not READY this many loops in a row trips it. SET BY HAND: rides out one bad read. */

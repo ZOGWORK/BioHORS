@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robot;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -29,6 +31,7 @@ import java.util.List;
  * It does NOT build a localizer or a Pedro follower: the teleop and the auto each own one
  * (see pedro/Constants), so two objects never read the Pinpoint in the same loop.
  */
+@Configurable
 public class BioHorsRobot {
 
     public final DcMotor frontLeft;

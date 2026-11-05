@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.zenith;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 /**
  * How many pollen the robot THINKS it holds. This robot has no sensor that sees pollen, so this is
  * an estimate, not a reading:
@@ -12,6 +14,7 @@ package org.firstinspires.ftc.teamcode.zenith;
  * Without it the hopperFull / holdingPiece / hopperEmpty conditions are only as good as the timing
  * below.
  */
+@Configurable
 public class PollenEstimate {
 
     public static final int CAPACITY = 4; // SET BY HAND: confirmed by Sushil (Oct 27); also BIOBUZZ G407

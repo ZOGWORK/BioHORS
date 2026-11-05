@@ -53,90 +53,45 @@ class ShootWhileMovingSimTest {
 
     // ------------------------------------------------------------------ fire interlock
 
+    /**
+     * B opens the gates at once, slow flywheels or not (no interlock on B); the Fire line still
+     * names what is not ready, then says READY once both are at speed.
+     */
     @Test
-    void gatesRefuseToOpenWhileAFlywheelIsSlowAndTelemetrySaysSo() {
+    void bOpensTheGatesAtOnceAndTheFireLineSaysWhatIsNotReady() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, -13.0, -63.0, Math.PI / 2.0); // faces the RED south cell already
-        final int[] closedWhileSlow = {0};
-        final String[] openedEarly = {null};
-        // Read on a late ACTIVE tick: at STOP the robot shuts its gates.
-        final double[] gatesLate = {Double.NaN, Double.NaN};
+        double[] gateAt = new double[260];
         OpModeRunResult result = run(sim, TELEOP, 250, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5; // shooters on, from rest
-            g1.b = tick >= 2 && tick < 5;         // request the gates at the same moment
-        }, (tick, s) -> {
-            // The flywheels' TRUE speed, against the 75 rpm tolerance plus a little filter lag.
-            boolean slow = Math.abs(s.pollenShooterRpm() - 1600.0) > 150.0
-                    || Math.abs(s.nectarShooterRpm() - 1600.0) > 150.0;
-            boolean moving = s.pollenGatePlant.getPosition() > GATE_CLOSED + 0.02
-                    || s.nectarGatePlant.getPosition() > GATE_CLOSED + 0.02;
-            if (tick > 2 && slow && !moving) closedWhileSlow[0]++;
-            if (tick == 245) {
-                gatesLate[0] = s.pollenGatePlant.getPosition();
-                gatesLate[1] = s.nectarGatePlant.getPosition();
-            }
-            if (slow && moving && openedEarly[0] == null) {
-                openedEarly[0] = String.format("tick %d: pollen %.0f rpm, nectar %.0f rpm",
-                        tick, s.pollenShooterRpm(), s.nectarShooterRpm());
-            }
-        });
+            g1.b = tick >= 2 && tick < 5;         // gates open at the same moment
+        }, (tick, s) -> gateAt[tick] = s.pollenGatePlant.getPosition());
 
-        assertEquals(null, openedEarly[0], "a gate opened while a flywheel was slow");
-        assertTrue(closedWhileSlow[0] >= 3, "the request should have waited on the spin-up for a few ticks, "
-                + closedWhileSlow[0]);
-        assertTrue(anyLine(result, "Fire", "BLOCKED: Pollen flywheel"),
-                "telemetry should name the slow flywheel");
-        assertFalse(anyLine(result, "Fire", "AIM"), "the aim was on target the whole time");
-        assertEquals(GATE_OPEN, gatesLate[0], 0.02,
-                "once both flywheels are at speed the standing request opens the gate");
-        assertEquals(GATE_OPEN, gatesLate[1], 0.02);
-        assertTrue(lastLine(result, "Fire").contains("READY"), lastLine(result, "Fire"));
+        assertEquals(GATE_OPEN, gateAt[30], 0.02, "B opened the gate while the flywheels were still slow");
+        assertTrue(anyLine(result, "Fire", "NOT READY: Pollen flywheel"), "telemetry names the slow flywheel");
+        assertTrue(anyLine(result, "Fire", "GATES OPEN"), "and says the gates are open");
+        assertTrue(lastLine(result, "Fire").startsWith("Fire : READY"), lastLine(result, "Fire"));
     }
 
     @Test
-    void gatesRefuseToOpenOffTargetAndOpenOnceTheAimArrives() {
+    void offTargetTheFireLineNamesTheAimButTheGatesStillOpen() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, -40.0, -40.0, 0.0); // facing +X, about 45 deg off the south cell
         double[] gateAt = new double[260];
-        OpModeRunResult result = run(sim, TELEOP, 200, (phase, tick, g1, g2) -> {
+        OpModeRunResult result = run(sim, TELEOP, 120, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
-            g1.dpad_down = tick >= 2 && tick < 5;      // shooters on (NO SHOOTER ON otherwise)
-            g1.b = tick >= 2 && tick < 5;              // spun up by tick 50: only the aim blocks there
-            g1.left_trigger = tick >= 60 ? 1f : 0f;    // then aim
+            g1.dpad_down = tick >= 2 && tick < 5;
+            g1.b = tick >= 60 && tick < 63;
         }, (tick, s) -> gateAt[tick] = s.pollenGatePlant.getPosition());
 
-        assertEquals(GATE_CLOSED, gateAt[50], 0.02, "off target: the gate must stay closed");
-        assertTrue(anyLine(result, "Fire", "BLOCKED: AIM"), "telemetry should name the aim error");
-        double want = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
-        assertTrue(Math.toDegrees(Math.abs(wrap(sim.drivePlant.getHeading() - want))) <= TOL_DEG + 0.5,
-                "the aim should have arrived");
-        assertEquals(GATE_OPEN, gateAt[195], 0.02, "on target: the gate opens");
+        assertEquals(GATE_CLOSED, gateAt[55], 0.02, "closed until B");
+        assertEquals(GATE_OPEN, gateAt[115], 0.02, "B opens it off target: the driver decides");
+        assertTrue(anyLine(result, "Fire", "NOT READY: AIM"), "telemetry names the aim error");
     }
 
     @Test
-    void anOpenGateClosesOnItsOwnWhenTheAimIsLost() {
-        BioHorsSim sim = new BioHorsSim();
-        startAt(sim, -13.0, -63.0, Math.PI / 2.0);
-        double[] gateAt = new double[400];
-        OpModeRunResult result = run(sim, TELEOP, 330, (phase, tick, g1, g2) -> {
-            if (phase != OpModePhase.ACTIVE) return;
-            g1.dpad_down = tick >= 2 && tick < 5;                    // shooters on
-            g1.b = tick >= 2 && tick < 5;
-            g1.right_stick_x = tick >= 160 && tick < 190 ? 0.5f : 0f; // the driver turns away
-            g1.left_trigger = tick >= 210 ? 1f : 0f;                  // then aims back, B untouched
-        }, (tick, s) -> gateAt[tick] = s.pollenGatePlant.getPosition());
-
-        assertEquals(GATE_OPEN, gateAt[155], 0.02, "on target with the shooters at speed: open");
-        assertEquals(GATE_CLOSED, gateAt[205], 0.02, "turned away: closed on its own");
-        assertTrue(anyLine(result, "Fire", "BLOCKED: AIM"), "telemetry should name the aim error");
-        // The request still stands: back on target, the gate reopens with no second B press.
-        assertEquals(GATE_OPEN, gateAt[325], 0.02, "back on target: open again");
-        assertEquals("Fire : READY", lastLine(result, "Fire"));
-    }
-
-    @Test
-    void anInvalidPoseKeepsTheGatesClosedAndSaysSo() {
+    void anInvalidPoseSaysSoAndBStillOpensTheGates() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, -13.0, -63.0, Math.PI / 2.0);
         final int[] n = {0};
@@ -153,7 +108,7 @@ class ShootWhileMovingSimTest {
                 })
                 .eachTick(sim::step)
                 .run();
-        assertEquals(GATE_CLOSED, sim.pollenGatePlant.getPosition(), 0.02);
+        assertTrue(anyLine(result, "Fire", "GATES OPEN"), "no pose check on B: the gates opened");
         assertTrue(lastLine(result, "Fire").contains("POSE INVALID"), lastLine(result, "Fire"));
         assertTrue(lastLine(result, "Pose").contains("INVALID"), lastLine(result, "Pose"));
         assertEquals(1600.0, target(lastLine(result, "Pollen")), 0.5,

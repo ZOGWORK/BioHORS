@@ -48,13 +48,14 @@ Shooter/gate names, directions, and tuning values live in
 | Left trigger (hold) | **Aim**: turn the robot to face our hive's cell on this half of the field, and spin both shooters up (no dpad down needed; a volley under way keeps them up after you let go) |
 | Right bumper (hold) | Slow mode, 0.45x. **While aiming:** each press nudges the aim 1° right instead |
 | Right trigger | Intake in (a stalled intake reverses for 0.3 s on its own; the Fire line says `INTAKE JAM`. After 3 reverses that do not clear it the intake stops: `INTAKE JAMMED: clear by hand`, until you let go) |
-| Y | **Volley**: spins both shooters up, then requests both gates for a 1 s window once they are at speed, then lets go (gives up after 2 s if they never get there). The interlock still decides; it does not aim. B and the intake trigger are locked out while it runs; the intake feeds only while the gates are open. Y again cancels. Fire line: `Y SEQ`. There is no outtake button |
+| Y | **Volley**: spins both shooters up; once they are at speed (or after 2 s if they never get there) both gates open and the intake runs for 1 s, then the gates close and the intake stops. No pose or aim check; it does not aim. B and the intake trigger are locked out while it runs. Y again cancels. Fire line: `Y SEQ`. There is no outtake button |
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF), to keep them spinning without aiming |
 | Dpad left / right | **Pollen** shooter target RPM − / + (its own step, 50 rpm) |
-| Left bumper / A | **Nectar** shooter target RPM − / + (its own step, 50 rpm). **While aiming:** each left bumper press nudges the aim 1° left instead. The nudge (up to ±10°) stays until an X reset; the Pose line shows it |
-| B | Request / cancel both gates open: they open only while the pose is valid, the aim is on target, at least one shooter is on and every switched-on shooter is at speed (telemetry names what blocks) |
+| Left bumper | **Nectar** shooter target RPM − (50 rpm). **While aiming:** each press nudges the aim 1° left instead. The nudge (up to ±10°) stays until an X reset; the Pose line shows it |
+| A | Nothing |
+| B | Toggle both gates open / closed. No pose, aim or speed check: you decide. The Fire line still says `READY`, or `NOT READY: ...` with the reason, so you know whether the shot would score |
 | X (hold 0.5 s) | **Reset the pose** (wipes Pinpoint drift): push the robot into your alliance's corner past the loading zone (RED: north-west, BLUE: south-east), back flat on the side wall and its side flat on the end wall, intake facing the field, then hold X until the pad rumbles. A tap does nothing |
-| Dpad up | Flower bar down / stowed. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
+| Dpad up | Flower bar down / up. Both servos start at 0.5; the first press puts it down (left 0.35 / right 0.65), the next up (left 0.65 / right 0.35). The right servo is reversed, so the two always add up to 1. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
 alliance and final pose are picked up automatically (the SDK blackboard), once, and only if the
@@ -68,10 +69,15 @@ short blips as the endgame starts and once, long, 10 s before the end. A shooter
 reads nothing while it is pushed shows `ENCODER? (no speed reading)` and runs on its feedforward
 alone instead of winding up to full power; its gate stays shut and the other shooter fires alone (`POLLEN FAULT: nectar only`, with a long left-side rumble). A backwards encoder
 (negative rpm while pushed forward) shows `ENCODER REVERSED?` and is handled the same way. Also on
-the Fire line: `SLOW LOOP n ms` when the loop averages over 40 ms, and `B request dropped` when a
-gate request has waited 3 s with no volley, no aim and no spin-up (so a forgotten B cannot fire the
-moment the robot faces the hive). A pose off the field or one that jumped further than the robot can
-drive in a loop is `INVALID` (aim off, gates shut) until X resets it.
+the Fire line: `GATES OPEN` while they are, and `SLOW LOOP n ms` when the loop averages over 40 ms.
+The Loop line ends with where the last loop went: `odo` (the Pinpoint read), `mech` (the hubs'
+encoder read and both shooter loops) and `drive` (the four drive writes), in ms. A pose off the field
+or one that jumped further than the robot can drive in a loop is `INVALID` (aim off) until X resets it.
+
+**Live tuning (Panels):** every class with tuning numbers is `@Configurable`. Connect the laptop to
+the robot's Wi-Fi and open Panels in a browser (`http://192.168.43.1:8001`); the values change on the
+robot as you edit them, and go back to the code's values when the robot restarts. Copy a value you
+want to keep into the code.
 
 **Idle and trims:** idle is OFF for now (`SHOOTER_IDLE_ENABLED = false`): unasked, the flywheels stand
 still. Switched on, with neither dpad down nor aim asking for them, both flywheels idle at 800 rpm

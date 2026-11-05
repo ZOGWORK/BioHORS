@@ -24,8 +24,8 @@ floor at z = -1.105 in. The robot frame used everywhere else (Pedro, Zenith, the
 | Frame front / back | 9.6 in ahead / 7.8 in behind | start pose: centre 7.8 in off the wall |
 | Drive wheels | 104 mm, at forward +5.2 / -5.2 in, left +/-6.48 in | sim: wheel base 10.39, track width 12.96 |
 | Pinpoint | forward -5.2, left -0.32 in | (reference) |
-| X (forward) pod wheel | 2.84 in to the right of the drive centre | `pedro/Constants` `xPodOffset` -2.84 |
-| Y (strafe) pod wheel | on the centreline, in the X pod's column: 5.1 in behind the drive centre (APPROX, from a top-view screenshot of the updated CAD, 2026-11-01) | `pedro/Constants` `yPodOffset` -5.1 |
+| X (forward) pod wheel | 2.84 in to the right of the drive centre | CAD value; `pedro/Constants` now has the Pinpoint Tuner's -0.031 |
+| Y (strafe) pod wheel | on the centreline, in the X pod's column: 5.1 in behind the drive centre (APPROX, from a top-view screenshot of the updated CAD, 2026-11-01) | CAD value; `pedro/Constants` now has the Pinpoint Tuner's -4.655 |
 | Intake mouth | 13.2 in wide (between the flower mech side plates), 4.6 in deep, centre 11.9 in ahead | `autos/robot.json` intake mouth |
 | Flower mech bar | 0.8 to 1.5 in above the floor, built to slide into a flower's retrieval opening | flower pickup poses |
 | Shooters | nectar on the left, pollen on the right, one motor each, 1:1 | `MechanismConstants` |

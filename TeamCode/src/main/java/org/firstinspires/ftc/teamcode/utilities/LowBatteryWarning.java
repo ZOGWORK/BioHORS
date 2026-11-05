@@ -1,10 +1,13 @@
 package org.firstinspires.ftc.teamcode.utilities;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 /**
  * Warns the driver when the battery runs low, before shots start falling short. The voltage sags
  * for a moment under every spin-up, so it must stay below LOW_V for HOLD_S to warn, and above it
  * for HOLD_S to clear. Pure logic: the teleop passes the volts and the loop's dt.
  */
+@Configurable
 public class LowBatteryWarning {
 
     /** Below this, volts, the battery is low. SET BY HAND: a match battery starts near 12.8 V and a

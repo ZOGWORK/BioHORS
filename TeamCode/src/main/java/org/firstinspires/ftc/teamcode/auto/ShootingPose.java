@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.auto;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.pedropathing.math.Pose;
 
 import org.firstinspires.ftc.teamcode.aim.Alliance;
@@ -10,6 +12,7 @@ import org.firstinspires.ftc.teamcode.aim.Alliance;
  * gate only while the robot is at one of them; a volley that never gets there is skipped, so a
  * ball is never fed from a pose the shot was not planned from.
  */
+@Configurable
 public final class ShootingPose {
 
     // SET BY HAND: the shot from 48 in seats over a few inches of range (ShotSweepTest: 46-50 in),
