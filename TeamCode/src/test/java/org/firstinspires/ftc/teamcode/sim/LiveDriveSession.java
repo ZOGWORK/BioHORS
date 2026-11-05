@@ -77,7 +77,7 @@ class LiveDriveSession {
                 + (LiveDrive.lagResets(pacer) > 0 ? "; the sim fell behind real time "
                 + LiveDrive.lagResets(pacer) + " time(s)" : ""));
         System.out.println("[live] RLOG (drag into AdvantageScope): " + rlog);
-        System.out.println("[live] input track (replay with -Dsim.live.replay=<it>): " + trackPath);
+        System.out.println("[live] input track (replay with driveSim -Preplay=<it>): " + trackPath);
     }
 
     /** The newest session's input track (file names sort by their timestamp). */

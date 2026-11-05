@@ -77,6 +77,11 @@ final class GlfwGamepadSource implements GamepadInputSource {
 
     private void start() {
         started = true;
+        // GLFW on macOS must start on the process's first thread, which a Gradle test worker is not.
+        if (System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("mac")) {
+            throw new IllegalStateException("Live driving does not run on macOS yet: GLFW needs the "
+                    + "JVM's first thread there, and the Gradle test worker is not it. Use Windows or Linux.");
+        }
         if (!GLFW.glfwInit()) {
             throw new IllegalStateException("GLFW did not start, so no controller can be read on this machine");
         }

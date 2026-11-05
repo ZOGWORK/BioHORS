@@ -184,13 +184,36 @@ public final class FieldWindow {
             g.drawString(s.status, tx, ty);
             ty += 22;
             g.setColor(new Color(220, 220, 220));
+            // Long lines (the Fire line gathers every warning) wrap to the window's width.
+            java.awt.FontMetrics fm = g.getFontMetrics();
+            int maxWidth = Math.max(80, getWidth() - tx - 12);
+            outer:
             for (String line : s.lines) {
-                if (ty > getHeight() - 40) break;
-                g.drawString(line, tx, ty);
-                ty += 16;
+                for (String part : wrap(line, fm, maxWidth)) {
+                    if (ty > getHeight() - 40) break outer;
+                    g.drawString(part, tx, ty);
+                    ty += 16;
+                }
             }
             g.setColor(new Color(150, 150, 150));
             g.drawString("Hold BACK + START (or close this window) to end.", tx, getHeight() - 16);
+        }
+
+        /** Splits {@code line} at spaces into pieces no wider than {@code maxWidth} pixels (a
+         *  single word wider than that is cut). Continuation pieces are indented two spaces. */
+        private java.util.List<String> wrap(String line, java.awt.FontMetrics fm, int maxWidth) {
+            java.util.List<String> out = new java.util.ArrayList<>();
+            String rest = line;
+            while (fm.stringWidth(rest) > maxWidth) {
+                int cut = rest.length();
+                while (cut > 1 && fm.stringWidth(rest.substring(0, cut)) > maxWidth) cut--;
+                int space = rest.lastIndexOf(' ', cut);
+                if (space > 2) cut = space;
+                out.add(rest.substring(0, cut));
+                rest = "  " + rest.substring(cut).trim();
+            }
+            out.add(rest);
+            return out;
         }
 
         private void drawHive(Graphics2D g, double x, Color colour) {

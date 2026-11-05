@@ -18,7 +18,8 @@ No robot, no Control Hub, no Driver Station.
    .\gradlew.bat driveSim
    ```
 
-   (macOS/Linux: `./gradlew driveSim`.) Gradle needs Java; if it says `JAVA_HOME` is not set, use
+   (Linux: `./gradlew driveSim`. macOS is not supported yet: GLFW must start on the JVM's first
+   thread there, and the Gradle test worker is not it.) Gradle needs Java; if it says `JAVA_HOME` is not set, use
    the one Android Studio ships with:
 
    ```powershell
