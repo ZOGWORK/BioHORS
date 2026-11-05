@@ -140,6 +140,8 @@ laptop against fake hardware, in `TeamCode/src/test/java/org/firstinspires/ftc/t
   stopped at 30 s like the field: RED twice (identical logs) and BLUE once. It checks 16 pollen and
   2 tips in AUTO, every step in order, no structure contact, strafing under 20 % of the driving,
   and the robot's belief against the sim's truth. `npx zenith sim two-tip` runs the same test.
+- `LiveDriveTest`: the live-controller session's plumbing (`LiveDrive`, `LiveDriveSession`, below)
+  with scripted input: input reaches the teleop, a recorded session replays to the same log.
 
 Every sim number is a placeholder until measured (`docs/TUNING.md`), so the sim proves the code's
 logic and wiring, not the real robot's timing.
@@ -158,6 +160,19 @@ RLOGs and Zenith traces land in `TeamCode/build/sim/` (gitignored; re-run the te
 Press play. Poses are logged in AdvantageScope's FTC "Center/Rotated" frame (metres), converted
 from the field frame the code uses by `sim/AdvantageScopeFrame`. `Match/scored`, `Match/tips`,
 `Shooter/pollenRpm` plot on a Line Graph.
+
+**Drive it yourself with a controller.** Plug a USB game controller (Xbox, Logitech F310 in X
+mode, PS4/PS5) into the laptop and run
+
+```
+.\gradlew.bat driveSim
+```
+
+to drive the teleop on the simulated robot and field in real time, with a top-down window and the
+Driver Station telemetry. Hold BACK + START to end early. Each session is recorded under
+`TeamCode/build/sim/live/` as an RLOG for AdvantageScope plus the controller input, which
+`.\gradlew.bat driveSim -Preplay=latest` replays exactly. Options and details:
+[`docs/LIVE_DRIVE.md`](docs/LIVE_DRIVE.md).
 
 ## Nothing is tuned yet
 

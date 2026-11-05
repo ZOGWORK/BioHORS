@@ -16,6 +16,9 @@ apply plugin: 'com.android.application'
 apply from: '../build.common.gradle'
 apply from: '../build.dependencies.gradle'
 
+// True when this build was asked for a live sim session (the driveSim task below).
+def liveDriveRequested = gradle.startParameter.taskNames.any { it == 'driveSim' || it.endsWith(':driveSim') }
+
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
 
@@ -46,6 +49,27 @@ android {
                 systemProperty 'sim.sweeps', 'true'
                 outputs.upToDateWhen { false }
             }
+
+            // `gradlew driveSim` drives MainHorsTeleOp in real time from a USB controller
+            // (LiveDriveSession, docs/LIVE_DRIVE.md) and runs nothing else. Its options are -P ones with
+            // no dot in the name, because PowerShell splits `-Dsim.live=true` at the dot. It opens a
+            // window, so the test JVM must not be headless; its console lines show while it runs; it
+            // always re-runs, since it is a session.
+            if (liveDriveRequested) {
+                systemProperty 'sim.live', 'true'
+                ['alliance', 'seconds', 'preload', 'window', 'watch'].each { key ->
+                    if (project.hasProperty(key)) systemProperty "sim.live.$key", project.property(key).toString()
+                }
+                if (project.hasProperty('replay')) {
+                    // `latest` (the newest session's track), or a path from the project root.
+                    def replay = project.property('replay').toString()
+                    systemProperty 'sim.live.replay', replay == 'latest' ? replay : rootProject.file(replay).absolutePath
+                }
+                systemProperty 'java.awt.headless', 'false'
+                filter.includeTestsMatching 'org.firstinspires.ftc.teamcode.sim.LiveDriveSession'
+                testLogging.showStandardStreams = true
+                outputs.upToDateWhen { false }
+            }
         }
     }
 }
@@ -55,6 +79,30 @@ dependencies {
 
     // Parameterized JUnit 5 tests (same version as simloop.gradle's JUnit 5).
     testImplementation 'org.junit.jupiter:junit-jupiter-params:5.11.3'
+
+    // A USB game controller for live driving in the sim (LiveDriveSession), through GLFW's gamepad
+    // API. Test-only: none of it reaches the APK. The natives jars carry GLFW for each laptop OS;
+    // LWJGL unpacks the right one at run time. Nothing opens unless a live session asks for it.
+    def lwjglVersion = '3.4.3'
+    testImplementation "org.lwjgl:lwjgl:${lwjglVersion}"
+    testImplementation "org.lwjgl:lwjgl-glfw:${lwjglVersion}"
+    ['natives-windows', 'natives-linux', 'natives-macos', 'natives-macos-arm64'].each { natives ->
+        testRuntimeOnly "org.lwjgl:lwjgl:${lwjglVersion}:${natives}"
+        testRuntimeOnly "org.lwjgl:lwjgl-glfw:${lwjglVersion}:${natives}"
+    }
+    // The live session's window, a plain Java module (this source set cannot compile java.awt).
+    testImplementation project(':simdesktop')
 }
 
 apply from: "$rootDir/simloop-starter/simloop.gradle"
+
+// Drive MainHorsTeleOp in the sim with a USB controller, in real time, and record it (docs/LIVE_DRIVE.md):
+//     .\gradlew.bat driveSim                      (Windows; ./gradlew driveSim elsewhere)
+//     .\gradlew.bat driveSim -Palliance=BLUE -Pseconds=60 -Ppreload=4 -Pwindow=false
+//     .\gradlew.bat driveSim -Preplay=latest [-Pwatch=true]
+//     .\gradlew.bat driveSim "-Preplay=TeamCode/build/sim/live/drive-<stamp>.gamepad.txt"   (quoted: PowerShell splits at a dot)
+tasks.register('driveSim') {
+    group = 'simulation'
+    description = 'Drive MainHorsTeleOp in SimLoop with a USB game controller; records an RLOG under TeamCode/build/sim/live/.'
+    dependsOn 'testDebugUnitTest'
+}
