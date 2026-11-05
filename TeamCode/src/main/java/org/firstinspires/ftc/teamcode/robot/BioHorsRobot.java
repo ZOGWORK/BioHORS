@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.subsystems.DriveController;
@@ -17,6 +18,8 @@ import org.firstinspires.ftc.teamcode.subsystems.IntakeJamGuard;
 import org.firstinspires.ftc.teamcode.subsystems.IntakeLoadSensor;
 import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
 import org.firstinspires.ftc.teamcode.subsystems.ShooterController;
+
+import java.util.List;
 
 /**
  * Owns this robot's hardware and builds every subsystem from one HardwareMap. The teleop, the
@@ -48,12 +51,21 @@ public class BioHorsRobot {
     /** The battery voltage sensor, for the low-battery warning. Null if the config has none. */
     private final VoltageSensor battery;
 
+    /** How often the battery voltage is read, seconds: a hub ADC read is not in the bulk read and
+     *  costs a few ms, and the voltage moves slowly. SET BY HAND. */
+    public static double BATTERY_READ_PERIOD_S = 0.25;
+    private final List<LynxModule> hubs;
+    private final ElapsedTime sinceBatteryRead = new ElapsedTime();
+    private double cachedVolts = Double.NaN;
+    private boolean manualBulkReads = false;
+
     /** The Pinpoint, for its device status. Null if the config has none. */
     public final GoBildaPinpointDriver pinpoint;
 
     public BioHorsRobot(HardwareMap hardwareMap, Telemetry telemetry) {
         // Bulk read: one read per hub per loop instead of per device.
-        for (LynxModule hub : hardwareMap.getAll(LynxModule.class)) {
+        hubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule hub : hubs) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
@@ -114,6 +126,9 @@ public class BioHorsRobot {
                 MechanismConstants.POLLEN_SHOOTER, pollenShooterMotor, telemetry, batterySensor);
         nectarShooter = new ShooterController(
                 MechanismConstants.NECTAR_SHOOTER, nectarShooterMotor, telemetry, batterySensor);
+        // Both shooters' feedforward uses the one cached reading, not a sensor read each.
+        pollenShooter.setVoltageSource(this::batteryVolts);
+        nectarShooter.setVoltageSource(this::batteryVolts);
         pollenGate = new GateController("Pollen", pollenGateServo,
                 MechanismConstants.POLLEN_GATE_OPEN, MechanismConstants.POLLEN_GATE_CLOSED);
         nectarGate = new GateController("Nectar", nectarGateServo,
@@ -123,14 +138,35 @@ public class BioHorsRobot {
                 MechanismConstants.FLOWER_BAR_SHOOTING);
     }
 
-    /** Battery volts, or NaN if there is no voltage sensor or it fails. */
+    /**
+     * Switch to one bulk read per hub per loop: every encoder read in the loop comes from it, so
+     * two readers of the same motor (the jam guard and the pollen count) cost nothing extra. The
+     * caller must then call {@link #beginLoop()} at the top of every loop, or reads go stale.
+     */
+    public void useManualBulkReads() {
+        for (LynxModule hub : hubs) hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        manualBulkReads = true;
+    }
+
+    /** Top of each loop: drop last loop's bulk read (manual mode only). */
+    public void beginLoop() {
+        if (!manualBulkReads) return;
+        for (LynxModule hub : hubs) hub.clearBulkCache();
+    }
+
+    /** Battery volts, read at most every BATTERY_READ_PERIOD_S; NaN if there is no voltage sensor
+     *  or it fails. */
     public double batteryVolts() {
         if (battery == null) return Double.NaN;
-        try {
-            return battery.getVoltage();
-        } catch (Exception e) {
-            return Double.NaN;
+        if (Double.isNaN(cachedVolts) || sinceBatteryRead.seconds() >= BATTERY_READ_PERIOD_S) {
+            try {
+                cachedVolts = battery.getVoltage();
+            } catch (Exception e) {
+                cachedVolts = Double.NaN;
+            }
+            sinceBatteryRead.reset();
         }
+        return cachedVolts;
     }
 
     /** True when the Pinpoint reports READY. False if it is missing, calibrating or faulted. */

@@ -36,7 +36,7 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *   Right stick X ......... turn (overridden while aiming)
  *   Left trigger (hold) ... AIM: turn the robot to face our hive's cell on this half of the field,
  *                           and spin both shooters up (see "Spin-up while aiming" below)
- *   Right bumper (hold) ... slow mode (0.45x)
+ *   Right bumper (hold) ... slow mode (0.45x). While aiming: nudge the aim RIGHT one step instead
  *   Right trigger ......... intake in (a stalled intake reverses briefly on its own: IntakeJamGuard)
  *   Y ..................... VOLLEY (VolleySequence): spin both shooters up, then request both gates for
  *                           a timed window, then let go. Y again cancels. See "Y volley" below.
@@ -44,7 +44,10 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *   Dpad down ............. toggle both shooters on/off (each at its own target), for spinning
  *                           without aiming
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
- *   Left bumper / A ....... NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM)
+ *   Left bumper / A ....... NECTAR shooter target RPM - / + (MechanismConstants.NECTAR_TRIM_STEP_RPM).
+ *                           While aiming, left bumper nudges the aim LEFT one step instead.
+ *                           The nudge (AIM_NUDGE_STEP_RAD a press, up to AIM_NUDGE_MAX_RAD) stays
+ *                           until an X reset; the Pose line shows it.
  *   B ..................... request / cancel both gates open (the flower bar lifts slightly while open)
  *   X (hold) .............. RESET the pose: push the robot into the alliance's corner beyond the
  *                           loading zone (RED: north-west), back flat on the side wall and its side
@@ -179,6 +182,11 @@ public class MainHorsTeleOp extends LinearOpMode {
     /** Average loop time above which the Fire line says SLOW LOOP, ms. SET BY HAND: twice the 20 ms
      *  an FTC loop is written for; aim and the shooter loops degrade past it. */
     public static double SLOW_LOOP_MS = 40.0;
+    /** One bumper press while aiming turns the aim this much, radians (left bumper CCW / left,
+     *  right bumper CW / right). SET BY HAND. */
+    public static double AIM_NUDGE_STEP_RAD = Math.toRadians(1.0);
+    /** The nudge never goes past this either way, radians. SET BY HAND. */
+    public static double AIM_NUDGE_MAX_RAD = Math.toRadians(10.0);
     /** How long X must be held to reset the pose, seconds. SET BY HAND. */
     public static double RESET_HOLD_S = 0.5;
     /** How long the Fire line says a request was dropped, seconds. SET BY HAND. */
@@ -206,9 +214,11 @@ public class MainHorsTeleOp extends LinearOpMode {
     private boolean aimSpinUp = false;
     private boolean shootersFiring = false;   // on for shooting (not merely idling)
     private PoseSanity poseSanity;
+    // Driver's aim correction, radians CCW, added to the auto-aim heading. Kept until X resets it.
+    private double aimNudgeRad = 0.0;
 
     // Edge-detect state (a press fires once, not every loop).
-    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast, yLast;
+    private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, aLast, lbLast, rbLast, yLast;
 
     // Loop time for the driver display: the period from the start of one loop to the start of the
     // next, ms. Display only; nothing reads it to decide anything.
@@ -217,6 +227,7 @@ public class MainHorsTeleOp extends LinearOpMode {
     @Override
     public void runOpMode() {
         robot = new BioHorsRobot(hardwareMap, telemetry);
+        robot.useManualBulkReads();   // one bulk read per hub per loop; beginLoop() at each loop's top
         localizer = Constants.createLocalizer(hardwareMap);
         pollenSpeedTable = new DistanceSpeedTable(
                 MechanismConstants.POLLEN_SPEED_TABLE_DISTANCE_IN, MechanismConstants.POLLEN_SPEED_TABLE_RPM);
@@ -244,6 +255,7 @@ public class MainHorsTeleOp extends LinearOpMode {
 
         // ----- INIT: pick the alliance -----
         while (!isStarted() && !isStopRequested()) {
+            robot.beginLoop();
             Alliance picked = null;
             if (gamepad1.dpad_left) picked = Alliance.RED;
             if (gamepad1.dpad_right) picked = Alliance.BLUE;
@@ -311,6 +323,7 @@ public class MainHorsTeleOp extends LinearOpMode {
             loopTimeTimer.reset();
             firstLoop = false;
 
+            robot.beginLoop();
             localizer.update();
             Pose pose = localizer.pose();
             double dt = loopTimer.seconds();
@@ -350,16 +363,28 @@ public class MainHorsTeleOp extends LinearOpMode {
                     ? AimController.leadAimPoint(pose.x(), pose.y(), vx, vy, cell[0], cell[1],
                             AimController.BALL_GROUND_SPEED_IN_PER_S)
                     : cell;
+            // ----- Aim nudge: while aiming, each bumper press moves the aim one step (left bumper
+            // left, right bumper right). Out of aim the bumpers keep their own jobs. -----
+            boolean aimHeld = gamepad1.left_trigger > TRIGGER_THRESHOLD;
+            boolean lbNow = gamepad1.left_bumper || gamepad2.left_bumper;
+            boolean rbNow = gamepad1.right_bumper || gamepad2.right_bumper;
+            if (aimHeld) {
+                if (lbNow && !lbLast) aimNudgeRad = Math.min(AIM_NUDGE_MAX_RAD, aimNudgeRad + AIM_NUDGE_STEP_RAD);
+                if (rbNow && !rbLast) aimNudgeRad = Math.max(-AIM_NUDGE_MAX_RAD, aimNudgeRad - AIM_NUDGE_STEP_RAD);
+            }
+            rbLast = rbNow;
             double headingErrorRad = poseOk
                     ? AimController.wrap(AimController.desiredHeading(pose.x(), pose.y(), aimPoint[0], aimPoint[1])
-                            - pose.heading())
+                            + aimNudgeRad - pose.heading())
                     : Double.NaN;
 
             // ----- Drive, with aim overriding manual turn while left trigger is held -----
-            double scale = gamepad1.right_bumper ? SLOW_DRIVE_SCALE : NORMAL_DRIVE_SCALE;
+            // Slow mode is the right bumper, but not while aiming: there it nudges the aim.
+            boolean slowHeld = gamepad1.right_bumper && !aimHeld;
+            double scale = slowHeld ? SLOW_DRIVE_SCALE : NORMAL_DRIVE_SCALE;
             // Bar DOWN: optionally stow it on a sustained sprint, else cap the speed. The bar is
             // read as it stands from last loop's toggle (one loop late, 20 ms).
-            boolean sprinting = !gamepad1.right_bumper
+            boolean sprinting = !slowHeld
                     && Math.hypot(gamepad1.left_stick_x, gamepad1.left_stick_y) >= BAR_AUTO_STOW_STICK;
             if (!sprinting || robot.flowerBar.position() != FlowerBarController.Position.DOWN) sprintTimer.reset();
             if (BAR_AUTO_STOW_ENABLED && sprintTimer.seconds() >= BAR_AUTO_STOW_S) {
@@ -373,10 +398,11 @@ public class MainHorsTeleOp extends LinearOpMode {
             if (barCapped) scale = Math.min(scale, BAR_DOWN_SPEED_CAP);
             double axial = DriveController.shapeTranslation(-gamepad1.left_stick_y);
             double lateral = DriveController.shapeTranslation(gamepad1.left_stick_x);
-            boolean aimHeld = gamepad1.left_trigger > TRIGGER_THRESHOLD;
             boolean aiming = aimHeld && poseOk;
             if (aiming) {
-                double yaw = aim.yawCommand(pose.x(), pose.y(), pose.heading(), vx, vy,
+                // The nudge is passed as a heading offset: the aim turns until heading - nudge
+                // faces the cell, i.e. the cell's bearing plus the nudge.
+                double yaw = aim.yawCommand(pose.x(), pose.y(), pose.heading() - aimNudgeRad, vx, vy,
                         aimPoint[0], aimPoint[1]);
                 // Yaw has priority: translation gets only the headroom the aim yaw leaves, so the
                 // mecanum normalization never shrinks the yaw while the driver strafes hard. The
@@ -427,9 +453,9 @@ public class MainHorsTeleOp extends LinearOpMode {
             if (dpadRightNow && !dpadRightLast) pollenTrimRpm = trimmed(pollenTrimRpm, MechanismConstants.POLLEN_TRIM_STEP_RPM, pollenTableRpm);
             dpadRightLast = dpadRightNow;
 
-            // Nectar has its own trim and step: left bumper down, A up.
-            boolean lbNow = gamepad1.left_bumper || gamepad2.left_bumper;
-            if (lbNow && !lbLast) nectarTrimRpm = trimmed(nectarTrimRpm, -MechanismConstants.NECTAR_TRIM_STEP_RPM, nectarTableRpm);
+            // Nectar has its own trim and step: left bumper down (not while aiming: there it
+            // nudges the aim), A up.
+            if (lbNow && !lbLast && !aimHeld) nectarTrimRpm = trimmed(nectarTrimRpm, -MechanismConstants.NECTAR_TRIM_STEP_RPM, nectarTableRpm);
             lbLast = lbNow;
 
             boolean aNow = gamepad1.a || gamepad2.a;
@@ -525,6 +551,7 @@ public class MainHorsTeleOp extends LinearOpMode {
                 lastPose = null;            // no velocity across the jump
                 velocityFilter.reset();
                 poseSanity.reset();         // the driver has put the pose right: trust it again
+                aimNudgeRad = 0.0;          // a fresh pose starts with no aim correction
                 gamepad1.rumble(120);
             }
             xLast = xNow;
@@ -597,6 +624,7 @@ public class MainHorsTeleOp extends LinearOpMode {
         aLast = gamepad1.a || gamepad2.a;
         bLast = gamepad1.b || gamepad2.b;
         lbLast = gamepad1.left_bumper || gamepad2.left_bumper;
+        rbLast = gamepad1.right_bumper || gamepad2.right_bumper;
         yLast = gamepad1.y || gamepad2.y;
     }
 
@@ -674,8 +702,10 @@ public class MainHorsTeleOp extends LinearOpMode {
         String why = !poseUsable(p) ? "(INVALID)"
                 : poseSanity != null && !poseSanity.fault().isEmpty()
                         ? "(INVALID: " + poseSanity.fault() + ", press X at the reset spot)" : "";
-        telemetry.addData("Pose", "x=%.1f y=%.1f h=%.1f deg %s",
-                p.x(), p.y(), Math.toDegrees(p.heading()), why);
+        String nudge = aimNudgeRad == 0.0 ? ""
+                : String.format(java.util.Locale.ROOT, " nudge %+.0f deg", Math.toDegrees(aimNudgeRad));
+        telemetry.addData("Pose", "x=%.1f y=%.1f h=%.1f deg%s %s",
+                p.x(), p.y(), Math.toDegrees(p.heading()), nudge, why);
     }
 
     /**

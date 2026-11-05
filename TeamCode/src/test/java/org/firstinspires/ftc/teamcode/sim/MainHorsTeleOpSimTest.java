@@ -111,6 +111,34 @@ class MainHorsTeleOpSimTest {
         assertEquals("Fire : READY", line(result, "Fire"), "on the cell, the display says READY");
     }
 
+    /**
+     * While aiming, eight right-bumper presses and two left-bumper presses leave the aim 6 deg right
+     * (clockwise) of the cell, well outside the aim's 2 deg on-target band either way; the left
+     * bumper does not trim nectar while aiming.
+     */
+    @Test
+    void bumpersNudgeTheAimWhileAiming() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -40.0, -40.0, 0.0);
+        OpModeRunResult result = run(sim, 300, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.left_trigger = 1f;
+            // A press is 4 ticks down, 4 up: RB at ticks 100-163 (8 presses), LB at 170-185 (2).
+            g1.right_bumper = tick >= 100 && tick < 164 && (tick - 100) % 8 < 4;
+            g1.left_bumper = tick >= 170 && tick < 186 && (tick - 170) % 8 < 4;
+        }, null);
+
+        double cell = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
+        assertAngleNear(cell - Math.toRadians(6.0), sim.drivePlant.getHeading(), 2.5,
+                "the aim holds 6 deg clockwise of the cell");
+        assertTrue(Math.abs(wrap(sim.drivePlant.getHeading() - cell)) > Math.toRadians(3.5),
+                "and visibly off the plain auto-aim heading");
+        assertTrue(line(result, "Pose").contains("nudge -6 deg"), "the Pose line shows it: " + line(result, "Pose"));
+        double nectarTargetRpm = Double.parseDouble(line(result, "Nectar").replaceAll(".*/ (-?[0-9.]+) rpm.*", "$1"));
+        assertEquals(MechanismConstants.NECTAR_SHOOTER.targetRpm, nectarTargetRpm, 1.0,
+                "the left bumper did not trim nectar while aiming");
+    }
+
     @Test
     void inTheNorthHalfItAimsAtTheNorthCellAndADoesNotChangeTheTarget() {
         BioHorsSim sim = new BioHorsSim();
