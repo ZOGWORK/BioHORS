@@ -25,4 +25,9 @@ dependencies {
     // no dependencies, so the command library is declared here.
     implementation 'org.solverslib:core:0.3.6'
     implementation 'com.github.Horizon-36596:zenith:v0.1.2'
+
+    // FtcAutoTune: relay-feedback PIDF auto tuner, used only by the tuning/autotune OpModes.
+    // https://ftcautotune.dev/ (JitPack, published under its custom dev.ftcautotune group).
+    implementation 'dev.ftcautotune.FtcAutoTune:pidautotuner-core:v1.4.3'
+    implementation 'dev.ftcautotune.FtcAutoTune:pidautotuner-ftc:v1.4.3'
 }
