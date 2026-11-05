@@ -196,6 +196,71 @@ class MainHorsTeleOpSimTest {
         assertAngleNear(north, sim.drivePlant.getHeading(), 3.0, "after crossing it faces the north cell");
     }
 
+    /** The reset spot is the robot pushed into RED's north-west corner (MEASURED FROM CAD walls). */
+    @Test
+    void theResetSpotIsTheRobotPushedIntoTheCorner() {
+        double wallIn = 70.674;          // FIRST's CAD field wall, from the centre
+        double backIn = 7.8;             // drive centre to the back (robot.json)
+        double halfWidthIn = 17.84 / 2;  // robot.json width
+        assertEquals(-wallIn + backIn, MainHorsTeleOp.RESET_X_IN, 0.1, "back flat on the west wall");
+        assertEquals(wallIn - halfWidthIn, MainHorsTeleOp.RESET_Y_IN, 0.1, "left side flat on the north wall");
+        assertEquals(0.0, MainHorsTeleOp.RESET_HEADING_RAD, 1e-9, "intake facing the field (east)");
+    }
+
+    /**
+     * The driver resets in the corner (the pose had drifted), then drives south across the centre
+     * line while aiming: north of it the aim holds the north cell, south of it the south cell.
+     */
+    @Test
+    void afterACornerResetTheTargetSwitchesAtTheCentreLine() {
+        BioHorsSim sim = new BioHorsSim();
+        double rx = MainHorsTeleOp.RESET_X_IN, ry = MainHorsTeleOp.RESET_Y_IN;
+        sim.placeAt(rx, ry, MainHorsTeleOp.RESET_HEADING_RAD);
+        OpMode.blackboard.put("biohors.alliance", "RED");
+        // Drift: the pose 20 in south and 15 in east of the truth, turned 10 deg.
+        OpMode.blackboard.put("biohors.pose", new double[] {rx + 15.0, ry - 20.0, Math.toRadians(10)});
+        OpMode.blackboard.put("biohors.poseTimer", new org.horizon36596.simloop.sim.SimElapsedTime(new org.horizon36596.simloop.sim.FakeTimer()));
+        final OpModePhase[] phaseNow = {OpModePhase.INIT};
+        final int[] tickNow = {0};
+        final double[] northErrDeg = {Double.NaN};
+        final double[] yBeforeDrive = {Double.NaN};
+        OpModeRunner.forTeamClass(TELEOP, sim.hardwareMap)
+                .teamPackages("org.firstinspires.ftc.teamcode.", SimClockLoader.PEDRO_PATHING)
+                .keepBlackboard(true)
+                .initLoopTicks(INIT_LOOP_TICKS)
+                .activeTicks(420)
+                .gamepads((phase, tick, g1, g2) -> {
+                    phaseNow[0] = phase;
+                    tickNow[0] = tick;
+                    if (phase != OpModePhase.ACTIVE) return;
+                    g1.x = tick >= 3 && tick < 33;          // hold X 0.6 s in the corner
+                    g1.left_trigger = tick >= 40 ? 1f : 0f; // then aim
+                    // Robot-frame stick that drives field-south whatever the heading.
+                    double h = sim.drivePlant.getHeading();
+                    double drive = tick >= 100 && tick < 330 ? 0.5 : 0.0;
+                    g1.left_stick_y = (float) (drive * Math.sin(h));
+                    g1.left_stick_x = (float) (drive * Math.cos(h));
+                })
+                .eachTick(dt -> {
+                    sim.step(dt);
+                    if (phaseNow[0] == OpModePhase.ACTIVE && tickNow[0] == 99) {
+                        yBeforeDrive[0] = sim.drivePlant.getY();
+                        double north = Math.atan2(CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
+                        northErrDeg[0] = Math.toDegrees(Math.abs(wrap(sim.drivePlant.getHeading() - north)));
+                    }
+                })
+                .run();
+        OpMode.blackboard.clear();
+
+        assertTrue(yBeforeDrive[0] > 50.0, "still in the corner before the drive, y = " + yBeforeDrive[0]);
+        assertTrue(northErrDeg[0] <= 3.0, String.format(
+                "after the reset, in the north half, it faces the north cell: %.1f deg off", northErrDeg[0]));
+        assertTrue(sim.drivePlant.getY() < -10.0, "the robot should have driven south of the centre line, y = "
+                + sim.drivePlant.getY());
+        double south = Math.atan2(-CELL_Y - sim.drivePlant.getY(), RED_HIVE_X - sim.drivePlant.getX());
+        assertAngleNear(south, sim.drivePlant.getHeading(), 3.0, "after crossing it faces the south cell");
+    }
+
     @Test
     void aimingLeavesTranslationWithTheDriver() {
         BioHorsSim sim = new BioHorsSim();
@@ -1390,8 +1455,8 @@ class MainHorsTeleOpSimTest {
 
     /** Puts the plant at a pose and tells the teleop (as an auto would) that it starts there. */
     /**
-     * X resets the pose to the reset spot (backed flat against the west wall at the park spot, by
-     * the loading zone, intake facing the field), wiping odometry drift. The robot really stands there; its
+     * X resets the pose to the reset spot (pushed into the north-west corner, back on the west
+     * wall, side on the north wall, intake facing the field), wiping odometry drift. The robot really stands there; its
      * pose is started wrong (as drift would leave it); X puts it right. Both alliances.
      */
     @Test
