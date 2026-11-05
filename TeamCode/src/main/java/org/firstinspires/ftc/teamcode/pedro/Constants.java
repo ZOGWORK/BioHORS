@@ -50,8 +50,11 @@ public class Constants {
         // the drive centre (5.1 in behind it). goBILDA's convention is left-positive, so -2.84.
         // VERIFY sign and value with the Pinpoint Tuner.
         c.xPodOffset.set(-2.84);
-        // NEEDS MEASUREMENT: the Y (strafe) pod is not in the CAD.
-        c.yPodOffset.set(0.0); // PLACEHOLDER
+        // APPROX, from a top-view CAD screenshot (2026-11-01): the Y (strafe) pod sits in the same
+        // fore-aft column as the X pod, on the centreline, so it is the X pod's 5.1 in behind the
+        // drive centre. goBILDA's convention is forward-positive, so -5.1. Reading the picture
+        // gave 4.9 in for both pods (about +/-0.3 in). VERIFY with the Pinpoint Tuner.
+        c.yPodOffset.set(-5.1);
         // TODO: VERIFY with the Pinpoint Tuner -- flip to REVERSED if the
         // pose drives backwards on either axis.
         c.xPodDirection.set(GoBildaPinpointDriver.EncoderDirection.FORWARD); // PLACEHOLDER
@@ -66,10 +69,10 @@ public class Constants {
         c.frontRightName.set("frontRight");
         c.backLeftName.set("backLeft");
         c.backRightName.set("backRight");
-        c.frontLeftDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD);
-        c.frontRightDirection.set(DcMotorSimple.Direction.REVERSE);
-        c.backRightDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+        c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD); // MEASURED: driving the real robot
+        c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
+        c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
     });
 
     /** Pinpoint localizer: 2 odometry pods + IMU heading. */
