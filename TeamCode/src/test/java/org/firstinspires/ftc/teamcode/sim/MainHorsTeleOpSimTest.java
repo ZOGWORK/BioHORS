@@ -928,12 +928,10 @@ class MainHorsTeleOpSimTest {
                 if (phase == OpModePhase.ACTIVE) g1.right_trigger = 1f;
             }, tick -> {
                 if (jam && tick == 40) {
-                    sim.intakeLeft.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
-                    sim.intakeRight.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+                    sim.setIntakeLoad(JAM_TORQUE_FRACTION);
                 }
                 if (jam && tick == 75) { // the jam clears (the reverse spat it out)
-                    sim.intakeLeft.setExternalTorqueFraction(0.0);
-                    sim.intakeRight.setExternalTorqueFraction(0.0);
+                    sim.setIntakeLoad(0.0);
                 }
                 if (sim.intakeLeft.getPower() < 0) reverseTicks[0]++;
                 if (tick == 115) powerAtEnd[0] = sim.intakeLeft.getPower();
@@ -1187,12 +1185,10 @@ class MainHorsTeleOpSimTest {
             if (phase == OpModePhase.ACTIVE) g1.right_trigger = tick < 235 || tick >= 240 ? 1f : 0f;
         }, tick -> {
             if (tick == 40) {   // a ball wedges for good
-                sim.intakeLeft.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
-                sim.intakeRight.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+                sim.setIntakeLoad(JAM_TORQUE_FRACTION);
             }
             if (tick == 236) {  // the driver clears it by hand with the trigger released
-                sim.intakeLeft.setExternalTorqueFraction(0.0);
-                sim.intakeRight.setExternalTorqueFraction(0.0);
+                sim.setIntakeLoad(0.0);
             }
             if (sim.intakeLeft.getPower() < 0) reverseTicks[0]++;
             if (tick == 230) power[0] = sim.intakeLeft.getPower();
@@ -1221,8 +1217,7 @@ class MainHorsTeleOpSimTest {
             g1.y = tick >= 235 && tick < 237;       // a volley after the guard has given up
         }, tick -> {
             if (tick == 40) {
-                sim.intakeLeft.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
-                sim.intakeRight.setExternalTorqueFraction(JAM_TORQUE_FRACTION);
+                sim.setIntakeLoad(JAM_TORQUE_FRACTION);
             }
             if (tick == 230) power[0] = sim.intakeLeft.getPower();
             if (tick > 230 && sim.intakeLeft.getPower() != 0.0) fedAfterGiveUp[0] = true;
