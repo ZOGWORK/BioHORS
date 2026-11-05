@@ -1,9 +1,12 @@
 package org.firstinspires.ftc.teamcode.utilities;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 /**
  * When to rumble the drivers during the teleop: once as the endgame starts (nectar time), once more
  * FINAL_WARNING_S before the end. Pure logic: the teleop passes the seconds since PLAY.
  */
+@Configurable
 public class EndgameAlerts {
 
     /** The driver-controlled period, seconds. CARRIED OVER: FTC's usual 2:00; check the BIOBUZZ manual. */

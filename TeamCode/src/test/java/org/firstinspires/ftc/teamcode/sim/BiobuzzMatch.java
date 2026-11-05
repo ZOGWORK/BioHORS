@@ -84,10 +84,10 @@ public final class BiobuzzMatch {
     // flower mech's opening between these two is the intake, and the bar tip is the robot's front.
     static final double FRAME_FRONT_IN = 9.62;
     static final double FLOWER_BAR_TIP_IN = 14.19;
-    // Drawing only. The CAD has the bar DOWN (collect). PLACEHOLDER: the bar turns 90 deg for every
-    // 0.65 of servo travel (the first placeholder STOWED, 0.15, drawn 90 deg up); so SHOOTING (0.65)
-    // is 21 deg up and STOWED (0.05) 104 deg up, folded back with its tip inside the frame.
-    static final double FLOWER_BAR_RAD_PER_UNIT = Math.toRadians(90.0) / 0.65;
+    // Drawing only. The CAD has the bar DOWN (collect). PLACEHOLDER (CARRIED OVER): STOWED is drawn
+    // 104 deg up, folded back with its tip inside the frame, and positions in between scale from
+    // DOWN to STOWED, whichever way the servo numbers run.
+    static final double FLOWER_BAR_STOWED_RAISE_RAD = Math.toRadians(90.0) * 0.75 / 0.65;
     static final double NECTAR_AXLE_FORWARD_IN = -5.6115, NECTAR_AXLE_UP_IN = 11.5365;
     // APPROX: the ball rides under the wheel toward the front, so the wheel's underside moves
     // forward: positive rpm turns it negatively about the robot's left (+y) axis. Drawing only.
@@ -369,7 +369,7 @@ public final class BiobuzzMatch {
             // (10.9 in out) by more than the 1.5 in the arrival there overshoots, so only the drive in
             // itself is judged, not a leg that passes the flower.
             if (intakeIn && dist < 8.0 && towardIn > 2.0
-                    && bar < org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN - 0.02
+                    && Math.abs(bar - org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN) > 0.02
                     && barUpIntoFlower.size() < 5) {
                 barUpIntoFlower.add(String.format(java.util.Locale.ROOT,
                         "t=%.2f %.1f in from the pickup, moving in at %.1f in/s, bar at %.2f", time, dist, towardIn, bar));
@@ -809,11 +809,12 @@ public final class BiobuzzMatch {
 
     /**
      * The flower bar's angle from its CAD (down) pose, about the robot's +y: 0 at the servo's DOWN
-     * position, negative raising it (the tip moves up), FLOWER_BAR_RAD_PER_UNIT a unit of servo travel.
+     * position, negative raising it (the tip moves up), -FLOWER_BAR_STOWED_RAISE_RAD at STOWED.
      */
     static double flowerBarAngleRad(double servoPosition) {
         double down = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN;
-        return (servoPosition - down) * FLOWER_BAR_RAD_PER_UNIT;
+        double stowed = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_STOWED;
+        return -(servoPosition - down) / (stowed - down) * FLOWER_BAR_STOWED_RAISE_RAD;
     }
 
     private boolean launchIsLegal(double x, double y, double h) {

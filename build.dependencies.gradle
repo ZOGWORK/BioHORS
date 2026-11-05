@@ -2,6 +2,7 @@ repositories {
     mavenCentral()
     maven { url 'https://repo.dairy.foundation/releases/'}   // SolversLib (and SimLoop's PsiKit)
     maven { url = 'https://jitpack.io' }                         // Zenith runtime
+    maven { url = 'https://mymaven.bylazar.com/releases' }        // Panels (live tuning dashboard)
     google() // Needed for androidx
 }
 
@@ -18,6 +19,7 @@ dependencies {
 
     implementation 'com.pedropathing:revhub:3.0.2'
     implementation 'com.pedropathing:tuning:1.0.3'
+    implementation 'com.bylazar:fullpanels:1.0.15'   // Panels: @Configurable fields, telemetry, field view (SDK 12 build)
 
     // Zenith: plays autos/*.auto.json through the Pedro v3 follower and the named commands.
     // Command library: SolversLib (zenith.json deploy.commandLibrary = "solverslib"), the one

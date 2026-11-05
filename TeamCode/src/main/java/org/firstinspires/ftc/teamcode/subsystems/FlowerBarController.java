@@ -2,14 +2,17 @@ package org.firstinspires.ftc.teamcode.subsystems;
 
 import com.qualcomm.robotcore.hardware.Servo;
 
+import java.util.function.DoubleSupplier;
+
 /**
  * The flower bar: the low bar at the front that drops into a flower's retrieval opening so the
  * intake can pull pollen out of it. Two servos drive it, mounted facing away from each other, so
  * one is set to REVERSE: the same position then turns both the same way and the bar stays level.
  *
- * Three positions (servo units in [0, 1], MechanismConstants, all PLACEHOLDER):
+ * Positions (the left servo's number; the right one gets 1 - it, MechanismConstants):
  * <ul>
- *   <li>STOWED: folded up. The robot is at its shortest (it starts the match like this).</li>
+ *   <li>START: both servos centred, at init, until the first command.</li>
+ *   <li>STOWED: the bar up. The robot is at its shortest.</li>
  *   <li>DOWN: out and low, for collecting from a flower. The robot is at its longest.</li>
  *   <li>SHOOTING: raised slightly from DOWN while launching, so the shots clear it.</li>
  * </ul>
@@ -22,14 +25,21 @@ public class FlowerBarController {
 
     private final Servo left;
     private final Servo right;
-    private final double stowedPos;
-    private final double downPos;
-    private final double shootingPos;
+    // Read at each command, so a live edit (Panels) takes effect on the next one.
+    private final DoubleSupplier stowedPos;
+    private final DoubleSupplier downPos;
+    private final DoubleSupplier shootingPos;
 
     private boolean down;
     private boolean shooting;
 
     public FlowerBarController(Servo left, Servo right, double stowedPos, double downPos, double shootingPos) {
+        this(left, right, () -> stowedPos, () -> downPos, () -> shootingPos);
+    }
+
+    /** With positions read at each command (live-tunable constants). */
+    public FlowerBarController(Servo left, Servo right, DoubleSupplier stowedPos, DoubleSupplier downPos,
+                               DoubleSupplier shootingPos) {
         this.left = left;
         this.right = right;
         this.stowedPos = stowedPos;
@@ -37,7 +47,8 @@ public class FlowerBarController {
         this.shootingPos = shootingPos;
         left.setDirection(Servo.Direction.FORWARD);
         right.setDirection(Servo.Direction.REVERSE);  // mirrored mount
-        apply();
+        left.setPosition(MechanismConstants.FLOWER_BAR_START);
+        right.setPosition(MechanismConstants.FLOWER_BAR_START);
     }
 
     public void setDown(boolean down) {
@@ -65,7 +76,7 @@ public class FlowerBarController {
     }
 
     private void apply() {
-        double p = shooting ? shootingPos : down ? downPos : stowedPos;
+        double p = (shooting ? shootingPos : down ? downPos : stowedPos).getAsDouble();
         left.setPosition(p);
         right.setPosition(p);
     }

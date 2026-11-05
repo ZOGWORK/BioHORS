@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.zenith;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.InstantCommand;
@@ -23,6 +25,7 @@ import java.util.function.BooleanSupplier;
  *   hopperFull    condition  4 pollen aboard, the maximum (estimate)
  *   hopperEmpty   condition  no pollen aboard              (estimate)
  */
+@Configurable
 public final class BioHorsCommands {
 
     public static final String INTAKE_ON = "intakeOn";

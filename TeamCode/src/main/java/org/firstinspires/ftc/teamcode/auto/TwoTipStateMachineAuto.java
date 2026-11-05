@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.auto;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.pedropathing.algorithm.ForesightConfig;
 import com.pedropathing.api.Paths;
 import com.pedropathing.follower.Follower;
@@ -43,6 +45,7 @@ import static org.firstinspires.ftc.teamcode.auto.AutoPoses.*;
  * read, decide, command loop an iterative OpMode would run.
  */
 @Autonomous(name = "Two Tip (state machine)", group = "BioHORS", preselectTeleOp = "MainHORS TeleOp")
+@Configurable
 public class TwoTipStateMachineAuto extends LinearOpMode {
 
     /** Where the current state is published for the sim tests and telemetry. */

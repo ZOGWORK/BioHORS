@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 /**
@@ -9,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
  * (mirrored mounting), reverse ONE of them in the OpMode with
  * setDirection(REVERSE) instead of changing powers here.
  */
+@Configurable
 public class IntakeController {
 
     private final DcMotor intakeLeft;

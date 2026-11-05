@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.aim;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 /**
  * Catches a pose the robot cannot really have. The Pinpoint can report READY and still give a bad
  * pose (a pod knocked loose, a glitch, a wrong reset), and the teleop would aim and fire on it.
@@ -11,6 +13,7 @@ package org.firstinspires.ftc.teamcode.aim;
  * failure is latched: the pose counts as invalid until {@link #reset()} (the teleop's X reset).
  * Field frame, inches. Pure logic: the teleop passes the pose and a clock reading, seconds.
  */
+@Configurable
 public class PoseSanity {
 
     /** Half the field, inches: the walls are about 70.7 in from the centre (FIRST's CAD). APPROX. */

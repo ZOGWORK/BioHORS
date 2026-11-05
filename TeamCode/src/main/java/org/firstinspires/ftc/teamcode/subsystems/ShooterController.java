@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -28,6 +30,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * {@link #encoderReversed()}. Both stay latched until the OpMode ends. A wheel that never reads speed is never at target,
  * so the fire interlock keeps the gates shut: a dead motor and a dead encoder look the same.
  */
+@Configurable
 public class ShooterController {
 
     /**

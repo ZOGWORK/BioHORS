@@ -29,12 +29,14 @@ class VolleySequenceTest {
     }
 
     @Test
-    void shootersThatNeverGetToSpeedEndItWithNoGateRequested() {
+    void shootersThatNeverGetToSpeedFireAnywayAtTheTimeout() {
         volley.press();
         assertEquals(0, run(VolleySequence.SPINUP_TIMEOUT_S - 0.1, false));
         assertTrue(volley.running(), "still waiting just before the timeout");
-        assertEquals(0, run(0.2, false));
-        assertFalse(volley.running(), "given up at the timeout");
+        int requested = run(VolleySequence.FIRE_WINDOW_S + 0.5, false);
+        assertEquals(VolleySequence.FIRE_WINDOW_S, requested * TICK, 0.2 + 1.5 * TICK,
+                "fires one window anyway once the spin-up time is up");
+        assertFalse(volley.running());
     }
 
     @Test

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.zenith;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 
@@ -26,6 +28,7 @@ import org.firstinspires.ftc.teamcode.subsystems.MechanismConstants;
  * ASSUMPTION (NEEDS CONFIRMATION): pollen reaches the shooter by the intake pushing it through the
  * open gate. If the robot feeds differently, this is the one place to change.
  */
+@Configurable
 public class ScoreCommand extends CommandBase {
 
     public static double SPINUP_TIMEOUT_S = 2.0;   // PLACEHOLDER

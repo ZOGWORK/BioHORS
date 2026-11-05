@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.aim;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -14,6 +16,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * ({@link #clearPose()}). Otherwise a practice auto's pose, run long before, would be trusted by a
  * later teleop after the robot had been carried somewhere else.
  */
+@Configurable
 public final class PoseHandoff {
 
     private PoseHandoff() {

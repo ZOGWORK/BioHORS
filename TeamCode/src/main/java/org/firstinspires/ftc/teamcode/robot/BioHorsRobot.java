@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.robot;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -29,6 +31,7 @@ import java.util.List;
  * It does NOT build a localizer or a Pedro follower: the teleop and the auto each own one
  * (see pedro/Constants), so two objects never read the Pinpoint in the same loop.
  */
+@Configurable
 public class BioHorsRobot {
 
     public final DcMotor frontLeft;
@@ -130,13 +133,14 @@ public class BioHorsRobot {
         // Both shooters' feedforward uses the one cached reading, not a sensor read each.
         pollenShooter.setVoltageSource(this::batteryVolts);
         nectarShooter.setVoltageSource(this::batteryVolts);
+        // Positions are read at each command, so Panels edits reach the servos.
         pollenGate = new GateController("Pollen", pollenGateServo,
-                MechanismConstants.POLLEN_GATE_OPEN, MechanismConstants.POLLEN_GATE_CLOSED);
+                () -> MechanismConstants.POLLEN_GATE_OPEN, () -> MechanismConstants.POLLEN_GATE_CLOSED);
         nectarGate = new GateController("Nectar", nectarGateServo,
-                MechanismConstants.NECTAR_GATE_OPEN, MechanismConstants.NECTAR_GATE_CLOSED);
+                () -> MechanismConstants.NECTAR_GATE_OPEN, () -> MechanismConstants.NECTAR_GATE_CLOSED);
         flowerBar = new FlowerBarController(flowerLeftServo, flowerRightServo,
-                MechanismConstants.FLOWER_BAR_STOWED, MechanismConstants.FLOWER_BAR_DOWN,
-                MechanismConstants.FLOWER_BAR_SHOOTING);
+                () -> MechanismConstants.FLOWER_BAR_STOWED, () -> MechanismConstants.FLOWER_BAR_DOWN,
+                () -> MechanismConstants.FLOWER_BAR_SHOOTING);
     }
 
     /**

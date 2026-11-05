@@ -110,10 +110,10 @@ class MechanismsDemoTest {
                     name, endBar, turned);
             boolean intakeOn = name.endsWith("INTAKE");
             assertTrue(intakeOn ? turned > 360 : turned < 1, name + ": rollers turned " + turned + " deg");
-            if (name.startsWith("DOWN")) assertEquals(0.0, endBar, 1.0, "DOWN is the CAD pose");
+            if (name.startsWith("DOWN")) assertEquals(0.0, endBar, 2.0, "DOWN is the CAD pose");
             if (name.startsWith("STOWED")) {
                 assertEquals(Math.toDegrees(BiobuzzMatch.flowerBarAngleRad(
-                        org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_STOWED)), endBar, 1.0, name + " bar");
+                        org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_STOWED)), endBar, 2.0, name + " bar");   // 2 deg: the bar now spans 104 deg in 0.3 servo units, so the plant's last 0.004 is 1.3 deg
                 assertTrue(endBar < -95, "STOWED folds the bar back past upright: " + endBar);
             }
             if (name.startsWith("SHOOTING")) assertTrue(endBar < -5 && endBar > -45, "SHOOTING lifts it a little: " + endBar);

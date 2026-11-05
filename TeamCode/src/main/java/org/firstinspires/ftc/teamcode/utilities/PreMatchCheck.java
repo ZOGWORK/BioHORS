@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.utilities;
 
+import com.bylazar.configurables.annotations.Configurable;
+
 import org.firstinspires.ftc.teamcode.robot.BioHorsRobot;
 
 import java.util.ArrayList;
@@ -15,6 +17,7 @@ import java.util.Locale;
  * dead encoder also reads zero at rest, so this cannot catch that one: the encoder check while
  * shooting does (ShooterController).
  */
+@Configurable
 public final class PreMatchCheck {
 
     private PreMatchCheck() {
