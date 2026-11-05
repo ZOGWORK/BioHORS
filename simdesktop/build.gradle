@@ -1,0 +1,20 @@
+//
+// The live sim's window (FieldWindow), as a plain Java module.
+//
+// TeamCode's unit tests compile against android.jar, which has no java.awt or javax.swing, so a
+// window cannot be compiled there. This module compiles against the desktop JDK instead, and TeamCode
+// uses it as a TEST-ONLY dependency (TeamCode/build.gradle): it never reaches the APK. Its public
+// API is plain Java (no AWT types), so the tests can call it.
+//
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:-options'] // building Java 8 bytecode on a newer JDK warns; that is intended
+}
