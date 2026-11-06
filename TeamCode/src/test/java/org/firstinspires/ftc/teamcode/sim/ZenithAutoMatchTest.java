@@ -57,6 +57,10 @@ class ZenithAutoMatchTest {
     static final int EXPECTED_SCORED = 12;
     static final double PARKED_WITHIN_IN = 2.0;   // SET BY HAND: the follower's end tolerance, with margin
     static final int EXPECTED_TIPS = 2;
+    // SET BY HAND: a speedFraction 0.2 step must stay under half the top speed (it runs at about 16 in/s
+    // against a 12 in/s cap: Pedro overshoots a little). With the cap ignored it ran at 52 in/s.
+    static final double SLOW_STEP_MAX_FRACTION = 0.5;
+    static final double SPEED_WINDOW_S = 0.1;   // SET BY HAND: five 0.02 s ticks
     // SET BY HAND: the route strafes 29 % without the park slide; the team's park (2026-10-28) slides
     // 18 in south into the spot facing west on purpose, which makes it 33 %.
     static final double MAX_STRAFE_FRACTION = 0.35;
@@ -109,6 +113,14 @@ class ZenithAutoMatchTest {
                 "strafing is %.0f %% of the driving\n%s", 100 * red2.match.strafeFraction(), red2.report));
         assertTrue(red2.maxBeliefErrorIn < 2.0, String.format(Locale.ROOT,
                 "belief vs truth up to %.2f in\n%s", red2.maxBeliefErrorIn, red2.report));
+
+        // ---- a slow step really is slow: Pedro 3.0.2 ignored the in/s we once passed to maxPathSpeed
+        // (a multiplier), and the 0.2 sweep ran at 52 in/s with every other test still green ----
+        for (String slow : new String[] {"collectFlower", "sweepGarden"}) {
+            double peak = red2.peakSpeedInPerS.getOrDefault(slow, Double.NaN);
+            assertTrue(peak < SLOW_STEP_MAX_FRACTION * org.firstinspires.ftc.teamcode.pedro.Constants.MAX_FORWARD_IN_PER_S,
+                    String.format(Locale.ROOT, "%s (speedFraction 0.2) peaked at %.0f in/s%n%s", slow, peak, red2.report));
+        }
 
         // ---- AdvantageScope: the robot, its belief and every pollen are in the log as poses ----
         java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(red2.rlog);
@@ -248,6 +260,8 @@ class ZenithAutoMatchTest {
         List<String> interrupted = new ArrayList<>();
         double lastEndS;
         double maxBeliefErrorIn;
+        /** Each step's fastest true speed over SPEED_WINDOW_S, in/s (parallel members included). */
+        java.util.Map<String, Double> peakSpeedInPerS = new java.util.HashMap<>();
         String report;
     }
 
@@ -401,6 +415,9 @@ class ZenithAutoMatchTest {
                     step.num("startS"), step.num("endS"), step.get("interrupted").bool() ? "  INTERRUPTED" : ""));
         }
         r.maxBeliefErrorIn = maxBeliefError(trace);
+        for (Json step : trace.get("steps").items()) {
+            r.peakSpeedInPerS.put(step.str("id"), peakSpeed(trace, step.num("startS"), step.num("endS")));
+        }
         rep.append(String.format(Locale.ROOT,
                 "  scored %d (missed %d, launched %d, collected %d), tips %d at %s, held at end %d%n",
                 match.scored(), match.missed(), match.launched(), match.collected(), match.tips(), match.tipTimes(),
@@ -424,6 +441,26 @@ class ZenithAutoMatchTest {
                 collectRaceMembers(children, mode.equals("race") || mode.equals("deadline"), out);
             }
         }
+    }
+
+    /** Fastest true speed between t0 and t1, in/s, each sample over SPEED_WINDOW_S so one tick's noise does not count. */
+    private static double peakSpeed(Json trace, double t0, double t1) {
+        Json truth = trace.opt("truthPoses");
+        if (truth == null) return Double.NaN;
+        double peak = 0;
+        int j = 0;
+        for (int i = 0; i < truth.size(); i++) {
+            Json b = truth.at(i);
+            double t = b.at(0).num();
+            if (t < t0 || t > t1) continue;
+            while (j < i && t - truth.at(j).at(0).num() > SPEED_WINDOW_S) j++;
+            Json a = truth.at(j);
+            double dt = t - a.at(0).num();
+            if (dt >= SPEED_WINDOW_S * 0.5) {
+                peak = Math.max(peak, Math.hypot(b.at(1).num() - a.at(1).num(), b.at(2).num() - a.at(2).num()) / dt);
+            }
+        }
+        return peak;
     }
 
     /** Largest distance between the robot's believed pose and the plant's true pose, inches. */

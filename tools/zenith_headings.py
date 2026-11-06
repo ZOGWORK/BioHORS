@@ -71,9 +71,15 @@ PI = math.pi
 # Each leg's heading plan: the waypoint it starts from (the step before it ends there) and its
 # pieces, as (end, mode, heading). The curve itself is read from the draft below, so a tuned control
 # point or waypoint gets headings for the route as it now is.
+# Turn breakpoints moved 2026-11-06 (split-the-gap legs, tuned in the sim): each leg's turn at the
+# hive frame's north-west corner now happens clear of it. Pedro's Foresight turns up to about 12 in
+# early, and turning in the 28 in lane swung a corner to within 1.5 in of the frame (toOtherSide
+# 0.8679 -> 0.9, toGarden 0.2186 -> 0.1, driveBack 0.707/0.8242 -> 0.86/0.97). toGarden's turn onto
+# the lane heading gets the last tenth of the path (the tangent grid alone left it 5 %, about 6 in
+# for 110 degrees, and the robot arrived still turning).
 PLAN = {
     'toOtherSide': ('scoreSouth',
-                    [(0.2038, 'linear', None), (0.8679, 'tangent', None), (1.0, 'linear', PI / 2)]),
+                    [(0.2038, 'linear', None), (0.9, 'tangent', None), (1.0, 'linear', PI / 2)]),
     'toScoreNorth': ('flowerNorthPickup',
                      # The starter backs off with tangentReversed; from our pickup, 6.4 in north of
                      # its first control point, that turns at once and swings a corner into the
@@ -81,9 +87,9 @@ PLAN = {
                      # piece, then its turn on through west to facing south.
                      [(0.2041, 'constant', PI / 2), (0.3742, 'linear', PI), (0.5442, 'linear', 3 * PI / 2),
                       (1.0, 'constant', -PI / 2)]),
-    'toGarden': ('scoreNorth', [(0.2186, 'linear', None), (1.0, 'tangent', None)]),
+    'toGarden': ('scoreNorth', [(0.1, 'linear', None), (0.90, 'tangent', None), (1.0, 'linear', -PI)]),
     'driveBack': ('offGardenLane',
-                  [(0.1612, 'linear', None), (0.707, 'tangentReversed', None), (0.8242, 'linear', None),
+                  [(0.1612, 'linear', None), (0.86, 'tangentReversed', None), (0.97, 'linear', None),
                    (1.0, 'constant', -PI / 2)]),
 }
 

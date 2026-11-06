@@ -53,6 +53,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     /** Fraction of top speed for paths with no stated speed (as the Zenith project's default). */
     public static double DEFAULT_SPEED = 0.8;   // SET BY HAND
+    public static double HIVE_LANE_SPEED = 0.6; // SET BY HAND (2026-11-06, the team: go slow through the lane west of the hive, a partner robot may stand by the loading zone)
     public static double PICKUP_SPEED = 0.2;    // SET BY HAND (the team): slower into the flower
     public static double GARDEN_SWEEP_SPEED = 0.2;   // SET BY HAND (team): slower along the garden row, so every pollen goes in
     public static double SLIDE_SPEED = 0.3;     // SET BY HAND: slow sideways onto the garden lane, so it stops on time
@@ -294,7 +295,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
 
             case TO_OTHER_SIDE:
-                go(curve(TO_OTHER_SIDE, FLOWER_NORTH_APPROACH).heading(pieces(TO_OTHER_SIDE_HEADING)), DEFAULT_SPEED);
+                go(curve(TO_OTHER_SIDE, FLOWER_NORTH_APPROACH).heading(pieces(TO_OTHER_SIDE_HEADING)), HIVE_LANE_SPEED);
                 break;
             case DROP_FLOWER_BAR:
                 // The team: drop the bar first, then drive in to intake.
@@ -318,7 +319,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
             case TO_GARDEN:
                 mech.flowerBarStow();   // folded after the north volley, for the rest of the route
-                go(curve(TO_GARDEN, ABOVE_GARDEN_LANE).heading(pieces(TO_GARDEN_HEADING)), DEFAULT_SPEED);
+                go(curve(TO_GARDEN, ABOVE_GARDEN_LANE).heading(pieces(TO_GARDEN_HEADING)), HIVE_LANE_SPEED);
                 break;
             case SLIDE_ONTO_LANE:
                 // A short, slow slide down onto the lane, square to the south wall: near it the 22 in
@@ -337,7 +338,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
             case DRIVE_BACK:
                 spunUpOnTheWay = false;
-                go(curve(DRIVE_BACK, SCORE_NORTH).heading(pieces(DRIVE_BACK_HEADING)), DEFAULT_SPEED);
+                go(curve(DRIVE_BACK, SCORE_NORTH).heading(pieces(DRIVE_BACK_HEADING)), HIVE_LANE_SPEED);
                 break;
 
             case TO_PARK_LANE:
@@ -364,10 +365,12 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
     // ------------------------------------------------------------------ path helpers
 
-    /** Follow a path, capped at a fraction of the robot's top speed. */
+    /** Follow a path, capped at a fraction of the robot's top speed.
+     * maxVelocityConstraint is the cap in in/s; Pedro 3.0.2's maxPathSpeed is a multiplier on the
+     * achievable speed, so passing in/s to it never slowed anything (sweeps ran at 52 in/s at 0.2). */
     private void go(Path path, double speedFraction) {
         double f = Math.max(0.05, Math.min(1.0, speedFraction));
-        follower.follow(path.with(foresight.maxPathSpeed.at(f * Constants.MAX_FORWARD_IN_PER_S)));
+        follower.follow(path.with(foresight.maxVelocityConstraint.at(f * Constants.MAX_FORWARD_IN_PER_S)));
     }
 
     /** A Bezier curve from where the robot is, through the RED control points, to the RED end. */

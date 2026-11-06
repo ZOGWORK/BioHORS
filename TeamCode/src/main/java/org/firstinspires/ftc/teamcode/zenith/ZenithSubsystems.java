@@ -65,10 +65,12 @@ public final class ZenithSubsystems {
             follower.update();
         }
 
-        /** Caps a path at a fraction of the robot's top forward speed while it is followed. */
+        /** Caps a path at a fraction of the robot's top forward speed while it is followed.
+         * maxVelocityConstraint is the cap in in/s; Pedro 3.0.2's maxPathSpeed is a multiplier on the
+         * achievable speed, so passing in/s to it never slowed anything (sweeps ran at 52 in/s at 0.2). */
         public Path atSpeed(Path path, double speedFraction) {
             double f = Math.max(0.05, Math.min(1.0, speedFraction));
-            return path.with(config.maxPathSpeed.at(f * Constants.MAX_FORWARD_IN_PER_S));
+            return path.with(config.maxVelocityConstraint.at(f * Constants.MAX_FORWARD_IN_PER_S));
         }
     }
 
