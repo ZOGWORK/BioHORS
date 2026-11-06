@@ -87,10 +87,8 @@ class StateMachineAutoMatchTest {
         // ---- the intake feeds a volley at AUTO_FEED_POWER and runs at AUTO_INTAKE_POWER otherwise
         // (the team, 2026-11-06: at 0.6 it did not turn while shooting on the robot) ----
         for (Run run : new Run[] {red, blue}) {
-            assertEquals(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_FEED_POWER,
-                    run.match.feedPowerMin(), 1e-9, "intake power while the gate is open\n" + run.report);
-            assertEquals(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER,
-                    run.match.carryPowerMax(), 1e-9, "intake power while the gate is shut\n" + run.report);
+            assertTrue(run.match.feedTicks() > 0, "the gate never opened\n" + run.report);
+            assertTrue(run.match.intakePowerWrong().isEmpty(), "intake off its AUTO power: " + run.match.intakePowerWrong());
         }
         assertTrue(red.match.barUpIntoFlower().isEmpty(), "RED drove in to the flower before the bar was down: " + red.match.barUpIntoFlower());
         assertTrue(blue.match.barUpIntoFlower().isEmpty(), "BLUE drove in to the flower before the bar was down: " + blue.match.barUpIntoFlower());
