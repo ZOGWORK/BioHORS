@@ -66,9 +66,9 @@ public final class MechanismConstants {
     static {
         POLLEN_SHOOTER.label = "Pollen";
         applySharedPlaceholders(POLLEN_SHOOTER);
-        // SET BY HAND (the team, 2026-11-05; was 1600 from Oct 27). The RPM that scores is a field
+        // SET BY HAND (the team, 2026-11-06; 3100 from 2026-11-05, 1600 from Oct 27). The RPM that scores is a field
         // test (the Shooter Tuner only makes the shooter hold whatever this is).
-        POLLEN_SHOOTER.targetRpm = 3100.0;
+        POLLEN_SHOOTER.targetRpm = 3050.0;
         // ---- Pollen tuned values ----
         // Pollen: CALIBRATED FROM ROBOT by FtcAutoTune v1.4.3 (2026-11-05), PD (classic ZN) candidate,
         // Ku 0.019099 Tu 0.2211 s, kF sweep at 13.52 V; kS not measured.
@@ -82,9 +82,9 @@ public final class MechanismConstants {
 
         NECTAR_SHOOTER.label = "Nectar";
         applySharedPlaceholders(NECTAR_SHOOTER);
-        // SET BY HAND (the team, 2026-11-05; was 1600): the same as pollen for now. Nectar is
-        // expected to settle at its own speed after a field test.
-        NECTAR_SHOOTER.targetRpm = 3100.0;
+        // SET BY HAND (the team, 2026-11-06; 3100 from 2026-11-05, 1600 before): its own speed now,
+        // higher than pollen's.
+        NECTAR_SHOOTER.targetRpm = 3200.0;
         // ---- Nectar tuned values ----
         // Nectar: CALIBRATED FROM ROBOT by FtcAutoTune v1.4.3 (2026-11-05), PD (classic ZN) candidate,
         // Ku 0.019099 Tu 0.2913 s, kF sweep at 13.41 V; kS not measured. (Replaces the kF 1.2 set by
@@ -141,9 +141,9 @@ public final class MechanismConstants {
     // ===== Gate servo positions (per gate) =====
     // SET BY HAND (the team, on the robot in teleop, 2026-11-05). Teleop and both autos read these.
     public static double POLLEN_GATE_OPEN = 0.485;   // SET BY HAND
-    public static double POLLEN_GATE_CLOSED = 0.2;   // SET BY HAND
+    public static double POLLEN_GATE_CLOSED = 0.35;   // SET BY HAND
     public static double NECTAR_GATE_OPEN = 0.485;   // SET BY HAND
-    public static double NECTAR_GATE_CLOSED = 0.2;   // SET BY HAND
+    public static double NECTAR_GATE_CLOSED = 0.35;   // SET BY HAND
 
     // ===== Flower bar servo positions =====
     // The number is the LEFT servo's. The right servo faces the other way and is REVERSE, so it
