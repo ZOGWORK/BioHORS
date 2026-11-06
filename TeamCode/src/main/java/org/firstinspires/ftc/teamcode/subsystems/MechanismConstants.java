@@ -170,10 +170,14 @@ public final class MechanismConstants {
      *  loaded threshold, (free - loaded) / free / capacity = 0.0625. SET FROM the two above. */
     public static double INTAKE_SLOWDOWN_PER_PIECE =
             (INTAKE_FREE_TICKS_PER_S - INTAKE_LOADED_TICKS_PER_S) / INTAKE_FREE_TICKS_PER_S / HOPPER_CAPACITY;
-    /** Intake power for the whole AUTO, in [0, 1]: it runs from the start to the park without stopping
-     *  (between volleys it keeps pulling in; the gate holds the pollen). SET BY HAND (the team,
-     *  2026-11-06). Teleop still uses IntakeController.INTAKE_POWER. */
-    public static double AUTO_INTAKE_POWER = 0.6;
+    /** Intake power for the whole AUTO except feeding a volley, in [0, 1]: it runs from the start to
+     *  the park without stopping (between volleys it keeps pulling in; the gate holds the pollen).
+     *  SET BY HAND (the team, 2026-11-06: 0.67; was 0.6). Teleop still uses IntakeController.INTAKE_POWER. */
+    public static double AUTO_INTAKE_POWER = 0.67;
+    /** Intake power while a volley feeds pollen through the open gate in AUTO, in [0, 1]. SET BY HAND
+     *  (the team, 2026-11-06: at 0.6 the intake did not turn while shooting on the robot; full power,
+     *  as teleop feeds). */
+    public static double AUTO_FEED_POWER = 1.0;
     public static double INTAKE_SENSE_MIN_POWER = 0.5;          // SET BY HAND: read only while pulling in hard
     public static double INTAKE_SENSE_SETTLE_S = 0.4;           // PLACEHOLDER: ignore the spin-up after starting
     public static double INTAKE_SENSE_DEBOUNCE_S = 0.15;        // CARRIED OVER: MAINHORS26's SPEED_STABLE_HOLD_SECONDS

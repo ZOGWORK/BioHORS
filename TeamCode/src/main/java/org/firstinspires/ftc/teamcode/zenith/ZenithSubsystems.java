@@ -114,7 +114,7 @@ public final class ZenithSubsystems {
                 robot.intake.stop();
                 return;
             }
-            robot.intake.setPower(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER);
+            robot.intake.setPower(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_FEED_POWER);
         }
 
         /**

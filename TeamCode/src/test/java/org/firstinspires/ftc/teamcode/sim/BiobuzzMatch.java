@@ -117,6 +117,7 @@ public final class BiobuzzMatch {
     private final boolean red;
     private boolean gateWasCommandedOpen;
     private final List<String> barUpIntoFlower = new ArrayList<>();
+    private double feedPowerMin = Double.POSITIVE_INFINITY, carryPowerMax = Double.NEGATIVE_INFINITY;
     private final List<String> offSpotGateOpens = new ArrayList<>();
     private final List<String> offSpotLaunches = new ArrayList<>();
     private final Json field;
@@ -400,6 +401,10 @@ public final class BiobuzzMatch {
         gateWasCommandedOpen = gateCommandedOpen;
         boolean gateOpen = pollenGateOpenAt(sim.pollenGatePlant.getPosition());
         boolean feeding = gateOpen && intakeIn && sim.pollenShooterRpm() >= LAUNCH_MIN_RPM && held > 0;
+        // The intake's power while the pollen gate is open, and while it is shut with the intake in.
+        double intakePower = Math.min(sim.intakeLeft.getPower(), sim.intakeRight.getPower());
+        if (gateCommandedOpen && gateOpen && intakeIn) feedPowerMin = Math.min(feedPowerMin, intakePower);
+        if (!gateCommandedOpen && !gateOpen && intakeIn) carryPowerMax = Math.max(carryPowerMax, intakePower);
         if (feeding) {
             launchTimer += dt;
             while (launchTimer >= LAUNCH_S_PER_PIECE && held > 0) {
@@ -988,6 +993,10 @@ public final class BiobuzzMatch {
     }
 
     public int held() { return held; }
+    /** Lowest intake power (both motors) while the pollen gate was open with the intake in; NaN if never. */
+    public double feedPowerMin() { return Double.isInfinite(feedPowerMin) ? Double.NaN : feedPowerMin; }
+    /** Highest intake power while the pollen gate was shut with the intake in; NaN if never. */
+    public double carryPowerMax() { return Double.isInfinite(carryPowerMax) ? Double.NaN : carryPowerMax; }
     public int launched() { return launched; }
     /** Ticks the robot drove in toward the flower before the bar was down; should be none. */
     public List<String> barUpIntoFlower() { return barUpIntoFlower; }
