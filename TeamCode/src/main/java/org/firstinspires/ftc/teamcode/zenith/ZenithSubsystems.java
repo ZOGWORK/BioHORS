@@ -117,10 +117,15 @@ public final class ZenithSubsystems {
             robot.intake.setPower(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER);
         }
 
-        /** After a volley (or while paused off the spot): back to collecting if the intake was on, else off. */
+        /**
+         * After a volley (or while paused off the spot): if the intake was on it keeps running in, but
+         * not as collecting, so the drive to the next pickup does not fill the pollen estimate; the
+         * next intakeOn (at the pickup) counts again. Else off.
+         */
         public void afterFeed() {
-            if (wantedOn) {
-                in();
+            if (wantedOn && !halted.getAsBoolean()) {
+                runningIn = false;
+                robot.intake.setPower(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER);
             } else {
                 runningIn = false;
                 robot.intake.stop();

@@ -24,7 +24,7 @@
       "id": "intakeOnAll",
       "kind": "command",
       "name": "intakeOn",
-      "notes": "The team (2026-11-06): the intake runs at MechanismConstants.AUTO_INTAKE_POWER (0.6, SET BY HAND) the whole AUTO, from here to the park. Between volleys it keeps pulling in and the shut gate holds the pollen; after each volley ScoreCommand hands it back to collecting."
+      "notes": "The team (2026-11-06): the intake runs at MechanismConstants.AUTO_INTAKE_POWER (0.6, SET BY HAND) the whole AUTO, from here to the park. Between volleys it keeps pulling in and the shut gate holds the pollen; after each volley ScoreCommand keeps it running without counting it, and intakeOnFlower / intakeOnGarden start counting again at each pickup."
     },
     {
       "id": "driveOut",
@@ -171,6 +171,12 @@
       },
       "speedFraction": 0.6,
       "notes": "After the tip the up cell faces north, and a launch only scores from the up cell's own quarter of the field, so the robot goes to the other side of the hive. It goes around the west of the hive frame, not under it: the frame's west legs keep an 18 in robot's centre east of about x = -9, and its footprint is 18 in wide, so under the hive it would cross the centre line into BLUE's side (G402). It keeps facing north while it leaves the scoring spot, turns to drive nose-first once its footprint is clear of the centre line, and turns back to face north for the flower. Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot. speedFraction 0.6 (SET BY HAND, 2026-11-06, the team: go slow through the 28 in lane between the hive frame and a partner robot by the loading zone); the cap is Pedro's maxVelocityConstraint, 36 in/s at MAX_FORWARD_IN_PER_S 60."
+    },
+    {
+      "id": "intakeOnFlower",
+      "kind": "command",
+      "name": "intakeOn",
+      "notes": "The intake is already running (intakeOnAll); this marks the flower pickup, so the pollen estimate counts from here (between pickups it runs without counting)."
     },
     {
       "id": "flowerBarDownFlower",
@@ -445,6 +451,12 @@
       },
       "speedFraction": 0.3,
       "notes": "Slides down onto the garden lane still facing west, slowly so it stops on time: near the south wall the 22 in robot must stay square to it."
+    },
+    {
+      "id": "intakeOnGarden",
+      "kind": "command",
+      "name": "intakeOn",
+      "notes": "The intake is already running (intakeOnAll); this marks the garden pickup, so the pollen estimate counts from here (between pickups it runs without counting)."
     },
     {
       "id": "sweepGarden",

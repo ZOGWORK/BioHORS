@@ -342,7 +342,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
             case TO_PARK_LANE:
                 mech.stopAll();
-                mech.collect();
+                mech.carry();
                 // A quarter turn counter-clockwise, from facing the hive to facing the field (east), on the way.
                 go(curve(TO_PARK_LANE, PARK_LANE).heading(Interpolator.linear(h(FACING_SOUTH), h(FACING_EAST))),
                         DEFAULT_SPEED);

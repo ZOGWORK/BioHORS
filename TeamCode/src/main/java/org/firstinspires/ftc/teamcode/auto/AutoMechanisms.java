@@ -16,8 +16,9 @@ import java.util.function.BooleanSupplier;
  *
  * <ul>
  *   <li><b>Intake</b> (both motors, intakeLeft + intakeRight): OFF, COLLECT (taking pollen in; the
- *       pollen estimate counts it), FEED (pushing pollen through the open gate into the shooter;
- *       not counted), OUTTAKE.</li>
+ *       pollen estimate counts it), CARRY (running in between pickups, the team's intake-on-all-AUTO;
+ *       not counted, so the drive to a pickup does not fill the time estimate), FEED (pushing pollen
+ *       through the open gate into the shooter; not counted), OUTTAKE.</li>
  *   <li><b>Pollen shooter + gate</b> (shooterRight, gateRight): IDLE, SPIN_UP (gate shut, the
  *       flower bar lifting clear; waiting for speed or the spin-up timeout, and for the bar to
  *       settle), FIRING (gate open, intake feeding, for count x the feed
@@ -39,7 +40,7 @@ import java.util.function.BooleanSupplier;
  */
 public class AutoMechanisms {
 
-    public enum IntakeState { OFF, COLLECT, FEED, OUTTAKE }
+    public enum IntakeState { OFF, COLLECT, CARRY, FEED, OUTTAKE }
 
     public enum PollenState { IDLE, SPIN_UP, FIRING }
 
@@ -110,6 +111,11 @@ public class AutoMechanisms {
         return MechanismConstants.INTAKE_SENSOR_ENABLED && intake == IntakeState.COLLECT
                 && robot.intakeLoad.hasReading() && robot.intakeLoad.readings() > readingsAtWait
                 && sinceNewPollen.seconds() >= seconds;
+    }
+
+    /** Intake running in between pickups: not counted as collecting. */
+    public void carry() {
+        setIntake(IntakeState.CARRY);
     }
 
     public void intakeOff() {
@@ -210,13 +216,13 @@ public class AutoMechanisms {
                         paused = true;
                         offSince = pollenTimer.seconds();
                         robot.pollenGate.setClosed(true);
-                        setIntake(IntakeState.COLLECT);
+                        setIntake(IntakeState.CARRY);
                     }
                     cutShort = pollenTimer.seconds() - offSince >= ShootingPose.WAIT_FOR_POSE_S;
                 }
                 if (fedSeconds >= full || cutShort) {
                     robot.pollenGate.setClosed(true);
-                    setIntake(IntakeState.COLLECT);   // the intake runs all AUTO
+                    setIntake(IntakeState.CARRY);   // the intake runs all AUTO; the next pickup counts again
                     int fed = ShootingPose.fedPieces(fedSeconds, volleyCount, ScoreCommand.FEED_S_PER_PIECE, full);
                     pollen.launched(fed);
                     if (fed == volleyCount) {
@@ -270,6 +276,7 @@ public class AutoMechanisms {
         intake = state;
         switch (state) {
             case COLLECT:
+            case CARRY:
             case FEED:
                 robot.intake.setPower(MechanismConstants.AUTO_INTAKE_POWER);
                 break;

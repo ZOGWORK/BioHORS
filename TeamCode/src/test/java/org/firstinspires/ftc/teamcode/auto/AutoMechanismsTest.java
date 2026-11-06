@@ -99,6 +99,32 @@ class AutoMechanismsTest {
         assertEquals(0, mech.volleysSkipped());
     }
 
+    /**
+     * Greptile on PR 61: with the intake on all AUTO, the time estimate must not count the drive
+     * between pickups, or the hopper reads full before the next pickup and its wait ends at once.
+     */
+    @Test
+    void withTheSensorOffCarryingRunsTheIntakeButDoesNotCount() throws InterruptedException {
+        MechanismConstants.INTAKE_SENSOR_ENABLED = false;
+        BioHorsRobot robot = robot();
+        AutoMechanisms mech = new AutoMechanisms(robot, 0, () -> true);
+        mech.carry();
+        runFor(mech, 0.5);
+        assertEquals(MechanismConstants.AUTO_INTAKE_POWER, robot.intake.getPower(), 1e-9, "carrying runs the intake");
+        assertEquals(0, mech.pollen().held(), "carrying is not collecting");
+        mech.collect();
+        runFor(mech, 0.5);
+        assertTrue(mech.pollen().held() > 0, "collecting counts again");
+    }
+
+    private static void runFor(AutoMechanisms mech, double seconds) throws InterruptedException {
+        long end = System.nanoTime() + (long) (seconds * 1e9);
+        while (System.nanoTime() < end) {
+            mech.update();
+            Thread.sleep(5);
+        }
+    }
+
     @Test
     void aLoadedRobotShoots() {
         BioHorsRobot robot = robot();
