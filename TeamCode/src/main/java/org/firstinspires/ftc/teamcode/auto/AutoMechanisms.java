@@ -210,13 +210,13 @@ public class AutoMechanisms {
                         paused = true;
                         offSince = pollenTimer.seconds();
                         robot.pollenGate.setClosed(true);
-                        setIntake(IntakeState.OFF);
+                        setIntake(IntakeState.COLLECT);
                     }
                     cutShort = pollenTimer.seconds() - offSince >= ShootingPose.WAIT_FOR_POSE_S;
                 }
                 if (fedSeconds >= full || cutShort) {
                     robot.pollenGate.setClosed(true);
-                    setIntake(IntakeState.OFF);
+                    setIntake(IntakeState.COLLECT);   // the intake runs all AUTO
                     int fed = ShootingPose.fedPieces(fedSeconds, volleyCount, ScoreCommand.FEED_S_PER_PIECE, full);
                     pollen.launched(fed);
                     if (fed == volleyCount) {
@@ -271,7 +271,7 @@ public class AutoMechanisms {
         switch (state) {
             case COLLECT:
             case FEED:
-                robot.intake.intake();
+                robot.intake.setPower(MechanismConstants.AUTO_INTAKE_POWER);
                 break;
             case OUTTAKE:
                 robot.intake.outtake();

@@ -65,6 +65,7 @@ public final class BiobuzzMatch {
     static final double LAUNCH_MIN_RPM = 1440.0;    // PLACEHOLDER: 90 % of the 1600 rpm test target
     static final double LAUNCH_CONE_DEG = 15.0;     // PLACEHOLDER: how far off the cell a launch still goes in
     static final double OPENING_REACH_IN = 2.0;     // PLACEHOLDER: mouth to retrieval opening
+    static final double FLOWER_FACING_RAD = Math.toRadians(25.0);   // SET BY HAND: "facing the flower" for the bar check
     static final double FACING_CONE_DEG = 25.0;     // PLACEHOLDER
     static final double CONTACT_TOLERANCE_IN = 0.25;
     // MEASURED FROM CAD: each flywheel's 8 mm shaft centre, in the robot frame (docs/ROBOT_CAD.md).
@@ -370,14 +371,16 @@ public final class BiobuzzMatch {
             double dx = pick.x() - x, dy = pick.y() - y, dist = Math.hypot(dx, dy);
             double towardIn = dist > 1e-6 ? (vx * dx + vy * dy) / dist : 0;   // in/s toward the pickup
             double bar = sim.flowerLeftPlant.getPosition();
-            // Collecting (the intake running in), within 8 in of the pickup: past the approach point
-            // (10.9 in out) by more than the 1.5 in the arrival there overshoots, so only the drive in
-            // itself is judged, not a leg that passes the flower.
-            if (intakeIn && dist < 8.0 && towardIn > 2.0
+            double facingErr = Math.abs(Math.IEEEremainder(h - pick.heading(), 2 * Math.PI));
+            // Facing the flower (the intake runs all AUTO, so running in no longer marks the drive in), within
+            // 8 in of the pickup: past the approach point (10.9 in out) by more than the 1.5 in the arrival
+            // there overshoots, so only the drive in itself is judged, not a leg that passes the flower.
+            if (facingErr < FLOWER_FACING_RAD && dist < 8.0 && towardIn > 2.0
                     && Math.abs(bar - org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN) > 0.02
                     && barUpIntoFlower.size() < 5) {
                 barUpIntoFlower.add(String.format(java.util.Locale.ROOT,
-                        "t=%.2f %.1f in from the pickup, moving in at %.1f in/s, bar at %.2f", time, dist, towardIn, bar));
+                        "t=%.2f %.1f in from the pickup, moving in at %.1f in/s, facing %.0f deg off, bar at %.2f", time, dist, towardIn,
+                        Math.toDegrees(facingErr), bar));
             }
         }
 

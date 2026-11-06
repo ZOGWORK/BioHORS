@@ -286,6 +286,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
         switch (s) {
             case DRIVE_OUT:
                 mech.spinUp();
+                mech.collect();   // the team: the intake runs at AUTO_INTAKE_POWER the whole AUTO
                 go(Paths.line(here(), p(SCORE_SOUTH)).tangent(), DEFAULT_SPEED);
                 break;
             case SHOOT_PRELOADS:
@@ -312,7 +313,6 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 mech.waitingForPollen();   // at the pickup now: the no-progress clock starts here
                 break;
             case TO_SCORE_NORTH:
-                mech.intakeOff();
                 // The bar stays down all the way back (the team); the volley lifts it to SHOOTING.
                 go(curve(TO_SCORE_NORTH, SCORE_NORTH).heading(pieces(TO_SCORE_NORTH_HEADING)), DEFAULT_SPEED);
                 break;
@@ -333,7 +333,6 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 go(Paths.line(here(), p(GARDEN_SWEEP_END)).constant(h(FACING_WEST)), GARDEN_SWEEP_SPEED);
                 break;
             case OFF_GARDEN_LANE:
-                mech.intakeOff();
                 go(Paths.line(here(), p(OFF_GARDEN_LANE)).constant(h(FACING_WEST)), OFF_LANE_SPEED);
                 break;
             case DRIVE_BACK:
@@ -343,6 +342,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
 
             case TO_PARK_LANE:
                 mech.stopAll();
+                mech.collect();
                 // A quarter turn counter-clockwise, from facing the hive to facing the field (east), on the way.
                 go(curve(TO_PARK_LANE, PARK_LANE).heading(Interpolator.linear(h(FACING_SOUTH), h(FACING_EAST))),
                         DEFAULT_SPEED);

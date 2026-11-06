@@ -84,4 +84,17 @@ class IntakeLoadSensorTest {
         assertEquals(MechanismConstants.HOPPER_CAPACITY - 1, IntakeLoadSensor.countFor(2150), "2150 is not full");
         assertEquals(0, IntakeLoadSensor.countFor(MechanismConstants.INTAKE_FREE_TICKS_PER_S), "free speed is empty");
     }
+    /** The AUTO runs the intake at 0.6: empty must read empty there, not full (its free speed is below 2100). */
+    @Test
+    void atPartPowerEmptyIsEmptyAndEachPollenStillCounts() {
+        double p = 0.6, free = MechanismConstants.INTAKE_FREE_TICKS_PER_S;
+        double perPiece = MechanismConstants.INTAKE_SLOWDOWN_PER_PIECE * free;
+        assertEquals(0, IntakeLoadSensor.countFor(free * p, p), "empty at 0.6");
+        assertEquals(1, IntakeLoadSensor.countFor(free * p - perPiece, p), "one pollen at 0.6");
+        assertEquals(3, IntakeLoadSensor.countFor(free * p - 3 * perPiece, p), "three pollen at 0.6");
+        assertEquals(MechanismConstants.HOPPER_CAPACITY,
+                IntakeLoadSensor.countFor(free * p - MechanismConstants.HOPPER_CAPACITY * perPiece, p), "full at 0.6");
+        assertEquals(MechanismConstants.HOPPER_CAPACITY, IntakeLoadSensor.countFor(free * p, 1.0),
+                "the same speed at full power is a full hopper");
+    }
 }
