@@ -182,6 +182,9 @@ public final class MechanismConstants {
     /** The idle speed, flywheel rpm. PLACEHOLDER: about half the firing speed; NEEDS MEASUREMENT
      *  (time the spin-up from idle; lower it if the battery suffers). */
     public static double SHOOTER_IDLE_RPM = 800.0;
+    /** Teleop display: a switched-off shooter still turning faster than this, rpm, shows "OFF, coasting"
+     *  (the motors FLOAT, so a flywheel takes a while to stop). SET BY HAND: display only. */
+    public static double SHOOTER_COAST_SHOW_RPM = 100.0;
 
     // ===== Shooter encoder check (ShooterController) =====
     /** Only judged while the motor is given at least this power. SET BY HAND: well above the

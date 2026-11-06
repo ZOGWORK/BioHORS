@@ -411,6 +411,33 @@ class MainHorsTeleOpSimTest {
     }
 
     @Test
+    void dpadDownStillSwitchesTheShootersOffAfterATrimAndTheLineSaysCoasting() {
+        // The team (2026-11-06): after trimming the rpm, dpad down seemed not to switch them off.
+        for (int end : new int[] {106, 400}) {
+            BioHorsSim sim = new BioHorsSim();
+            startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
+            OpModeRunResult result = run(sim, end, (phase, tick, g1, g2) -> {
+                if (phase != OpModePhase.ACTIVE) return;
+                g1.dpad_down = (tick >= 2 && tick < 5) || (tick >= 100 && tick < 103);   // on, then off
+                g1.dpad_right = (tick >= 40 && tick < 43) || (tick >= 60 && tick < 63);  // +2 steps while on
+            }, null);
+            // Three loops after the press the power-smoothing tail is still fading (0.004); on it was 0.5.
+            double powerTol = end == 106 ? 0.05 : 1e-9;
+            assertEquals(0.0, sim.pollenShooter.getPower(), powerTol, "pollen gets no power once off (end " + end + ")");
+            assertEquals(0.0, sim.nectarShooter.getPower(), powerTol, "nectar gets no power once off (end " + end + ")");
+            if (end == 106) {
+                // Just switched off: still near full speed, and the line says so instead of a bare OFF.
+                assertTrue(line(result, "Pollen").endsWith("OFF, coasting"), "pollen: " + line(result, "Pollen"));
+                assertTrue(line(result, "Nectar").endsWith("OFF, coasting"), "nectar: " + line(result, "Nectar"));
+            } else {
+                assertTrue(line(result, "Pollen").contains("OFF"), "pollen off again: " + line(result, "Pollen"));
+                assertTrue(sim.pollenShooterRpm() < 0.5 * POLLEN_RPM, "pollen slowing: " + sim.pollenShooterRpm());
+                assertTrue(sim.nectarShooterRpm() < 0.5 * NECTAR_RPM, "nectar slowing: " + sim.nectarShooterRpm());
+            }
+        }
+    }
+
+    @Test
     void aDpadHeldFromAlliancePickThroughPlayDoesNotTrimTheShooter() {
         BioHorsSim sim = new BioHorsSim();
         sim.placeAt(13.0, 63.0, -Math.PI / 2.0);
