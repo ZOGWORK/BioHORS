@@ -42,7 +42,6 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *   Right trigger ......... intake in (a stalled intake reverses briefly on its own: IntakeJamGuard)
  *   Y ..................... VOLLEY (VolleySequence): spin both shooters up, then request both gates for
  *                           a timed window, then let go. Y again cancels. See "Y volley" below.
- *                           (There is no outtake button: Y outtake was removed.)
  *   Dpad down ............. toggle both shooters on/off (each at its own target), for spinning
  *                           without aiming
  *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
@@ -51,15 +50,16 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *                           The nudge (AIM_NUDGE_STEP_RAD a press, up to AIM_NUDGE_MAX_RAD) stays
  *                           until an X reset; the Pose line shows it.
  *   B ..................... toggle both gates open / closed. No pose or aim check: the driver decides.
- *   A ..................... nothing
+ *   A (hold) .............. OUTTAKE: both intake motors run out at IntakeController.OUTTAKE_POWER.
+ *                           Wins over right trigger; locked out while the Y volley runs.
  *   X (hold) .............. RESET the pose: push the robot into the alliance's corner beyond the
  *                           loading zone (RED: north-west), back flat on the side wall and its side
  *                           flat on the end wall, intake facing the field, and HOLD X for RESET_HOLD_S: the pose becomes RESET_X/Y/HEADING (mirrored for
  *                           BLUE), wiping the Pinpoint's drift, and the pad rumbles. A tap does
  *                           nothing: the reset also tells PoseSanity to trust the pose again, so a
  *                           fat-fingered press mid-field would aim on a wrong pose unchecked.
- *   Dpad up ............... toggle the flower bar: DOWN (collect from a flower) / UP. It starts in
- *                           the middle (FLOWER_BAR_START); the first press puts it down. While
+ *   Dpad up ............... toggle the flower bar: DOWN (collect from a flower) / UP. It starts
+ *                           STOWED (FLOWER_BAR_START); the first press puts it down. While
  *                           it is DOWN the drive is capped at BAR_DOWN_SPEED_CAP (the Fire line
  *                           says BAR DOWN: slow). Optional
  *                           (BAR_AUTO_STOW_ENABLED, off): a sustained full-stick sprint stows it.
@@ -459,7 +459,6 @@ public class MainHorsTeleOp extends LinearOpMode {
             if (lbNow && !lbLast && !aimHeld) nectarTrimRpm = trimmed(nectarTrimRpm, -MechanismConstants.NECTAR_TRIM_STEP_RPM, nectarTableRpm);
             lbLast = lbNow;
 
-            // A does nothing.
 
             if (pollenTrimRpm != pollenTrimBefore || nectarTrimRpm != nectarTrimBefore) saveTrims();
             if (idling) {
@@ -556,6 +555,8 @@ public class MainHorsTeleOp extends LinearOpMode {
                 double intakeRequest = 0.0;
                 if (volley.running()) {
                     if (volley.requestsGates() && gatesOpen) intakeRequest = IntakeController.INTAKE_POWER;
+                } else if (gamepad1.a || gamepad2.a) {
+                    intakeRequest = IntakeController.OUTTAKE_POWER;   // A held: outtake, over the trigger
                 } else if (triggerHeld) {
                     intakeRequest = IntakeController.INTAKE_POWER;
                 }
