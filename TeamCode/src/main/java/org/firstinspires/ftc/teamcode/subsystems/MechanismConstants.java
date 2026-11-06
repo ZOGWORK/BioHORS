@@ -53,13 +53,12 @@ public final class MechanismConstants {
     public static final ShooterController.Config POLLEN_SHOOTER = new ShooterController.Config();
 
     /**
-     * The pollen flywheel's speed in AUTO, from the scoring spots 48 in from the hive axle. PLACEHOLDER,
-     * SET FROM SIM: the middle of the 1650-1800 rpm that seat a pollen from there in the sim's physics,
-     * at the hood's 75 deg exit (MEASURED FROM CAD) and a WHAT-IF ball speed of 0.8 of the rim speed (at
-     * the physics placeholder 0.5 it would be about 2700). Film a shot, measure its speed, then re-run
-     * ShotSweepTest and set this from it.
+     * The pollen flywheel's speed in AUTO, from the scoring spots 48 in from the hive axle. SET BY HAND
+     * (the team, 2026-11-05): the teleop's 3100 (was 1750, SET FROM SIM at a WHAT-IF ball speed of 0.8
+     * of the rim speed; at the physics placeholder 0.5 it would be about 2700). Check it scores from
+     * the auto's spots; if not, film a shot, re-run ShotSweepTest and set this from it.
      */
-    public static double AUTO_POLLEN_RPM = 1750.0;
+    public static double AUTO_POLLEN_RPM = 3100.0;
 
     /** Nectar shooter. Teleop / endgame only. Runs at its own (different) speed. */
     public static final ShooterController.Config NECTAR_SHOOTER = new ShooterController.Config();
@@ -140,12 +139,11 @@ public final class MechanismConstants {
     public static double SHOOTER_TRIM_STEP_RPM = 50.0; // SET BY HAND
 
     // ===== Gate servo positions (per gate) =====
-    // PLACEHOLDER: both gates start at the old shared values. Move each gate
-    // by hand from the driver station and record its own open/closed positions.
-    public static double POLLEN_GATE_OPEN = 0.0;    // PLACEHOLDER
-    public static double POLLEN_GATE_CLOSED = 0.485; // PLACEHOLDER
-    public static double NECTAR_GATE_OPEN = 0.0;    // PLACEHOLDER
-    public static double NECTAR_GATE_CLOSED = 0.485; // PLACEHOLDER
+    // SET BY HAND (the team, on the robot in teleop, 2026-11-05). Teleop and both autos read these.
+    public static double POLLEN_GATE_OPEN = 0.485;   // SET BY HAND
+    public static double POLLEN_GATE_CLOSED = 0.2;   // SET BY HAND
+    public static double NECTAR_GATE_OPEN = 0.485;   // SET BY HAND
+    public static double NECTAR_GATE_CLOSED = 0.2;   // SET BY HAND
 
     // ===== Flower bar servo positions =====
     // The number is the LEFT servo's. The right servo faces the other way and is REVERSE, so it

@@ -45,10 +45,10 @@
       "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepStart, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); just above the lane heading west (0.35 in short: a slide ends a few tenths past its target, and the slow sweep eases down onto the lane, y = -61.52, before the first pollen). Against FIRST's CAD wall (y = -70.674) and garden (pollen at y = -69.27), heading west the 13.2 in mouth reaches a pollen against the south wall only with the centre between y = -61.75 (the side on the wall) and -61.27. NEEDS MEASUREMENT on the real field."
     },
     "gardenSweepEnd": {
-      "xIn": -59.6,
+      "xIn": -59.0,
       "yIn": -61.62,
       "headingRad": 3.1416,
-      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepEnd, tuned to BioHORS with the flower bar stowed (robot.json: front roller 10.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide). y = -61.62: the side 0.13 in off FIRST's CAD south wall (y = -70.674), so the 13.2 in mouth overlaps the wall-side pollen by 0.23 in. x = -59.6: the front roller right over the corner pollen (FIRST's CAD -69.27, -69.27), 0.87 in short of the west wall (x = -70.674), about 0.2 in after the robot rolls on. NEEDS MEASUREMENT on the real field."
+      "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), gardenSweepEnd, tuned to BioHORS with the flower bar stowed (robot.json: front roller 10.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide). y = -61.62: the side 0.13 in off FIRST's CAD south wall (y = -70.674), so the 13.2 in mouth overlaps the wall-side pollen by 0.23 in. x = -59.0 (was -59.6; moved 0.6 in east 2026-11-05 when the wider garden curve made the sim's robot roll 1.2 in past it into the wall): the front roller over the corner pollen (FIRST's CAD -69.27, -69.27) at -69.2, 1.47 in short of the west wall (x = -70.674), about 0.3 in after the robot rolls on. NEEDS MEASUREMENT on the real field."
     },
     "offGardenLane": {
       "xIn": -50.0,

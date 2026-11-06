@@ -470,8 +470,8 @@ class MainHorsTeleOpSimTest {
                 assertEquals(0.0, power[0], 1e-9, "idle off: pollen stopped");
                 assertEquals(0.0, power[1], 1e-9, "idle off: nectar stopped");
             }
-            assertEquals(0.485, sim.pollenGatePlant.getPosition(), 0.02, "pollen gate closed");
-            assertEquals(0.485, sim.nectarGatePlant.getPosition(), 0.02, "nectar gate closed");
+            assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, sim.pollenGatePlant.getPosition(), 0.02, "pollen gate closed");
+            assertEquals(MechanismConstants.NECTAR_GATE_CLOSED, sim.nectarGatePlant.getPosition(), 0.02, "nectar gate closed");
             OpMode.blackboard.clear();
         }
     }
@@ -497,7 +497,7 @@ class MainHorsTeleOpSimTest {
             g1.dpad_down = tick >= 2 && tick < 5;
             g1.b = (tick >= 150 && tick < 153) || (tick >= 180 && tick < 183);
         });
-        assertEquals(0.485, twiceLate[0], 0.02, "B again closes it");
+        assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, twiceLate[0], 0.02, "B again closes it");
         OpMode.blackboard.clear();
 
         BioHorsSim x = new BioHorsSim();
@@ -505,8 +505,8 @@ class MainHorsTeleOpSimTest {
         double[] xLate = servosAt(x, 50, 45, (phase, tick, g1, g2) -> {
             if (phase == OpModePhase.ACTIVE) g1.dpad_up = true;
         });
-        assertEquals(0.485, xLate[0], 0.02, "dpad up (flower bar) does not move the gates");
-        assertEquals(0.485, xLate[1], 0.02, "dpad up (flower bar) does not move the gates");
+        assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, xLate[0], 0.02, "dpad up (flower bar) does not move the gates");
+        assertEquals(MechanismConstants.NECTAR_GATE_CLOSED, xLate[1], 0.02, "dpad up (flower bar) does not move the gates");
         assertEquals(MechanismConstants.FLOWER_BAR_DOWN, xLate[2], 0.02, "dpad up puts the bar down");
         assertEquals(com.qualcomm.robotcore.hardware.Servo.Direction.REVERSE, x.flowerRight.getDirection(),
                 "the right bar servo is mounted mirrored");

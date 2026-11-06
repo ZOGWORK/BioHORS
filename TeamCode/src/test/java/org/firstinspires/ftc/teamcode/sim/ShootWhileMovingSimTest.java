@@ -284,7 +284,7 @@ class ShootWhileMovingSimTest {
     @Test
     void aShotFiredWhileStrafingWithLeadCrossesTheCellWhereAStandingShotDoes() {
         ShotSweepTest.withShot(ZenithAutoMatchTest.SHOT_PITCH_DEG, ZenithAutoMatchTest.WHAT_IF_GRIP, () -> {
-            double rpm = MechanismConstants.AUTO_POLLEN_RPM;
+            double rpm = ZenithAutoMatchTest.SIM_SEATING_RPM;
             double ballGround = ShotModel.exitSpeed(rpm) * Math.cos(Math.toRadians(ShotModel.POLLEN_PITCH_DEG));
             double x = RED_HIVE_X, y = -48.0, vx = 8.0, vy = 0.0;
             double straight = AimController.desiredHeading(x, y, RED_HIVE_X, -CELL_Y);
