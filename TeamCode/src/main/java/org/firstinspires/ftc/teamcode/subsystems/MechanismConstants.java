@@ -153,12 +153,13 @@ public final class MechanismConstants {
     // gets 1 - this (left 0.35 = right 0.65): the two always add up to 1. START is where both sit
     // at init, until the first command; STOWED is the bar UP; DOWN is out and low for a flower's
     // opening; SHOOTING (autos only) is DOWN raised a little, so shots clear it.
-    // Back to the values before 2026-11-05 (the team's call): the bar starts STOWED, as it did.
-    public static double FLOWER_BAR_START = 0.05;    // = STOWED
-    public static double FLOWER_BAR_STOWED = 0.05;   // PLACEHOLDER: folded well back, so the bar and its side plates sit
-                                                     // inside the frame and clear of the wall when the robot runs close to it
-    public static double FLOWER_BAR_DOWN = 0.80;     // PLACEHOLDER
-    public static double FLOWER_BAR_SHOOTING = 0.65; // PLACEHOLDER (autos only)
+    // The bar starts STOWED. Up and down swapped on 2026-11-05: on the robot 0.05 was down and
+    // 0.80 up (the team, driving it); SHOOTING keeps its 0.15 lift off DOWN.
+    public static double FLOWER_BAR_START = 0.80;    // = STOWED
+    public static double FLOWER_BAR_STOWED = 0.80;   // SET BY HAND (the team, on the robot): folded back, so the bar and its
+                                                     // side plates sit inside the frame and clear of the wall
+    public static double FLOWER_BAR_DOWN = 0.05;     // SET BY HAND (the team, on the robot)
+    public static double FLOWER_BAR_SHOOTING = 0.20; // PLACEHOLDER (autos only): DOWN raised 0.15
     // ===== Pollen count from the intake's speed (IntakeLoadSensor) =====
     // Both intake motors have encoders. Pollen aboard press on the rollers, so the intake slows.
     public static final int HOPPER_CAPACITY = 4;                // SET BY HAND: confirmed by the team (G407)
