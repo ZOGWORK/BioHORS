@@ -1048,14 +1048,23 @@ public final class BiobuzzMatch {
         }
 
         boolean reachable(double mx, double my, double fwdX, double fwdY) {
-            boolean facing = -(fwdX * inX + fwdY * inY) >= Math.cos(Math.toRadians(FACING_CONE_DEG));
-            // Out on the field: within OPENING_REACH_IN of the opening's face point. Past the face, a tip
-            // inside the opening (no deeper than it goes) is at the pollen too.
-            double dx = mx - openX, dy = my - openY;
-            double intoFoot = -(dx * inX + dy * inY);
-            double across = Math.abs(dx * inY - dy * inX);
-            if (intoFoot > 0) return facing && intoFoot <= openingDepthIn && across <= OPENING_REACH_IN;
-            return facing && Math.hypot(dx, dy) <= OPENING_REACH_IN;
+            return reachesOpening(openX, openY, inX, inY, openingDepthIn, mx, my, fwdX, fwdY);
         }
+    }
+
+    /**
+     * Whether a bar tip at (mx, my), the robot facing (fwdX, fwdY), is at a flower's pollen. The opening's
+     * face point is (openX, openY), (inX, inY) its unit normal out toward the field, and the opening goes
+     * depthIn into the foot. Out on the field: within OPENING_REACH_IN of the face point. Past the face, a
+     * tip inside the opening (no deeper than it goes, no further across than the reach) is at the pollen too.
+     */
+    static boolean reachesOpening(double openX, double openY, double inX, double inY, double depthIn,
+                                  double mx, double my, double fwdX, double fwdY) {
+        boolean facing = -(fwdX * inX + fwdY * inY) >= Math.cos(Math.toRadians(FACING_CONE_DEG));
+        double dx = mx - openX, dy = my - openY;
+        double intoFoot = -(dx * inX + dy * inY);
+        double across = Math.abs(dx * inY - dy * inX);
+        if (intoFoot > 0) return facing && intoFoot <= depthIn && across <= OPENING_REACH_IN;
+        return facing && Math.hypot(dx, dy) <= OPENING_REACH_IN;
     }
 }
