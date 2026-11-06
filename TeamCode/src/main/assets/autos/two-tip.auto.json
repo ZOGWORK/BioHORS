@@ -21,6 +21,12 @@
   },
   "steps": [
     {
+      "id": "intakeOnAll",
+      "kind": "command",
+      "name": "intakeOn",
+      "notes": "The team (2026-11-06): the intake runs at MechanismConstants.AUTO_INTAKE_POWER (0.6, SET BY HAND) the whole AUTO, from here to the park. Between volleys it keeps pulling in and the shut gate holds the pollen; after each volley ScoreCommand keeps it running without counting it, and intakeOnFlower / intakeOnGarden start counting again at each pickup."
+    },
+    {
       "id": "driveOut",
       "kind": "path",
       "segments": [
@@ -57,13 +63,13 @@
           "from": "current",
           "control": [
             {
-              "xIn": -68.0,
+              "xIn": -68,
               "yIn": -31.5,
               "provenance": "SET BY HAND (2026-11-06, the team: a gentle curve round the hive that splits the gap between the frame and a partner robot): with (-50.6, -3) and (-46.8, 19.5), as driven in the sim (ZenithAutoMatchTest's trace, both alliances) the stowed-bar footprint keeps 4.0 in from the hive frame and 4.6 in from the 18 in strip along the west wall beside RED's loading zone (x >= -52.67, y 23.9..54.6) where a partner robot may stand. Tuned in the sim against the heading Pedro actually drives (Foresight turns up to about 12 in early); not driven on the robot yet"
             },
             {
               "xIn": -50.6,
-              "yIn": -3.0,
+              "yIn": -3,
               "provenance": "SET BY HAND (2026-11-06, split the gap): see the first control point"
             },
             {
@@ -170,7 +176,7 @@
       "id": "intakeOnFlower",
       "kind": "command",
       "name": "intakeOn",
-      "notes": "Starts the intake before the flower. (Pedro 3.0.2 cannot run Zenith's mid-path markers, so the starter's t = 0 marker is a command first.)"
+      "notes": "The intake is already running (intakeOnAll); this marks the flower pickup, so the pollen estimate counts from here (between pickups it runs without counting)."
     },
     {
       "id": "flowerBarDownFlower",
@@ -219,11 +225,6 @@
       "kind": "wait",
       "seconds": 0.5,
       "notes": "SET BY HAND (the team): holds the intake running and the bar down 0.5 s more after the hopper reads full, so a last pollen still in the mouth comes in before the bar lifts."
-    },
-    {
-      "id": "stopIntake",
-      "kind": "command",
-      "name": "intakeOff"
     },
     {
       "id": "toScoreNorth",
@@ -455,7 +456,7 @@
       "id": "intakeOnGarden",
       "kind": "command",
       "name": "intakeOn",
-      "notes": "Starts the intake before the sweep. (Pedro 3.0.2 cannot run Zenith's mid-path markers, so the starter's t = 0 marker is a command first.)"
+      "notes": "The intake is already running (intakeOnAll); this marks the garden pickup, so the pollen estimate counts from here (between pickups it runs without counting)."
     },
     {
       "id": "sweepGarden",
@@ -486,11 +487,6 @@
       "until": "hopperFull",
       "timeoutS": 0.8,
       "notes": "Up to 0.8 s more for the last pollen."
-    },
-    {
-      "id": "stopGardenIntake",
-      "kind": "command",
-      "name": "intakeOff"
     },
     {
       "id": "offGardenLane",
@@ -660,7 +656,7 @@
           ]
         }
       ],
-      "notes": "A deadline group ends when its deadline member, the drive, ends. The sequence beside it keeps the intake on for half a second while the robot leaves the garden, then stops it and spins the launcher up on the way back."
+      "notes": "A deadline group ends when its deadline member, the drive, ends. Beside it, after half a second off the garden, the launcher spins up on the way back. The intake keeps running all AUTO."
     },
     {
       "id": "scoreGardenPollen",

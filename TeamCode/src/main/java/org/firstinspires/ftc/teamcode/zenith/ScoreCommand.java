@@ -115,7 +115,7 @@ public class ScoreCommand extends CommandBase {
                 paused = true;
                 offSince = now;
                 launcher.closeGate();
-                intake.stop();
+                intake.afterFeed();
             }
             if (now - offSince >= ShootingPose.WAIT_FOR_POSE_S) done = true;
         }
@@ -128,7 +128,7 @@ public class ScoreCommand extends CommandBase {
     public void end(boolean interrupted) {
         launcher.closeGate();
         launcher.barClearOfShots(false);
-        intake.stop();
+        intake.afterFeed();
         if (feeding) {
             int fed = ShootingPose.fedPieces(fedSeconds, count, FEED_S_PER_PIECE, fullVolleySeconds());
             pollen.launched(fed);

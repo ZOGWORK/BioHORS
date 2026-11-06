@@ -80,6 +80,7 @@ public final class ZenithSubsystems {
         private final PollenEstimate pollen;
         private final ElapsedTime loop = new ElapsedTime();
         private boolean runningIn = false;
+        private boolean wantedOn = false;   // intakeOn ran and no intakeOff since
         private java.util.function.BooleanSupplier halted = () -> false;
 
         public Intake(BioHorsRobot robot, PollenEstimate pollen) {
@@ -98,7 +99,8 @@ public final class ZenithSubsystems {
                 return;
             }
             runningIn = true;
-            robot.intake.intake();
+            wantedOn = true;
+            robot.intake.setPower(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER);
         }
 
         /**
@@ -112,11 +114,27 @@ public final class ZenithSubsystems {
                 robot.intake.stop();
                 return;
             }
-            robot.intake.intake();
+            robot.intake.setPower(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER);
+        }
+
+        /**
+         * After a volley (or while paused off the spot): if the intake was on it keeps running in, but
+         * not as collecting, so the drive to the next pickup does not fill the pollen estimate; the
+         * next intakeOn (at the pickup) counts again. Else off.
+         */
+        public void afterFeed() {
+            if (wantedOn && !halted.getAsBoolean()) {
+                runningIn = false;
+                robot.intake.setPower(org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER);
+            } else {
+                runningIn = false;
+                robot.intake.stop();
+            }
         }
 
         public void stop() {
             runningIn = false;
+            wantedOn = false;
             robot.intake.stop();
         }
 

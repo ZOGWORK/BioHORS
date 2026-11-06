@@ -15,6 +15,10 @@ import java.util.function.Supplier;
  * hold for INTAKE_SENSE_DEBOUNCE_S before it is believed. Otherwise the last count is kept, except
  * that running the intake outward (ejecting) forgets it.
  *
+ * Below full power the empty speed is taken as proportional to the power, and each pollen as
+ * costing the same share of full-power speed (a fixed drag on the rollers): APPROX, the way the sim
+ * models it. At 1.0 this is the plain full-power reading.
+ *
  * Calibrate on the robot (MechanismConstants, PLACEHOLDER): run the intake empty and read
  * "Intake speed" for INTAKE_FREE_TICKS_PER_S; then hold 1, 2, 3, 4 pollen and read the slowdown
  * for INTAKE_SLOWDOWN_PER_PIECE.
@@ -28,6 +32,7 @@ public class IntakeLoadSensor {
 
     private boolean wasRunning;
     private double filteredTicksPerS = Double.NaN;
+    private double power = 1.0;    // the inward power of the last reading
     private int count = -1;        // -1: not read yet
     private int candidate = -1;
     private long readings;         // settled loops read so far (lets callers ask for a fresh one)
@@ -59,6 +64,7 @@ public class IntakeLoadSensor {
         }
         wasRunning = runningIn;
         if (!runningIn) return;
+        power = intakePower;
 
         double v = (Math.abs(left.getVelocity()) + Math.abs(right.getVelocity())) / 2.0;
         double a = MechanismConstants.INTAKE_SENSE_FILTER_ALPHA;
@@ -66,7 +72,7 @@ public class IntakeLoadSensor {
         if (running.seconds() < MechanismConstants.INTAKE_SENSE_SETTLE_S) return;
         readings++;
 
-        int now = countFor(filteredTicksPerS);
+        int now = countFor(filteredTicksPerS, power);
         if (now != candidate) {
             candidate = now;
             candidateHeld.reset();
@@ -75,10 +81,10 @@ public class IntakeLoadSensor {
         }
     }
 
-    /** Fraction of the empty free speed lost (0 = empty, about 0.06 per pollen by default). */
+    /** Share of the full-power free speed lost (0 = empty, about 0.06 per pollen by default). */
     public double slowdown() {
         if (Double.isNaN(filteredTicksPerS)) return 0;
-        return Math.max(0, 1.0 - filteredTicksPerS / MechanismConstants.INTAKE_FREE_TICKS_PER_S);
+        return Math.max(0, power - filteredTicksPerS / MechanismConstants.INTAKE_FREE_TICKS_PER_S);
     }
 
     /**
@@ -87,9 +93,16 @@ public class IntakeLoadSensor {
      * one short of full.
      */
     static int countFor(double ticksPerS) {
+        return countFor(ticksPerS, 1.0);
+    }
+
+    /** The count for an intake speed with the intake running inward at {@code power}. */
+    static int countFor(double ticksPerS, double power) {
         int capacity = MechanismConstants.HOPPER_CAPACITY;
-        if (ticksPerS <= MechanismConstants.INTAKE_LOADED_TICKS_PER_S) return capacity;
-        double slowdown = Math.max(0, 1.0 - ticksPerS / MechanismConstants.INTAKE_FREE_TICKS_PER_S);
+        double free = MechanismConstants.INTAKE_FREE_TICKS_PER_S;
+        double loaded = free * power - (free - MechanismConstants.INTAKE_LOADED_TICKS_PER_S);
+        if (ticksPerS <= loaded) return capacity;
+        double slowdown = Math.max(0, power - ticksPerS / free);
         int n = (int) Math.floor(slowdown / MechanismConstants.INTAKE_SLOWDOWN_PER_PIECE + 0.5);
         return Math.max(0, Math.min(capacity - 1, n));
     }
