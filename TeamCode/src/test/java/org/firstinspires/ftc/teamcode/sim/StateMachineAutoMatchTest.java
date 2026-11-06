@@ -84,6 +84,12 @@ class StateMachineAutoMatchTest {
         assertTrue(BiobuzzMatch.inchesFromPark(blue.rlog, false) < PARKED_WITHIN_IN,
                 "BLUE ended " + BiobuzzMatch.inchesFromPark(blue.rlog, false) + " in from the park spot\n" + blue.report);
 
+        // ---- the intake feeds a volley at AUTO_FEED_POWER and runs at AUTO_INTAKE_POWER otherwise
+        // (the team, 2026-11-06: at 0.6 it did not turn while shooting on the robot) ----
+        for (Run run : new Run[] {red, blue}) {
+            assertTrue(run.match.feedTicks() > 0, "the gate never opened\n" + run.report);
+            assertTrue(run.match.intakePowerWrong().isEmpty(), "intake off its AUTO power: " + run.match.intakePowerWrong());
+        }
         assertTrue(red.match.barUpIntoFlower().isEmpty(), "RED drove in to the flower before the bar was down: " + red.match.barUpIntoFlower());
         assertTrue(blue.match.barUpIntoFlower().isEmpty(), "BLUE drove in to the flower before the bar was down: " + blue.match.barUpIntoFlower());
         assertTrue(red.match.offSpotGateOpens().isEmpty(), "RED gate opened off a scoring spot: " + red.match.offSpotGateOpens());

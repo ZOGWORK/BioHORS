@@ -117,6 +117,8 @@ public final class BiobuzzMatch {
     private final boolean red;
     private boolean gateWasCommandedOpen;
     private final List<String> barUpIntoFlower = new ArrayList<>();
+    private final List<String> intakePowerWrong = new ArrayList<>();
+    private int feedTicks;
     private final List<String> offSpotGateOpens = new ArrayList<>();
     private final List<String> offSpotLaunches = new ArrayList<>();
     private final Json field;
@@ -400,6 +402,24 @@ public final class BiobuzzMatch {
         gateWasCommandedOpen = gateCommandedOpen;
         boolean gateOpen = pollenGateOpenAt(sim.pollenGatePlant.getPosition());
         boolean feeding = gateOpen && intakeIn && sim.pollenShooterRpm() >= LAUNCH_MIN_RPM && held > 0;
+        // Each intake motor's power, every tick: with the pollen gate open (commanded and really) both
+        // feed at AUTO_FEED_POWER, stopped included; with it shut, a running intake is at AUTO_INTAKE_POWER.
+        {
+            double pl = sim.intakeLeft.getPower(), pr = sim.intakeRight.getPower();
+            double feedP = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_FEED_POWER;
+            double carryP = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER;
+            String wrong = null;
+            if (gateCommandedOpen && gateOpen) {
+                feedTicks++;
+                if (Math.abs(pl - feedP) > 1e-9 || Math.abs(pr - feedP) > 1e-9) wrong = "gate open";
+            } else if (!gateCommandedOpen && !gateOpen && (Math.abs(pl) > 1e-9 || Math.abs(pr) > 1e-9)) {
+                if (Math.abs(pl - carryP) > 1e-9 || Math.abs(pr - carryP) > 1e-9) wrong = "gate shut";
+            }
+            if (wrong != null && intakePowerWrong.size() < 5) {
+                intakePowerWrong.add(String.format(java.util.Locale.ROOT, "t=%.2f %s: intakeLeft %.2f intakeRight %.2f",
+                        time, wrong, pl, pr));
+            }
+        }
         if (feeding) {
             launchTimer += dt;
             while (launchTimer >= LAUNCH_S_PER_PIECE && held > 0) {
@@ -988,6 +1008,10 @@ public final class BiobuzzMatch {
     }
 
     public int held() { return held; }
+    /** Ticks an intake motor was off its AUTO power (the first five): feed with the gate open, carry with it shut. */
+    public List<String> intakePowerWrong() { return intakePowerWrong; }
+    /** Ticks the pollen gate was open (commanded and really). */
+    public int feedTicks() { return feedTicks; }
     public int launched() { return launched; }
     /** Ticks the robot drove in toward the flower before the bar was down; should be none. */
     public List<String> barUpIntoFlower() { return barUpIntoFlower; }

@@ -24,7 +24,7 @@
       "id": "intakeOnAll",
       "kind": "command",
       "name": "intakeOn",
-      "notes": "The team (2026-11-06): the intake runs at MechanismConstants.AUTO_INTAKE_POWER (0.6, SET BY HAND) the whole AUTO, from here to the park. Between volleys it keeps pulling in and the shut gate holds the pollen; after each volley ScoreCommand keeps it running without counting it, and intakeOnFlower / intakeOnGarden start counting again at each pickup."
+      "notes": "The team (2026-11-06): the intake runs at MechanismConstants.AUTO_INTAKE_POWER (0.67, SET BY HAND) the whole AUTO, from here to the park, and at AUTO_FEED_POWER (1.0) while a volley feeds. Between volleys it keeps pulling in and the shut gate holds the pollen; after each volley ScoreCommand keeps it running without counting it, and intakeOnFlower / intakeOnGarden start counting again at each pickup."
     },
     {
       "id": "driveOut",

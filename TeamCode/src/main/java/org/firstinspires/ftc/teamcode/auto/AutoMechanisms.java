@@ -277,8 +277,10 @@ public class AutoMechanisms {
         switch (state) {
             case COLLECT:
             case CARRY:
-            case FEED:
                 robot.intake.setPower(MechanismConstants.AUTO_INTAKE_POWER);
+                break;
+            case FEED:
+                robot.intake.setPower(MechanismConstants.AUTO_FEED_POWER);
                 break;
             case OUTTAKE:
                 robot.intake.outtake();
