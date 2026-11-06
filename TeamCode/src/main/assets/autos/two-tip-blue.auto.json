@@ -88,7 +88,7 @@
             }
           ],
           "to": {
-            "xIn": 24,
+            "xIn": 21,
             "yIn": -42,
             "headingRad": -1.5707926535897931,
             "provenance": "SET BY HAND: the point mirror of waypoints.json flowerNorthApproach (see its provenance there)"
@@ -104,7 +104,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": -1.5707926535897931,
-              "toRad": -0.580292653589793
+              "toRad": -0.5866926535897932
             }
           },
           {
@@ -112,8 +112,8 @@
             "endT": 0.3038,
             "heading": {
               "mode": "linear",
-              "fromRad": -0.580292653589793,
-              "toRad": -0.8739926535897933
+              "fromRad": -0.5866926535897932,
+              "toRad": -0.8901926535897933
             }
           },
           {
@@ -121,8 +121,8 @@
             "endT": 0.4038,
             "heading": {
               "mode": "linear",
-              "fromRad": -0.8739926535897933,
-              "toRad": -1.2821926535897932
+              "fromRad": -0.8901926535897933,
+              "toRad": -1.309792653589793
             }
           },
           {
@@ -130,8 +130,8 @@
             "endT": 0.5038,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.2821926535897932,
-              "toRad": -1.6372926535897931
+              "fromRad": -1.309792653589793,
+              "toRad": -1.6691926535897932
             }
           },
           {
@@ -139,8 +139,8 @@
             "endT": 0.6038,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.6372926535897931,
-              "toRad": -1.861592653589793
+              "fromRad": -1.6691926535897932,
+              "toRad": -1.897992653589793
             }
           },
           {
@@ -148,8 +148,8 @@
             "endT": 0.7038,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.861592653589793,
-              "toRad": -2.009392653589793
+              "fromRad": -1.897992653589793,
+              "toRad": -2.0545926535897934
             }
           },
           {
@@ -157,8 +157,8 @@
             "endT": 0.8038,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.009392653589793,
-              "toRad": -2.130692653589793
+              "fromRad": -2.0545926535897934,
+              "toRad": -2.1864926535897933
             }
           },
           {
@@ -166,8 +166,8 @@
             "endT": 0.9,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.130692653589793,
-              "toRad": -2.244692653589793
+              "fromRad": -2.1864926535897933,
+              "toRad": -2.307092653589793
             }
           },
           {
@@ -175,7 +175,7 @@
             "endT": 1,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.244692653589793,
+              "fromRad": -2.307092653589793,
               "toRad": -1.5707926535897931
             }
           }
@@ -210,7 +210,7 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": 24,
+            "xIn": 21,
             "yIn": -56,
             "headingRad": -1.5707926535897931,
             "provenance": "SET BY HAND (2026-11-06, the team: the point mirror of waypoints.json flowerNorthPickup (see its provenance there)"
@@ -250,7 +250,7 @@
           "from": "current",
           "control": [
             {
-              "xIn": 24,
+              "xIn": 21,
               "yIn": -46,
               "provenance": "PLACEHOLDER: starter example, a curve control point that takes the robot around the west of the hive frame, clear of its west bar and legs, so the whole footprint stays on RED's side of the centre line"
             },
@@ -490,7 +490,7 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": 59,
+            "xIn": 58.5,
             "yIn": 61.62,
             "headingRad": 0.000007346410206832132,
             "provenance": "SET BY HAND: the point mirror of waypoints.json gardenSweepEnd (see its provenance there)"
@@ -754,6 +754,12 @@
         "headingRad": 3.141592653589793
       },
       "notes": "Slides south into the park spot, back to the west wall and the intake facing the field: where the teleop starts (MainHorsTeleOp's default start pose)."
+    },
+    {
+      "id": "intakeOffDone",
+      "kind": "command",
+      "name": "intakeOff",
+      "notes": "The team (2026-11-06): once the park is done and every action has run, the intake stops."
     }
   ]
 }

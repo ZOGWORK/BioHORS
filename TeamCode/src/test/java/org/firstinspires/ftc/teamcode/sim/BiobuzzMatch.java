@@ -64,6 +64,7 @@ public final class BiobuzzMatch {
     static final double LAUNCH_S_PER_PIECE = 0.30;  // PLACEHOLDER: real launch cadence NEEDS MEASUREMENT
     static final double LAUNCH_MIN_RPM = 1440.0;    // PLACEHOLDER: 90 % of the 1600 rpm test target
     static final double LAUNCH_CONE_DEG = 15.0;     // PLACEHOLDER: how far off the cell a launch still goes in
+    static final double END_OF_AUTO_CHECK_S = 29.5;   // SET BY HAND: after both autos park (~26.5 s), before AUTO ends
     static final double OPENING_REACH_IN = 2.0;     // PLACEHOLDER: mouth to retrieval opening
     static final double FLOWER_FACING_RAD = Math.toRadians(25.0);   // SET BY HAND: "facing the flower" for the bar check
     static final double FACING_CONE_DEG = 25.0;     // PLACEHOLDER
@@ -119,6 +120,7 @@ public final class BiobuzzMatch {
     private final List<String> barUpIntoFlower = new ArrayList<>();
     private final List<String> intakePowerWrong = new ArrayList<>();
     private int feedTicks;
+    private double[] lastIntakePowers = {0.0, 0.0};
     private final List<String> offSpotGateOpens = new ArrayList<>();
     private final List<String> offSpotLaunches = new ArrayList<>();
     private final Json field;
@@ -231,7 +233,7 @@ public final class BiobuzzMatch {
             } else if (kind.equals("container") && "flower".equals(e.optText("container", ""))) {
                 Json opening = e.opt("retrieval") == null ? null : e.get("retrieval").opt("openingIn");
                 flowers.add(new Flower(id, e.num("xIn"), e.num("yIn"), e.get("holds").size(),
-                        opening == null ? 0.0 : opening.num("depthIn")));
+                        opening == null ? 0.0 : opening.num("depthIn"), opening == null ? 0.0 : opening.num("widthIn")));
             } else if (id.equals("hive" + own)) {
                 pivotX = e.get("pivotIn").num("xIn");
                 upIsNorth = "NORTH".equals(e.str("upSide"));
@@ -406,6 +408,7 @@ public final class BiobuzzMatch {
         // feed at AUTO_FEED_POWER, stopped included; with it shut, a running intake is at AUTO_INTAKE_POWER.
         {
             double pl = sim.intakeLeft.getPower(), pr = sim.intakeRight.getPower();
+            if (time <= END_OF_AUTO_CHECK_S) lastIntakePowers = new double[] {pl, pr};
             double feedP = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_FEED_POWER;
             double carryP = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_INTAKE_POWER;
             String wrong = null;
@@ -1010,6 +1013,8 @@ public final class BiobuzzMatch {
     public int held() { return held; }
     /** Ticks an intake motor was off its AUTO power (the first five): feed with the gate open, carry with it shut. */
     public List<String> intakePowerWrong() { return intakePowerWrong; }
+    /** Both intake motors' power at END_OF_AUTO_CHECK_S (intakeLeft, intakeRight): parked, still in AUTO. */
+    public double[] lastIntakePowers() { return lastIntakePowers.clone(); }
     /** Ticks the pollen gate was open (commanded and really). */
     public int feedTicks() { return feedTicks; }
     public int launched() { return launched; }
@@ -1047,13 +1052,15 @@ public final class BiobuzzMatch {
         int count;
         double openX, openY, inX, inY; // opening point and its inward-to-the-field normal
         final double openingDepthIn;   // how far the retrieval opening goes into the foot (field file, SPEC)
+        final double openingWidthIn;   // the retrieval opening's width (field file, SPEC)
 
-        Flower(String id, double x, double y, int count, double openingDepthIn) {
+        Flower(String id, double x, double y, int count, double openingDepthIn, double openingWidthIn) {
             this.id = id;
             this.x = x;
             this.y = y;
             this.count = count;
             this.openingDepthIn = openingDepthIn;
+            this.openingWidthIn = openingWidthIn;
         }
 
         void setFoot(double[] b) {
@@ -1072,7 +1079,10 @@ public final class BiobuzzMatch {
         }
 
         boolean reachable(double mx, double my, double fwdX, double fwdY) {
-            return reachesOpening(openX, openY, inX, inY, openingDepthIn, mx, my, fwdX, fwdY);
+            // Inside the opening the mouth (robot.json, 13.2 in wide) still spans the whole opening while
+            // it is off-centre by up to half its width less half the opening's.
+            double acrossIn = Math.max(OPENING_REACH_IN, mouthHalfWidth - openingWidthIn / 2.0);
+            return reachesOpening(openX, openY, inX, inY, openingDepthIn, acrossIn, mx, my, fwdX, fwdY);
         }
     }
 
@@ -1080,15 +1090,15 @@ public final class BiobuzzMatch {
      * Whether a bar tip at (mx, my), the robot facing (fwdX, fwdY), is at a flower's pollen. The opening's
      * face point is (openX, openY), (inX, inY) its unit normal out toward the field, and the opening goes
      * depthIn into the foot. Out on the field: within OPENING_REACH_IN of the face point. Past the face, a
-     * tip inside the opening (no deeper than it goes, no further across than the reach) is at the pollen too.
+     * tip inside the opening (no deeper than it goes, no further across than acrossIn) is at the pollen too.
      */
-    static boolean reachesOpening(double openX, double openY, double inX, double inY, double depthIn,
+    static boolean reachesOpening(double openX, double openY, double inX, double inY, double depthIn, double acrossIn,
                                   double mx, double my, double fwdX, double fwdY) {
         boolean facing = -(fwdX * inX + fwdY * inY) >= Math.cos(Math.toRadians(FACING_CONE_DEG));
         double dx = mx - openX, dy = my - openY;
         double intoFoot = -(dx * inX + dy * inY);
         double across = Math.abs(dx * inY - dy * inX);
-        if (intoFoot > 0) return facing && intoFoot <= depthIn && across <= OPENING_REACH_IN;
+        if (intoFoot > 0) return facing && intoFoot <= depthIn && across <= acrossIn;
         return facing && Math.hypot(dx, dy) <= OPENING_REACH_IN;
     }
 }

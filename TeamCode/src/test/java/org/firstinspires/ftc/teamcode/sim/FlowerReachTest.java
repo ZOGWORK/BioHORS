@@ -13,9 +13,11 @@ class FlowerReachTest {
 
     static final double OPEN_X = -24.0, OPEN_Y = 67.1, IN_X = 0.0, IN_Y = -1.0;   // SPEC: biobuzz.field.json
     static final double DEPTH_IN = 3.57;                                           // SPEC: flower1's openingIn.depthIn
+    // MEASURED FROM CAD: the 13.2 in mouth (robot.json) spans flower1's 6 in opening (SPEC) up to 3.6 in off-centre.
+    static final double ACROSS_IN = 13.2 / 2 - 6.0 / 2;
 
     private static boolean reaches(double mx, double my, double headingRad) {
-        return BiobuzzMatch.reachesOpening(OPEN_X, OPEN_Y, IN_X, IN_Y, DEPTH_IN, mx, my,
+        return BiobuzzMatch.reachesOpening(OPEN_X, OPEN_Y, IN_X, IN_Y, DEPTH_IN, ACROSS_IN, mx, my,
                 Math.cos(headingRad), Math.sin(headingRad));
     }
 
@@ -37,8 +39,9 @@ class FlowerReachTest {
     @Test
     void aTipOffToTheSideOrARobotFacingAwayDoesNotReach() {
         double north = Math.PI / 2;
-        assertTrue(reaches(-24.0 + 1.99, OPEN_Y + 2.0, north), "inside, 1.99 in across");
-        assertFalse(reaches(-24.0 + 2.01, OPEN_Y + 2.0, north), "inside, 2.01 in across");
+        assertTrue(reaches(-24.0 + 3.0, OPEN_Y + 2.0, north), "inside, 3.0 in across (the pickup, 3 in right)");
+        assertTrue(reaches(-24.0 - 3.59, OPEN_Y + 2.0, north), "inside, 3.59 in across");
+        assertFalse(reaches(-24.0 + 3.61, OPEN_Y + 2.0, north), "inside, 3.61 in across: the mouth no longer spans it");
         assertFalse(reaches(-24.0, OPEN_Y + 2.0, north + Math.toRadians(30)), "inside, turned 30 deg");
         assertFalse(reaches(-24.0, OPEN_Y - 1.0, -north), "at the face, facing away");
     }
