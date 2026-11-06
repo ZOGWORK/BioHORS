@@ -70,19 +70,33 @@ public final class MechanismConstants {
         // SET BY HAND: the team's test target (Oct 27). The RPM that scores is a field test (the
         // Shooter Tuner only makes the shooter hold whatever this is).
         POLLEN_SHOOTER.targetRpm = 1600.0;
-        // ---- Pollen tuned values: paste the "Pollen" lines the Shooter Tuner OpMode prints here ----
+        // ---- Pollen tuned values ----
+        // Pollen: CALIBRATED FROM ROBOT by FtcAutoTune v1.4.3 (2026-11-05), PD (classic ZN) candidate,
+        // Ku 0.019099 Tu 0.2211 s, kF sweep at 13.52 V; kS not measured.
+        POLLEN_SHOOTER.ffReferenceVoltage = 12.0;
+        POLLEN_SHOOTER.ffReferenceMaxTicksPerSec = 2250.8;
+        POLLEN_SHOOTER.kF = 1.0;
+        POLLEN_SHOOTER.kS = 0.0;
+        POLLEN_SHOOTER.kP = 0.007130;
+        POLLEN_SHOOTER.kI = 0.000000;
+        POLLEN_SHOOTER.kD = 0.000197;
 
         NECTAR_SHOOTER.label = "Nectar";
         applySharedPlaceholders(NECTAR_SHOOTER);
         // SET BY HAND: the team's test target (Oct 27), the same start as pollen. Nectar is
         // expected to settle at its own speed after a field test; trim it down with left bumper.
         NECTAR_SHOOTER.targetRpm = 1600.0;
-        // SET BY HAND (the team, 2026-11-05): nectar fell short of its target on the robot. The
-        // shared kF 1.0 is the no-load free speed, and the small kI cannot make up a loaded
-        // flywheel's gap, so nectar's feedforward goes up 20 %. Tune live in Panels
-        // (MechanismConstants > NECTAR_SHOOTER > kF), then copy the value here.
-        NECTAR_SHOOTER.kF = 1.2;
-        // ---- Nectar tuned values: paste the "Nectar" lines the Shooter Tuner OpMode prints here ----
+        // ---- Nectar tuned values ----
+        // Nectar: CALIBRATED FROM ROBOT by FtcAutoTune v1.4.3 (2026-11-05), PD (classic ZN) candidate,
+        // Ku 0.019099 Tu 0.2913 s, kF sweep at 13.41 V; kS not measured. (Replaces the kF 1.2 set by
+        // hand: the measured max speed already makes up the shortfall.)
+        NECTAR_SHOOTER.ffReferenceVoltage = 12.0;
+        NECTAR_SHOOTER.ffReferenceMaxTicksPerSec = 2229.4;
+        NECTAR_SHOOTER.kF = 1.0;
+        NECTAR_SHOOTER.kS = 0.0;
+        NECTAR_SHOOTER.kP = 0.007130;
+        NECTAR_SHOOTER.kI = 0.000000;
+        NECTAR_SHOOTER.kD = 0.000260;
     }
 
     /**
