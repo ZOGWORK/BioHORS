@@ -113,6 +113,10 @@ class ZenithAutoMatchTest {
         for (Result run : new Result[] {red2, blue}) {
             assertTrue(run.match.feedTicks() > 0, "the gate never opened\n" + run.report);
             assertTrue(run.match.intakePowerWrong().isEmpty(), "intake off its AUTO power: " + run.match.intakePowerWrong());
+            // The team (2026-11-06): parked and every action done, the intake is stopped.
+            double[] end = run.match.lastIntakePowers();
+            assertTrue(end[0] == 0.0 && end[1] == 0.0, "intake still running at the end: "
+                    + java.util.Arrays.toString(end) + "\n" + run.report);
         }
         assertTrue(red2.match.barUpIntoFlower().isEmpty(), "RED drove in to the flower before the bar was down: " + red2.match.barUpIntoFlower());
         assertTrue(blue.match.barUpIntoFlower().isEmpty(), "BLUE drove in to the flower before the bar was down: " + blue.match.barUpIntoFlower());

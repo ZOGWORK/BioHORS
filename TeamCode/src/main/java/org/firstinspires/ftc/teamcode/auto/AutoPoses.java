@@ -23,11 +23,11 @@ public final class AutoPoses {
     public static final Pose START = new Pose(-13.0, -62.87, Math.PI / 2);
     public static final Pose SCORE_SOUTH = new Pose(-13.0, -48.0, Math.PI / 2);
     public static final Pose SCORE_NORTH = new Pose(-13.0, 48.0, -Math.PI / 2);
-    public static final Pose FLOWER_NORTH_APPROACH = new Pose(-24.0, 42.0, Math.PI / 2);
-    public static final Pose FLOWER_NORTH_PICKUP = new Pose(-24.0, 56.0, Math.PI / 2);
+    public static final Pose FLOWER_NORTH_APPROACH = new Pose(-21.0, 42.0, Math.PI / 2);
+    public static final Pose FLOWER_NORTH_PICKUP = new Pose(-21.0, 56.0, Math.PI / 2);
     public static final Pose ABOVE_GARDEN_LANE = new Pose(-36.0, -54.7, Math.PI);
     public static final Pose GARDEN_SWEEP_START = new Pose(-40.0, -61.4, Math.PI);
-    public static final Pose GARDEN_SWEEP_END = new Pose(-59.0, -61.62, Math.PI);
+    public static final Pose GARDEN_SWEEP_END = new Pose(-58.5, -61.62, Math.PI);
     public static final Pose OFF_GARDEN_LANE = new Pose(-50.0, -50.0, Math.PI);
     public static final Pose PARK_LANE = new Pose(-61.5, 54.0, 0.0);
     public static final Pose PARK = new Pose(-61.5, 49.0, 0.0);
@@ -35,7 +35,7 @@ public final class AutoPoses {
     // ---- Bezier control points ----
     public static final Pose[] TO_OTHER_SIDE = {
             new Pose(-68.0, -31.5), new Pose(-50.6, -3.0), new Pose(-46.8, 19.5)};
-    public static final Pose[] TO_SCORE_NORTH = {new Pose(-24.0, 46.0), new Pose(-13.0, 60.0)};
+    public static final Pose[] TO_SCORE_NORTH = {new Pose(-21.0, 46.0), new Pose(-13.0, 60.0)};
     public static final Pose[] TO_GARDEN = {
             new Pose(-55.2, 30.3), new Pose(-58.7, -27.9), new Pose(-26.0, -54.7)};
     public static final Pose[] DRIVE_BACK = {
@@ -48,11 +48,11 @@ public final class AutoPoses {
     // linear pieces between the curve's true direction, each starting where the last ended.
     // AutoPosesTest checks there is no jump.
     public static final HeadingPiece[] TO_OTHER_SIDE_HEADING = {
-            HeadingPiece.linear(0.2038, 1.5708, 2.5613), HeadingPiece.linear(0.3038, 2.5613, 2.2676),
-            HeadingPiece.linear(0.4038, 2.2676, 1.8594), HeadingPiece.linear(0.5038, 1.8594, 1.5043),
-            HeadingPiece.linear(0.6038, 1.5043, 1.28), HeadingPiece.linear(0.7038, 1.28, 1.1322),
-            HeadingPiece.linear(0.8038, 1.1322, 1.0109), HeadingPiece.linear(0.9, 1.0109, 0.8969),
-            HeadingPiece.linear(1.0, 0.8969, 1.5708)};
+            HeadingPiece.linear(0.2038, 1.5708, 2.5549), HeadingPiece.linear(0.3038, 2.5549, 2.2514),
+            HeadingPiece.linear(0.4038, 2.2514, 1.8318), HeadingPiece.linear(0.5038, 1.8318, 1.4724),
+            HeadingPiece.linear(0.6038, 1.4724, 1.2436), HeadingPiece.linear(0.7038, 1.2436, 1.087),
+            HeadingPiece.linear(0.8038, 1.087, 0.9551), HeadingPiece.linear(0.9, 0.9551, 0.8345),
+            HeadingPiece.linear(1.0, 0.8345, 1.5708)};
     public static final HeadingPiece[] TO_SCORE_NORTH_HEADING = {
             HeadingPiece.constant(0.2041, 1.5708), HeadingPiece.linear(0.3742, 1.5708, 3.1416),
             HeadingPiece.linear(0.5442, 3.1416, 4.7124), HeadingPiece.constant(1.0, -1.5708)};
