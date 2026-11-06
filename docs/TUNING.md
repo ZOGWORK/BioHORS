@@ -82,8 +82,8 @@ first.
 | `ffReferenceMaxTicksPerSec`, `kS`, `kF = 1` | 2800 (SPEC no-load), 0, 1.0 | Shooter Tuner |
 | `kP` | 0.001 (PLACEHOLDER) | Shooter Tuner |
 | `kI`, `kD` | 0.0005, 0 (PLACEHOLDER) | Shooter Tuner sets both to 0 (flywheels do not need them) |
-| Pollen `targetRpm` | **1600** (the team's test value) | **Field test**, not the tuner: shoot from the auto's volley spots (the start, `gardenTurn`, `scoreNorth`), trim with dpad left/right in the teleop until pollen lands 10 of 10 |
-| Nectar `targetRpm` | **1600** (the team's test value; trim with left bumper / A) | Field test, nectar into the flower |
+| Pollen `targetRpm` | **3100** (the team's value, 2026-11-05) | **Field test**, not the tuner: shoot from the auto's volley spots (the start, `gardenTurn`, `scoreNorth`), trim with dpad left/right in the teleop until pollen lands 10 of 10 |
+| Nectar `targetRpm` | **1600** (the team's test value; dpad left/right trims both shooters together) | Field test, nectar into the flower |
 | `ticksPerRev` | 28 (SPEC, 1:1) | Section 0 gear ratio (the tuner works in encoder ticks/s, so it does not need it) |
 | `rpmTolerance` | 75 rpm | Shot-to-shot spread vs rpm |
 

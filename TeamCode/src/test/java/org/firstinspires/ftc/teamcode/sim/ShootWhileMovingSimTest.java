@@ -41,8 +41,8 @@ class ShootWhileMovingSimTest {
     static final int INIT_LOOP_TICKS = MainHorsTeleOpSimTest.INIT_LOOP_TICKS;
     static final double RED_HIVE_X = MainHorsTeleOpSimTest.RED_HIVE_X;
     static final double CELL_Y = MainHorsTeleOpSimTest.CELL_Y;
-    static final double GATE_OPEN = 0.67;
-    static final double GATE_CLOSED = 0.485;
+    static final double GATE_OPEN = MechanismConstants.POLLEN_GATE_OPEN;
+    static final double GATE_CLOSED = MechanismConstants.POLLEN_GATE_CLOSED;
     /** The aim's on-target tolerance (AimController.ON_TARGET_TOLERANCE_RAD), repeated here. */
     static final double TOL_DEG = 2.0;
 
@@ -111,7 +111,7 @@ class ShootWhileMovingSimTest {
         assertTrue(anyLine(result, "Fire", "GATES OPEN"), "no pose check on B: the gates opened");
         assertTrue(lastLine(result, "Fire").contains("POSE INVALID"), lastLine(result, "Fire"));
         assertTrue(lastLine(result, "Pose").contains("INVALID"), lastLine(result, "Pose"));
-        assertEquals(1600.0, target(lastLine(result, "Pollen")), 0.5,
+        assertEquals(MechanismConstants.POLLEN_SHOOTER.targetRpm, target(lastLine(result, "Pollen")), 0.5,
                 "pose invalid: the fixed rpm, " + lastLine(result, "Pollen"));
     }
 

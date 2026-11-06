@@ -67,9 +67,9 @@ public final class MechanismConstants {
     static {
         POLLEN_SHOOTER.label = "Pollen";
         applySharedPlaceholders(POLLEN_SHOOTER);
-        // SET BY HAND: the team's test target (Oct 27). The RPM that scores is a field test (the
-        // Shooter Tuner only makes the shooter hold whatever this is).
-        POLLEN_SHOOTER.targetRpm = 1600.0;
+        // SET BY HAND (the team, 2026-11-05; was 1600 from Oct 27). The RPM that scores is a field
+        // test (the Shooter Tuner only makes the shooter hold whatever this is).
+        POLLEN_SHOOTER.targetRpm = 3100.0;
         // ---- Pollen tuned values ----
         // Pollen: CALIBRATED FROM ROBOT by FtcAutoTune v1.4.3 (2026-11-05), PD (classic ZN) candidate,
         // Ku 0.019099 Tu 0.2211 s, kF sweep at 13.52 V; kS not measured.
@@ -136,16 +136,15 @@ public final class MechanismConstants {
      */
     public static double SPEED_TABLE_UPDATE_STEP_RPM = 10.0;
 
-    // ===== Teleop trim: each shooter its own step (rpm per press) =====
-    public static double POLLEN_TRIM_STEP_RPM = 50.0; // SET BY HAND
-    public static double NECTAR_TRIM_STEP_RPM = 50.0; // SET BY HAND
+    // ===== Teleop trim: dpad left/right moves BOTH shooters by this much (rpm per press) =====
+    public static double SHOOTER_TRIM_STEP_RPM = 50.0; // SET BY HAND
 
     // ===== Gate servo positions (per gate) =====
     // PLACEHOLDER: both gates start at the old shared values. Move each gate
     // by hand from the driver station and record its own open/closed positions.
-    public static double POLLEN_GATE_OPEN = 0.67;    // PLACEHOLDER
+    public static double POLLEN_GATE_OPEN = 0.0;    // PLACEHOLDER
     public static double POLLEN_GATE_CLOSED = 0.485; // PLACEHOLDER
-    public static double NECTAR_GATE_OPEN = 0.67;    // PLACEHOLDER
+    public static double NECTAR_GATE_OPEN = 0.0;    // PLACEHOLDER
     public static double NECTAR_GATE_CLOSED = 0.485; // PLACEHOLDER
 
     // ===== Flower bar servo positions =====

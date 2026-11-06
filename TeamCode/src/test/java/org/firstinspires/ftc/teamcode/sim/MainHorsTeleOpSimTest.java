@@ -39,6 +39,11 @@ import java.util.function.Consumer;
  */
 class MainHorsTeleOpSimTest {
 
+    /** Each shooter's fixed target, flywheel rpm (a one-point distance table), and the trim step. */
+    static final double POLLEN_RPM = MechanismConstants.POLLEN_SHOOTER.targetRpm;
+    static final double NECTAR_RPM = MechanismConstants.NECTAR_SHOOTER.targetRpm;
+    static final double STEP_RPM = MechanismConstants.SHOOTER_TRIM_STEP_RPM;
+
     static final String TELEOP = "org.firstinspires.ftc.teamcode.teleop.MainHorsTeleOp";
     static final double TICK_S = OpModeRunner.DEFAULT_TICK_SECONDS;
     /** Long enough for the Pinpoint to finish calibrating before PLAY. */
@@ -147,7 +152,7 @@ class MainHorsTeleOpSimTest {
         startAt(sim, "RED", -40.0, 40.0, 0.0);
         OpModeRunResult result = run(sim, 150, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
-            g1.a = tick >= 2 && tick < 6; // A trims nectar; it must not touch the target
+            g1.a = tick >= 2 && tick < 6; // A (outtake) must not touch the target
             g1.left_trigger = 1f;
         }, null);
 
@@ -390,19 +395,19 @@ class MainHorsTeleOpSimTest {
     // ------------------------------------------------------------------ mechanisms
 
     @Test
-    void dpadDownSpinsBothShootersToTheirOwnTargetsAndDpadRightTrimsOnlyPollen() {
+    void dpadDownSpinsBothShootersToTheirOwnTargetsAndDpadRightTrimsBoth() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
         OpModeRunResult result = run(sim, 250, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5;     // shooters on
-            g2.dpad_right = tick >= 10 && tick < 13;  // operator trims pollen +50
+            g2.dpad_right = tick >= 10 && tick < 13;  // operator trims both +1 step
         }, null);
 
-        assertEquals(1650.0, sim.pollenShooterRpm(), 100.0, "pollen shooter should hold its trimmed target");
-        assertEquals(1600.0, sim.nectarShooterRpm(), 100.0, "nectar shooter keeps its own target");
-        assertEquals(1650.0, shownTargetRpm(result, "Pollen"), 0.5, "pollen target shown as 1650");
-        assertEquals(1600.0, shownTargetRpm(result, "Nectar"), 0.5, "nectar target shown as 1600");
+        assertEquals(POLLEN_RPM + STEP_RPM, sim.pollenShooterRpm(), 100.0, "pollen shooter should hold its trimmed target");
+        assertEquals(NECTAR_RPM + STEP_RPM, sim.nectarShooterRpm(), 100.0, "nectar shooter too");
+        assertEquals(POLLEN_RPM + STEP_RPM, shownTargetRpm(result, "Pollen"), 0.5, "pollen target shown trimmed");
+        assertEquals(NECTAR_RPM + STEP_RPM, shownTargetRpm(result, "Nectar"), 0.5, "nectar target shown trimmed the same");
     }
 
     @Test
@@ -418,27 +423,28 @@ class MainHorsTeleOpSimTest {
         double[] shown = shownPose(lastTelemetry(result));
         assertEquals(-MainHorsTeleOp.DEFAULT_START_X_IN, shown[0], 1.0, "dpad right in INIT picks BLUE: x");
         assertEquals(-MainHorsTeleOp.DEFAULT_START_Y_IN, shown[1], 1.0, "dpad right in INIT picks BLUE: y");
-        assertEquals(1600.0, shownTargetRpm(result, "Pollen"), 0.5,
-                "holding it through PLAY must not trim pollen (no +50)");
+        assertEquals(POLLEN_RPM, shownTargetRpm(result, "Pollen"), 0.5,
+                "holding it through PLAY must not trim pollen (no +1 step)");
     }
 
     @Test
-    void eachShooterHasItsOwnTrim() {
+    void dpadLeftTrimsBothShootersByTheSameStepAndTheBumperTrimsNothing() {
         BioHorsSim sim = new BioHorsSim();
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
         OpModeRunResult result = run(sim, 250, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5;                                  // both on
-            g1.a = (tick >= 10 && tick < 13) || (tick >= 20 && tick < 23);         // A: nothing
-            g2.left_bumper = tick >= 30 && tick < 33;                              // nectar -50 (operator)
-            g1.dpad_left = tick >= 40 && tick < 43;                                // pollen -50
+            g1.a = (tick >= 10 && tick < 13) || (tick >= 20 && tick < 23);         // A: no trim
+            g2.left_bumper = tick >= 30 && tick < 33;                              // not aiming: no trim
+            g1.dpad_left = (tick >= 40 && tick < 43) || (tick >= 50 && tick < 53); // both -2 steps
         }, null);
         assertFalse(line(result, "Pollen").endsWith("OFF"), "pollen on: " + line(result, "Pollen"));
         assertFalse(line(result, "Nectar").endsWith("OFF"), "nectar on: " + line(result, "Nectar"));
-        assertEquals(1550.0, shownTargetRpm(result, "Pollen"), 0.5, "pollen trimmed alone");
-        assertEquals(1550.0, shownTargetRpm(result, "Nectar"), 0.5, "nectar trimmed alone, and A did nothing");
-        assertEquals(1550.0, sim.pollenShooterRpm(), 100.0, "pollen holds its own target");
-        assertEquals(1550.0, sim.nectarShooterRpm(), 100.0, "nectar holds its own target");
+        assertEquals(POLLEN_RPM - 2 * STEP_RPM, shownTargetRpm(result, "Pollen"), 0.5, "pollen down two steps");
+        assertEquals(NECTAR_RPM - 2 * STEP_RPM, shownTargetRpm(result, "Nectar"), 0.5,
+                "nectar down the same two steps; A and the bumper did nothing");
+        assertEquals(POLLEN_RPM - 2 * STEP_RPM, sim.pollenShooterRpm(), 100.0, "pollen holds its target");
+        assertEquals(NECTAR_RPM - 2 * STEP_RPM, sim.nectarShooterRpm(), 100.0, "nectar holds its target");
     }
 
     @Test
@@ -480,8 +486,8 @@ class MainHorsTeleOpSimTest {
             if (phase != OpModePhase.ACTIVE) return;
             g1.b = tick >= 150 && tick < 153;
         });
-        assertEquals(0.67, openLate[0], 0.02, "B opens the pollen gate");
-        assertEquals(0.67, openLate[1], 0.02, "B opens the nectar gate");
+        assertEquals(MechanismConstants.POLLEN_GATE_OPEN, openLate[0], 0.02, "B opens the pollen gate");
+        assertEquals(MechanismConstants.NECTAR_GATE_OPEN, openLate[1], 0.02, "B opens the nectar gate");
         OpMode.blackboard.clear();
 
         BioHorsSim twice = new BioHorsSim();
@@ -646,8 +652,8 @@ class MainHorsTeleOpSimTest {
                 afterRelease[1] = sim.nectarShooter.getPower();
             }
         });
-        assertEquals(1600.0, whileAiming[0], 100.0, "aiming alone spins pollen up to its target");
-        assertEquals(1600.0, whileAiming[1], 100.0, "and nectar to its own");
+        assertEquals(POLLEN_RPM, whileAiming[0], 100.0, "aiming alone spins pollen up to its target");
+        assertEquals(NECTAR_RPM, whileAiming[1], 100.0, "and nectar to its own");
         assertIdlePower(afterRelease[0], "trigger released, no volley: pollen back to idle");
         assertIdlePower(afterRelease[1], "nectar back to idle");
     }
@@ -664,7 +670,7 @@ class MainHorsTeleOpSimTest {
         }, tick -> {
             if (tick == 195) afterRelease[0] = sim.pollenShooterRpm();
         });
-        assertEquals(1600.0, afterRelease[0], 100.0, "the dpad-down toggle outlasts the aim");
+        assertEquals(POLLEN_RPM, afterRelease[0], 100.0, "the dpad-down toggle outlasts the aim");
     }
 
     @Test
@@ -691,8 +697,8 @@ class MainHorsTeleOpSimTest {
             }
         });
         assertEquals(MechanismConstants.POLLEN_GATE_OPEN, midVolley[0], 0.02, "the volley is still feeding");
-        assertEquals(1600.0, midVolley[1], 100.0, "pollen still at speed with the trigger released");
-        assertEquals(1600.0, midVolley[2], 100.0, "nectar too");
+        assertEquals(POLLEN_RPM, midVolley[1], 100.0, "pollen still at speed with the trigger released");
+        assertEquals(NECTAR_RPM, midVolley[2], 100.0, "nectar too");
         assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, afterCancel[0], 0.02, "B cancels the volley");
         assertIdlePower(afterCancel[1], "and with the gates shut the aim spin-up ends: back to idle");
     }
@@ -739,7 +745,7 @@ class MainHorsTeleOpSimTest {
         });
         assertTrue(line(result, "Pollen").endsWith("ENCODER? (no speed reading)"), line(result, "Pollen"));
         assertTrue(line(result, "Nectar").endsWith(" rpm OK"), "nectar is unaffected: " + line(result, "Nectar"));
-        assertTrue(worstLatePower[0] < 0.4, String.format(
+        assertTrue(worstLatePower[0] < FEEDFORWARD_ONLY_POWER, String.format(
                 "feedforward only, not a wound-up loop: pollen power %.2f", worstLatePower[0]));
         assertEquals(MechanismConstants.POLLEN_GATE_CLOSED, gate[0], 0.02,
                 "no speed reading: the pollen gate stays shut, nothing feeds an unverified flywheel");
@@ -804,9 +810,13 @@ class MainHorsTeleOpSimTest {
         });
         assertTrue(line(result, "Pollen").endsWith("ENCODER REVERSED? (reads backwards)"), line(result, "Pollen"));
         assertTrue(line(result, "Nectar").endsWith(" rpm OK"), "nectar is unaffected: " + line(result, "Nectar"));
-        assertTrue(worstLatePower[0] < 0.4, String.format(
+        assertTrue(worstLatePower[0] < FEEDFORWARD_ONLY_POWER, String.format(
                 "feedforward only, not a loop pushing against a backwards reading: %.2f", worstLatePower[0]));
     }
+
+    /** Above pollen's feedforward alone at its target (about 0.64 for 3100 rpm), below the full
+     *  power a loop winding up against a bad reading reaches. */
+    static final double FEEDFORWARD_ONLY_POWER = 0.85;
 
 
     @Test
@@ -909,8 +919,7 @@ class MainHorsTeleOpSimTest {
         startAt(first, "RED", -13.0, -63.0, Math.PI / 2.0);
         run(first, 30, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
-            g1.dpad_right = tick >= 2 && tick < 5;    // pollen +50
-            g1.left_bumper = tick >= 10 && tick < 13; // nectar -50
+            g1.dpad_right = tick >= 2 && tick < 5;    // both +1 step
         }, null);
 
         BioHorsSim second = new BioHorsSim();
@@ -918,8 +927,8 @@ class MainHorsTeleOpSimTest {
         OpModeRunResult next = run(second, 30, (phase, tick, g1, g2) -> {
             if (phase == OpModePhase.ACTIVE) g1.dpad_down = tick >= 2 && tick < 5;
         }, null);
-        assertEquals(1650.0, shownTargetRpm(next, "Pollen"), 0.5, "the pollen trim carried over");
-        assertEquals(1550.0, shownTargetRpm(next, "Nectar"), 0.5, "the nectar trim carried over");
+        assertEquals(POLLEN_RPM + STEP_RPM, shownTargetRpm(next, "Pollen"), 0.5, "the pollen trim carried over");
+        assertEquals(NECTAR_RPM + STEP_RPM, shownTargetRpm(next, "Nectar"), 0.5, "the nectar trim carried over");
 
         BioHorsSim third = new BioHorsSim();
         startAt(third, "RED", -13.0, -63.0, Math.PI / 2.0);
@@ -927,8 +936,8 @@ class MainHorsTeleOpSimTest {
             if (phase == OpModePhase.INIT_LOOP) g1.back = true;   // clear in INIT
             if (phase == OpModePhase.ACTIVE) g1.dpad_down = tick >= 2 && tick < 5;
         }, null);
-        assertEquals(1600.0, shownTargetRpm(cleared, "Pollen"), 0.5, "back in INIT cleared it");
-        assertEquals(1600.0, shownTargetRpm(cleared, "Nectar"), 0.5);
+        assertEquals(POLLEN_RPM, shownTargetRpm(cleared, "Pollen"), 0.5, "back in INIT cleared it");
+        assertEquals(NECTAR_RPM, shownTargetRpm(cleared, "Nectar"), 0.5);
     }
 
     @Test
@@ -1042,8 +1051,8 @@ class MainHorsTeleOpSimTest {
             double intake = sim.intakeLeft.getPower();
             if (intake == 1.0) t.fedTicks++;
             if (t.firstOpenTick < 0 && intake != 0.0) t.intakeDuringSpinUp = true;
-            boolean slow = (!pollenDead && Math.abs(sim.pollenShooterRpm() - 1600.0) > 150.0)
-                    || Math.abs(sim.nectarShooterRpm() - 1600.0) > 150.0;
+            boolean slow = (!pollenDead && Math.abs(sim.pollenShooterRpm() - POLLEN_RPM) > 150.0)
+                    || Math.abs(sim.nectarShooterRpm() - NECTAR_RPM) > 150.0;
             if ((p || n) && slow) t.openedWhileSlow = true;
             if (tick == lateTick) {
                 t.pollenPowerLate = sim.pollenShooter.getPower();
@@ -1329,7 +1338,7 @@ class MainHorsTeleOpSimTest {
     }
 
     /**
-     * A shooter at idle power: under the ~0.27 a 1600 rpm firing target needs (the sim's free speed
+     * A shooter at idle power: under the ~0.27 a 1600 rpm firing target (nectar's) needs (the sim's free speed
      * is 6000 rpm), so a spun-up shooter fails this; idle (800 rpm) needs about 0.13.
      */
     static void assertIdlePower(double power, String what) {
@@ -1414,8 +1423,8 @@ class MainHorsTeleOpSimTest {
         System.out.println("DRIVING DISPLAY\n  " + String.join("\n  ", last));
         assertEquals(DRIVING_CAPTIONS, captions(last), "exactly the five lines, in order: " + last);
         assertEquals("Fire : READY", lineIn(last, "Fire"));
-        assertTrue(lineIn(last, "Pollen").endsWith(" / 1600 rpm OK"), lineIn(last, "Pollen"));
-        assertTrue(lineIn(last, "Nectar").endsWith(" / 1600 rpm OK"), lineIn(last, "Nectar"));
+        assertTrue(lineIn(last, "Pollen").endsWith(String.format(" / %.0f rpm OK", POLLEN_RPM)), lineIn(last, "Pollen"));
+        assertTrue(lineIn(last, "Nectar").endsWith(String.format(" / %.0f rpm OK", NECTAR_RPM)), lineIn(last, "Nectar"));
         assertFalse(lineIn(last, "Pose").contains("INVALID"), lineIn(last, "Pose"));
 
         // The sim ticks at 20 ms, so the last loop, the average and the peak are all one tick.
