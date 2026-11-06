@@ -59,7 +59,7 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *                           nothing: the reset also tells PoseSanity to trust the pose again, so a
  *                           fat-fingered press mid-field would aim on a wrong pose unchecked.
  *   Dpad up ............... toggle the flower bar: DOWN (collect from a flower) / UP. It starts
- *                           STOWED (FLOWER_BAR_START); the first press puts it down. While
+ *                           at FLOWER_BAR_START (0.5, between); the first press puts it down. While
  *                           it is DOWN the drive is capped at BAR_DOWN_SPEED_CAP (the Fire line
  *                           says BAR DOWN: slow). Optional
  *                           (BAR_AUTO_STOW_ENABLED, off): a sustained full-stick sprint stows it.
