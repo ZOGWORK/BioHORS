@@ -172,7 +172,8 @@ class ShootWhileMovingSimTest {
                     tickNow[0] = tick;
                     if (phase != OpModePhase.ACTIVE) return;
                     g1.left_trigger = 1f;
-                    g1.left_stick_x = tick >= 75 ? -0.4f : 0f;
+                    // About 0.21 strafe power (the linear stick): the speed these checks were set at.
+                    g1.left_stick_x = tick >= 75 ? -0.25f : 0f;
                 })
                 .eachTick(dt -> {
                     sim.step(dt);
