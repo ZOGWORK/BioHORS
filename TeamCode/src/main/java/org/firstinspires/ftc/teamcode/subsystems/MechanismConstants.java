@@ -83,9 +83,9 @@ public final class MechanismConstants {
 
         NECTAR_SHOOTER.label = "Nectar";
         applySharedPlaceholders(NECTAR_SHOOTER);
-        // SET BY HAND: the team's test target (Oct 27), the same start as pollen. Nectar is
-        // expected to settle at its own speed after a field test; trim it down with left bumper.
-        NECTAR_SHOOTER.targetRpm = 1600.0;
+        // SET BY HAND (the team, 2026-11-05; was 1600): the same as pollen for now. Nectar is
+        // expected to settle at its own speed after a field test.
+        NECTAR_SHOOTER.targetRpm = 3100.0;
         // ---- Nectar tuned values ----
         // Nectar: CALIBRATED FROM ROBOT by FtcAutoTune v1.4.3 (2026-11-05), PD (classic ZN) candidate,
         // Ku 0.019099 Tu 0.2913 s, kF sweep at 13.41 V; kS not measured. (Replaces the kF 1.2 set by
