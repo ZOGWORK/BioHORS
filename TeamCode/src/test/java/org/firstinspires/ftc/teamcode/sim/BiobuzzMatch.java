@@ -227,7 +227,9 @@ public final class BiobuzzMatch {
             if (kind.equals("pollen") && id.startsWith("garden" + own)) {
                 loosePollen.add(new double[] {e.num("xIn"), e.num("yIn"), e.num("radiusIn")});
             } else if (kind.equals("container") && "flower".equals(e.optText("container", ""))) {
-                flowers.add(new Flower(id, e.num("xIn"), e.num("yIn"), e.get("holds").size()));
+                Json opening = e.opt("retrieval") == null ? null : e.get("retrieval").opt("openingIn");
+                flowers.add(new Flower(id, e.num("xIn"), e.num("yIn"), e.get("holds").size(),
+                        opening == null ? 0.0 : opening.num("depthIn")));
             } else if (id.equals("hive" + own)) {
                 pivotX = e.get("pivotIn").num("xIn");
                 upIsNorth = "NORTH".equals(e.str("upSide"));
@@ -1020,12 +1022,14 @@ public final class BiobuzzMatch {
         final double x, y;
         int count;
         double openX, openY, inX, inY; // opening point and its inward-to-the-field normal
+        final double openingDepthIn;   // how far the retrieval opening goes into the foot (field file, SPEC)
 
-        Flower(String id, double x, double y, int count) {
+        Flower(String id, double x, double y, int count, double openingDepthIn) {
             this.id = id;
             this.x = x;
             this.y = y;
             this.count = count;
+            this.openingDepthIn = openingDepthIn;
         }
 
         void setFoot(double[] b) {
@@ -1044,8 +1048,23 @@ public final class BiobuzzMatch {
         }
 
         boolean reachable(double mx, double my, double fwdX, double fwdY) {
-            boolean facing = -(fwdX * inX + fwdY * inY) >= Math.cos(Math.toRadians(FACING_CONE_DEG));
-            return facing && Math.hypot(mx - openX, my - openY) <= OPENING_REACH_IN;
+            return reachesOpening(openX, openY, inX, inY, openingDepthIn, mx, my, fwdX, fwdY);
         }
+    }
+
+    /**
+     * Whether a bar tip at (mx, my), the robot facing (fwdX, fwdY), is at a flower's pollen. The opening's
+     * face point is (openX, openY), (inX, inY) its unit normal out toward the field, and the opening goes
+     * depthIn into the foot. Out on the field: within OPENING_REACH_IN of the face point. Past the face, a
+     * tip inside the opening (no deeper than it goes, no further across than the reach) is at the pollen too.
+     */
+    static boolean reachesOpening(double openX, double openY, double inX, double inY, double depthIn,
+                                  double mx, double my, double fwdX, double fwdY) {
+        boolean facing = -(fwdX * inX + fwdY * inY) >= Math.cos(Math.toRadians(FACING_CONE_DEG));
+        double dx = mx - openX, dy = my - openY;
+        double intoFoot = -(dx * inX + dy * inY);
+        double across = Math.abs(dx * inY - dy * inX);
+        if (intoFoot > 0) return facing && intoFoot <= depthIn && across <= OPENING_REACH_IN;
+        return facing && Math.hypot(dx, dy) <= OPENING_REACH_IN;
     }
 }
