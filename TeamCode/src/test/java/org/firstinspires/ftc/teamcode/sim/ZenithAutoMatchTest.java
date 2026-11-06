@@ -57,6 +57,19 @@ class ZenithAutoMatchTest {
     static final int EXPECTED_SCORED = 12;
     static final double PARKED_WITHIN_IN = 2.0;   // SET BY HAND: the follower's end tolerance, with margin
     static final int EXPECTED_TIPS = 2;
+    // The three legs that pass west of the hive, through the lane beside the loading zone.
+    static final String[] HIVE_LANE_LEGS = {"toOtherSide", "toGarden", "driveBack"};
+    // A partner robot waiting against RED's west wall: 18 in deep (G-rule robot size) from FIRST's CAD wall
+    // at x = -70.674 (SPEC), beside the loading zone (field file y 23.907..46.599, SPEC) plus 8 in north
+    // for a robot not quite inside it (SET BY HAND).
+    static final double PARTNER_STRIP_X_IN = -70.674 + 18.0;
+    static final double PARTNER_STRIP_Y0_IN = 23.9, PARTNER_STRIP_Y1_IN = 46.6 + 8.0;
+    // SET BY HAND (2026-11-06, the team: split the gap): the legs keep 3.1..4.6 in from it in the sim.
+    static final double PARTNER_GAP_MIN_IN = 2.0;
+    // SET BY HAND: a speedFraction 0.2 step must stay under half the top speed (it runs at about 16 in/s
+    // against a 12 in/s cap: Pedro overshoots a little). With the cap ignored it ran at 52 in/s.
+    static final double SLOW_STEP_MAX_FRACTION = 0.5;
+    static final double SPEED_WINDOW_S = 0.1;   // SET BY HAND: five 0.02 s ticks
     // SET BY HAND: the route strafes 29 % without the park slide; the team's park (2026-10-28) slides
     // 18 in south into the spot facing west on purpose, which makes it 33 %.
     static final double MAX_STRAFE_FRACTION = 0.35;
@@ -109,6 +122,23 @@ class ZenithAutoMatchTest {
                 "strafing is %.0f %% of the driving\n%s", 100 * red2.match.strafeFraction(), red2.report));
         assertTrue(red2.maxBeliefErrorIn < 2.0, String.format(Locale.ROOT,
                 "belief vs truth up to %.2f in\n%s", red2.maxBeliefErrorIn, red2.report));
+
+        // ---- the legs past the hive leave room for a partner robot waiting by our loading zone ----
+        for (Result run : new Result[] {red2, blue}) {
+            for (String leg : HIVE_LANE_LEGS) {
+                double gap = run.partnerGapIn.getOrDefault(leg, Double.NaN);
+                assertTrue(gap >= PARTNER_GAP_MIN_IN, String.format(Locale.ROOT,
+                        "%s comes %.1f in from a partner robot's 18 in strip by the loading zone%n%s", leg, gap, run.report));
+            }
+        }
+
+        // ---- a slow step really is slow: Pedro 3.0.2 ignored the in/s we once passed to maxPathSpeed
+        // (a multiplier), and the 0.2 sweep ran at 52 in/s with every other test still green ----
+        for (String slow : new String[] {"collectFlower", "sweepGarden"}) {
+            double peak = red2.peakSpeedInPerS.getOrDefault(slow, Double.NaN);
+            assertTrue(peak < SLOW_STEP_MAX_FRACTION * org.firstinspires.ftc.teamcode.pedro.Constants.MAX_FORWARD_IN_PER_S,
+                    String.format(Locale.ROOT, "%s (speedFraction 0.2) peaked at %.0f in/s%n%s", slow, peak, red2.report));
+        }
 
         // ---- AdvantageScope: the robot, its belief and every pollen are in the log as poses ----
         java.util.Set<String> keys = RlogDecodedCompare.decodedKeys(red2.rlog);
@@ -248,6 +278,10 @@ class ZenithAutoMatchTest {
         List<String> interrupted = new ArrayList<>();
         double lastEndS;
         double maxBeliefErrorIn;
+        /** Each step's fastest true speed over SPEED_WINDOW_S, in/s (parallel members included). */
+        java.util.Map<String, Double> peakSpeedInPerS = new java.util.HashMap<>();
+        /** For each hive-lane leg: the footprint's closest approach to the partner strip, in (negative = inside it). */
+        java.util.Map<String, Double> partnerGapIn = new java.util.HashMap<>();
         String report;
     }
 
@@ -401,6 +435,12 @@ class ZenithAutoMatchTest {
                     step.num("startS"), step.num("endS"), step.get("interrupted").bool() ? "  INTERRUPTED" : ""));
         }
         r.maxBeliefErrorIn = maxBeliefError(trace);
+        for (Json step : trace.get("steps").items()) {
+            r.peakSpeedInPerS.put(step.str("id"), peakSpeed(trace, step.num("startS"), step.num("endS")));
+            if (java.util.Arrays.asList(HIVE_LANE_LEGS).contains(step.str("id"))) {
+                r.partnerGapIn.put(step.str("id"), partnerGap(trace, robotJson, red, step.num("startS"), step.num("endS")));
+            }
+        }
         rep.append(String.format(Locale.ROOT,
                 "  scored %d (missed %d, launched %d, collected %d), tips %d at %s, held at end %d%n",
                 match.scored(), match.missed(), match.launched(), match.collected(), match.tips(), match.tipTimes(),
@@ -424,6 +464,57 @@ class ZenithAutoMatchTest {
                 collectRaceMembers(children, mode.equals("race") || mode.equals("deadline"), out);
             }
         }
+    }
+
+    /**
+     * Closest the bar-stowed footprint (robot.json) comes, between t0 and t1, to a partner robot standing
+     * against the alliance's own wall beside its loading zone, inches. Poses are mirrored to RED's side.
+     */
+    private static double partnerGap(Json trace, Json robot, boolean red, double t0, double t1) {
+        Json fp = robot.get("footprint").get("startIn");
+        Json cor = robot.get("footprint").get("centreOfRotationIn");
+        double ahead = fp.num("lengthIn") / 2.0 - cor.num("xIn"), behind = fp.num("lengthIn") / 2.0 + cor.num("xIn");
+        double half = fp.num("widthIn") / 2.0;
+        Json truth = trace.get("truthPoses");
+        double gap = Double.POSITIVE_INFINITY;
+        for (int i = 0; i < truth.size(); i++) {
+            Json p = truth.at(i);
+            double t = p.at(0).num();
+            if (t < t0 || t > t1) continue;
+            double x = p.at(1).num(), y = p.at(2).num(), h = p.at(3).num();
+            if (!red) { x = -x; y = -y; h += Math.PI; }
+            double c = Math.cos(h), sn = Math.sin(h);
+            // the footprint's outline, eight steps along each edge
+            for (int k = 0; k <= 32; k++) {
+                int e = k / 8, j = k % 8;
+                double u = j / 8.0;
+                double f = e == 0 ? ahead : e == 1 ? ahead - (ahead + behind) * u : e == 2 ? -behind : -behind + (ahead + behind) * u;
+                double side = e == 0 ? half - 2 * half * u : e == 1 ? -half : e == 2 ? -half + 2 * half * u : half;
+                double px = x + f * c - side * sn, py = y + f * sn + side * c;
+                if (py >= PARTNER_STRIP_Y0_IN && py <= PARTNER_STRIP_Y1_IN) gap = Math.min(gap, px - PARTNER_STRIP_X_IN);
+            }
+        }
+        return gap;
+    }
+
+    /** Fastest true speed between t0 and t1, in/s, each sample over SPEED_WINDOW_S so one tick's noise does not count. */
+    private static double peakSpeed(Json trace, double t0, double t1) {
+        Json truth = trace.opt("truthPoses");
+        if (truth == null) return Double.NaN;
+        double peak = 0;
+        int j = 0;
+        for (int i = 0; i < truth.size(); i++) {
+            Json b = truth.at(i);
+            double t = b.at(0).num();
+            if (t < t0 || t > t1) continue;
+            while (j < i && t - truth.at(j).at(0).num() > SPEED_WINDOW_S) j++;
+            Json a = truth.at(j);
+            double dt = t - a.at(0).num();
+            if (dt >= SPEED_WINDOW_S * 0.5) {
+                peak = Math.max(peak, Math.hypot(b.at(1).num() - a.at(1).num(), b.at(2).num() - a.at(2).num()) / dt);
+            }
+        }
+        return peak;
     }
 
     /** Largest distance between the robot's believed pose and the plant's true pose, inches. */

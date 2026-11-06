@@ -66,19 +66,19 @@
           "from": "current",
           "control": [
             {
-              "xIn": 50,
-              "yIn": 50,
-              "provenance": "SET BY HAND (2026-11-06, the team: not so close to the hive, down the middle): with (-58, 0) and (-48, 40) the centre passes the hive at x -45..-49, the middle of the lane between the frame bar (-24.76) and FIRST's CAD west wall (-70.674); the rotated footprint clears the frame by 10.5 in (was 5.1) and the west wall by 11.9 in"
+              "xIn": 68,
+              "yIn": 31.5,
+              "provenance": "SET BY HAND (2026-11-06, the team: a gentle curve round the hive that splits the gap between the frame and a partner robot): with (-50.6, -3) and (-46.8, 19.5), as driven in the sim (ZenithAutoMatchTest's trace, both alliances) the stowed-bar footprint keeps 4.0 in from the hive frame and 4.6 in from the 18 in strip along the west wall beside RED's loading zone (x >= -52.67, y 23.9..54.6) where a partner robot may stand. Tuned in the sim against the heading Pedro actually drives (Foresight turns up to about 12 in early); not driven on the robot yet"
             },
             {
-              "xIn": 58,
-              "yIn": 0,
-              "provenance": "SET BY HAND (2026-11-06, the team: down the middle of the lane west of the hive): see the first control point"
+              "xIn": 50.6,
+              "yIn": 3,
+              "provenance": "SET BY HAND (2026-11-06, split the gap): see the first control point"
             },
             {
-              "xIn": 48,
-              "yIn": -40,
-              "provenance": "SET BY HAND (2026-11-06, the team: down the middle of the lane west of the hive): stays west until north of the frame, then crosses east to the flower approach; see the first control point"
+              "xIn": 46.8,
+              "yIn": -19.5,
+              "provenance": "SET BY HAND (2026-11-06, split the gap): see the first control point"
             }
           ],
           "to": {
@@ -98,7 +98,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": -1.5707926535897931,
-              "toRad": -0.783392653589793
+              "toRad": -0.580292653589793
             }
           },
           {
@@ -106,8 +106,8 @@
             "endT": 0.3038,
             "heading": {
               "mode": "linear",
-              "fromRad": -0.783392653589793,
-              "toRad": -1.1012926535897933
+              "fromRad": -0.580292653589793,
+              "toRad": -0.8739926535897933
             }
           },
           {
@@ -115,8 +115,8 @@
             "endT": 0.4038,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.1012926535897933,
-              "toRad": -1.3222926535897932
+              "fromRad": -0.8739926535897933,
+              "toRad": -1.2821926535897932
             }
           },
           {
@@ -124,8 +124,8 @@
             "endT": 0.5038,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.3222926535897932,
-              "toRad": -1.4938926535897932
+              "fromRad": -1.2821926535897932,
+              "toRad": -1.6372926535897931
             }
           },
           {
@@ -133,8 +133,8 @@
             "endT": 0.6038,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.4938926535897932,
-              "toRad": -1.6509926535897932
+              "fromRad": -1.6372926535897931,
+              "toRad": -1.861592653589793
             }
           },
           {
@@ -142,8 +142,8 @@
             "endT": 0.7038,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.6509926535897932,
-              "toRad": -1.8248926535897931
+              "fromRad": -1.861592653589793,
+              "toRad": -2.009392653589793
             }
           },
           {
@@ -151,31 +151,32 @@
             "endT": 0.8038,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.8248926535897931,
-              "toRad": -2.0639926535897932
+              "fromRad": -2.009392653589793,
+              "toRad": -2.130692653589793
             }
           },
           {
             "startT": 0.8038,
-            "endT": 0.8679,
+            "endT": 0.9,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.0639926535897932,
-              "toRad": -2.295792653589793
+              "fromRad": -2.130692653589793,
+              "toRad": -2.244692653589793
             }
           },
           {
-            "startT": 0.8679,
+            "startT": 0.9,
             "endT": 1,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.295792653589793,
+              "fromRad": -2.244692653589793,
               "toRad": -1.5707926535897931
             }
           }
         ]
       },
-      "notes": "After the tip the up cell faces north, and a launch only scores from the up cell's own quarter of the field, so the robot goes to the other side of the hive. It goes around the west of the hive frame, not under it: the frame's west legs keep an 18 in robot's centre east of about x = -9, and its footprint is 18 in wide, so under the hive it would cross the centre line into BLUE's side (G402). It keeps facing north while it leaves the scoring spot, turns to drive nose-first once its footprint is clear of the centre line, and turns back to face north for the flower. Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot."
+      "speedFraction": 0.6,
+      "notes": "After the tip the up cell faces north, and a launch only scores from the up cell's own quarter of the field, so the robot goes to the other side of the hive. It goes around the west of the hive frame, not under it: the frame's west legs keep an 18 in robot's centre east of about x = -9, and its footprint is 18 in wide, so under the hive it would cross the centre line into BLUE's side (G402). It keeps facing north while it leaves the scoring spot, turns to drive nose-first once its footprint is clear of the centre line, and turns back to face north for the flower. Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot. speedFraction 0.6 (SET BY HAND, 2026-11-06, the team: go slow through the 28 in lane between the hive frame and a partner robot by the loading zone); the cap is Pedro's maxVelocityConstraint, 36 in/s at MAX_FORWARD_IN_PER_S 60."
     },
     {
       "id": "intakeOnFlower",
@@ -331,14 +332,14 @@
           "from": "current",
           "control": [
             {
-              "xIn": 60,
-              "yIn": -52,
-              "provenance": "SET BY HAND (2026-11-06, the team: not so close to the hive, down the middle; the real robot hit the frame's west bar on this leg): with (-62, -30) the centre passes the hive at x -46..-49, the middle of the lane between the frame bar (-24.76) and FIRST's CAD west wall (-70.674); the rotated footprint clears the frame by 12.0 in (4.3 before 2026-11-05) and the west wall by 11.7 in"
+              "xIn": 55.2,
+              "yIn": -30.3,
+              "provenance": "SET BY HAND (2026-11-06, the team: a gentle curve round the hive that splits the gap between the frame and a partner robot): with (-58.7, -27.9) and (-26, -54.7), as driven in the sim (ZenithAutoMatchTest's trace, both alliances) the stowed-bar footprint keeps 3.2 in from the hive frame and 3.3 in from the 18 in strip along the west wall beside RED's loading zone (x >= -52.67, y 23.9..54.6) where a partner robot may stand. Tuned in the sim against the heading Pedro actually drives (Foresight turns up to about 12 in early); not driven on the robot yet"
             },
             {
-              "xIn": 62,
-              "yIn": 30,
-              "provenance": "SET BY HAND (2026-11-06, the team: down the middle of the lane west of the hive): see the first control point"
+              "xIn": 58.7,
+              "yIn": 27.9,
+              "provenance": "SET BY HAND (2026-11-06, split the gap): see the first control point"
             },
             {
               "xIn": 26,
@@ -359,88 +360,98 @@
         "ranges": [
           {
             "startT": 0,
-            "endT": 0.2186,
+            "endT": 0.1,
             "heading": {
               "mode": "linear",
               "fromRad": 1.5707926535897931,
-              "toRad": 0.859992653589793
+              "toRad": 0.6272926535897931
             }
           },
           {
-            "startT": 0.2186,
-            "endT": 0.3186,
+            "startT": 0.1,
+            "endT": 0.2,
             "heading": {
               "mode": "linear",
-              "fromRad": 0.859992653589793,
-              "toRad": 1.176592653589793
+              "fromRad": 0.6272926535897931,
+              "toRad": 0.860392653589793
             }
           },
           {
-            "startT": 0.3186,
-            "endT": 0.4186,
+            "startT": 0.2,
+            "endT": 0.3,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.176592653589793,
-              "toRad": 1.393692653589793
+              "fromRad": 0.860392653589793,
+              "toRad": 1.081192653589793
             }
           },
           {
-            "startT": 0.4186,
-            "endT": 0.5186,
+            "startT": 0.3,
+            "endT": 0.4,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.393692653589793,
-              "toRad": 1.555592653589793
+              "fromRad": 1.081192653589793,
+              "toRad": 1.281092653589793
             }
           },
           {
-            "startT": 0.5186,
-            "endT": 0.6186,
+            "startT": 0.4,
+            "endT": 0.5,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.555592653589793,
-              "toRad": 1.688792653589793
+              "fromRad": 1.281092653589793,
+              "toRad": 1.458692653589793
             }
           },
           {
-            "startT": 0.6186,
-            "endT": 0.7186,
+            "startT": 0.5,
+            "endT": 0.6,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.688792653589793,
-              "toRad": 1.807392653589793
+              "fromRad": 1.458692653589793,
+              "toRad": 1.6165926535897932
             }
           },
           {
-            "startT": 0.7186,
-            "endT": 0.8186,
+            "startT": 0.6,
+            "endT": 0.7,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.807392653589793,
-              "toRad": 1.918492653589793
+              "fromRad": 1.6165926535897932,
+              "toRad": 1.7577926535897932
             }
           },
           {
-            "startT": 0.8186,
-            "endT": 0.9186,
+            "startT": 0.7,
+            "endT": 0.8,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.918492653589793,
-              "toRad": 2.007892653589793
+              "fromRad": 1.7577926535897932,
+              "toRad": 1.8825926535897932
             }
           },
           {
-            "startT": 0.9186,
+            "startT": 0.8,
+            "endT": 0.9,
+            "heading": {
+              "mode": "linear",
+              "fromRad": 1.8825926535897932,
+              "toRad": 1.9733926535897932
+            }
+          },
+          {
+            "startT": 0.9,
             "endT": 1,
             "heading": {
               "mode": "linear",
-              "fromRad": 2.007892653589793,
+              "fromRad": 1.9733926535897932,
               "toRad": -0.000007346410206832132
             }
           }
         ]
       },
-      "notes": "The starter's curve back south round the west of the hive, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); ending heading west above the garden lane instead of turning to west on it. Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot."
+      "speedFraction": 0.6,
+      "notes": "The starter's curve back south round the west of the hive, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide); ending heading west above the garden lane instead of turning to west on it. Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot. speedFraction 0.6 (SET BY HAND, 2026-11-06, the team: go slow through the 28 in lane between the hive frame and a partner robot by the loading zone); the cap is Pedro's maxVelocityConstraint, 36 in/s at MAX_FORWARD_IN_PER_S 60."
     },
     {
       "id": "slideOntoLane",
@@ -545,14 +556,14 @@
               "from": "current",
               "control": [
                 {
-                  "xIn": 54,
-                  "yIn": 30,
-                  "provenance": "SET BY HAND (2026-11-06, the team: not so close to the hive, down the middle): with (-60, 62) the centre passes the hive at x -46..-52, in the lane between the frame bar (-24.76) and FIRST's CAD west wall (-70.674); the rotated footprint clears the frame by 12.0 in (was 9.4) and the west wall by 9.1 in"
+                  "xIn": 50.3,
+                  "yIn": 5.3,
+                  "provenance": "SET BY HAND (2026-11-06, the team: a gentle curve round the hive that splits the gap between the frame and a partner robot): with (-57.6, 16.1) and (-13, 56), as driven in the sim (ZenithAutoMatchTest's trace, both alliances) the stowed-bar footprint keeps 3.2 in from the hive frame and 3.1 in from the 18 in strip along the west wall beside RED's loading zone (x >= -52.67, y 23.9..54.6) where a partner robot may stand. Tuned in the sim against the heading Pedro actually drives (Foresight turns up to about 12 in early); not driven on the robot yet"
                 },
                 {
-                  "xIn": 60,
-                  "yIn": -62,
-                  "provenance": "SET BY HAND (2026-11-06, the team: down the middle of the lane west of the hive): see the first control point"
+                  "xIn": 57.6,
+                  "yIn": -16.1,
+                  "provenance": "SET BY HAND (2026-11-06, split the gap): see the first control point"
                 },
                 {
                   "xIn": 13,
@@ -577,7 +588,7 @@
                 "heading": {
                   "mode": "linear",
                   "fromRad": 0.000007346410206832132,
-                  "toRad": 1.6111073464102068
+                  "toRad": 1.5884073464102073
                 }
               },
               {
@@ -585,8 +596,8 @@
                 "endT": 0.2612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.6111073464102068,
-                  "toRad": 1.5483073464102066
+                  "fromRad": 1.5884073464102073,
+                  "toRad": 1.5440073464102069
                 }
               },
               {
@@ -594,8 +605,8 @@
                 "endT": 0.3612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.5483073464102066,
-                  "toRad": 1.480707346410207
+                  "fromRad": 1.5440073464102069,
+                  "toRad": 1.453607346410207
                 }
               },
               {
@@ -603,8 +614,8 @@
                 "endT": 0.4612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.480707346410207,
-                  "toRad": 1.4002073464102072
+                  "fromRad": 1.453607346410207,
+                  "toRad": 1.326007346410207
                 }
               },
               {
@@ -612,8 +623,8 @@
                 "endT": 0.5612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.4002073464102072,
-                  "toRad": 1.2967073464102068
+                  "fromRad": 1.326007346410207,
+                  "toRad": 1.1828073464102067
                 }
               },
               {
@@ -621,30 +632,39 @@
                 "endT": 0.6612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.2967073464102068,
-                  "toRad": 1.1516073464102066
+                  "fromRad": 1.1828073464102067,
+                  "toRad": 1.0444073464102068
                 }
               },
               {
                 "startT": 0.6612,
-                "endT": 0.707,
+                "endT": 0.7612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.1516073464102066,
-                  "toRad": 1.0621073464102073
+                  "fromRad": 1.0444073464102068,
+                  "toRad": 0.9170073464102071
                 }
               },
               {
-                "startT": 0.707,
-                "endT": 0.8242,
+                "startT": 0.7612,
+                "endT": 0.86,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.0621073464102073,
+                  "fromRad": 0.9170073464102071,
+                  "toRad": 0.788407346410207
+                }
+              },
+              {
+                "startT": 0.86,
+                "endT": 0.97,
+                "heading": {
+                  "mode": "linear",
+                  "fromRad": 0.788407346410207,
                   "toRad": 1.5708073464102066
                 }
               },
               {
-                "startT": 0.8242,
+                "startT": 0.97,
                 "endT": 1,
                 "heading": {
                   "mode": "constant",
@@ -653,7 +673,8 @@
               }
             ]
           },
-          "notes": "North around the west of the frame, east along the north side of the hive and down to the scoring spot north of it, turning to face the up cell. It does the turn west of x = -13, and the last stretch is a straight drive south, so its footprint stays on RED's side of the centre line (G402). Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot."
+          "speedFraction": 0.6,
+          "notes": "North around the west of the frame, east along the north side of the hive and down to the scoring spot north of it, turning to face the up cell. It does the turn west of x = -13, and the last stretch is a straight drive south, so its footprint stays on RED's side of the centre line (G402). Pedro reads a piece's end as a fraction of the path's length and hands a tangent piece its own 0..1 t, so the starter's tangent spans are written as linear pieces between the curve's true direction every tenth of the path (tools/zenith_headings.py); each piece starts on the heading the last one ended on, so the robot never spins on the spot. speedFraction 0.6 (SET BY HAND, 2026-11-06, the team: go slow through the 28 in lane between the hive frame and a partner robot by the loading zone); the cap is Pedro's maxVelocityConstraint, 36 in/s at MAX_FORWARD_IN_PER_S 60."
         },
         {
           "id": "clearThenSpinUp",
