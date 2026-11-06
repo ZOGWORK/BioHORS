@@ -105,7 +105,12 @@ public final class BiobuzzMatch {
     /** Drawing only: the hive model's axle height, MEASURED FROM CAD (AdvantageScope's field model,
      *  its two F608ZZ bearings; advantagescope/tools/build_hive_assets.py pivots the model there). */
     static final double HIVE_MODEL_AXLE_Z_IN = 43.95;
-    static final double GATE_OPEN_THRESHOLD = (0.485 + 0.67) / 2.0; // halfway between MechanismConstants' positions
+    /** A pollen gate servo position nearer MechanismConstants' OPEN than its CLOSED: open, either
+     *  way round the two numbers are. */
+    static boolean pollenGateOpenAt(double position) {
+        return Math.abs(position - org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.POLLEN_GATE_OPEN)
+                < Math.abs(position - org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.POLLEN_GATE_CLOSED);
+    }
 
     private final BioHorsSim sim;
     private final boolean red;
@@ -382,13 +387,13 @@ public final class BiobuzzMatch {
         boolean atSpot = org.firstinspires.ftc.teamcode.auto.ShootingPose.at(
                 red ? org.firstinspires.ftc.teamcode.aim.Alliance.RED : org.firstinspires.ftc.teamcode.aim.Alliance.BLUE,
                 new com.pedropathing.math.Pose(x, y, h));
-        boolean gateCommandedOpen = sim.pollenGate.getPosition() >= GATE_OPEN_THRESHOLD;
+        boolean gateCommandedOpen = pollenGateOpenAt(sim.pollenGate.getPosition());
         if (gateCommandedOpen && !gateWasCommandedOpen && !atSpot) {
             offSpotGateOpens.add(String.format(java.util.Locale.ROOT, "t=%.2f gate opened at (%.1f, %.1f, %.0f deg)",
                     time, x, y, Math.toDegrees(h)));
         }
         gateWasCommandedOpen = gateCommandedOpen;
-        boolean gateOpen = sim.pollenGatePlant.getPosition() >= GATE_OPEN_THRESHOLD;
+        boolean gateOpen = pollenGateOpenAt(sim.pollenGatePlant.getPosition());
         boolean feeding = gateOpen && intakeIn && sim.pollenShooterRpm() >= LAUNCH_MIN_RPM && held > 0;
         if (feeding) {
             launchTimer += dt;

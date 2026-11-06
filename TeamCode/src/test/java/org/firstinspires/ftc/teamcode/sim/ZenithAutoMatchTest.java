@@ -281,8 +281,7 @@ class ZenithAutoMatchTest {
                 worstMoveAfterIn[0] = Math.max(worstMoveAfterIn[0],
                         Math.hypot(sim.drivePlant.getX() - settled[0], sim.drivePlant.getY() - settled[1]));
             }
-            if (t > FAULT_AT_S + 0.3 && sim.pollenGatePlant.getPosition() > (MechanismConstants.POLLEN_GATE_OPEN
-                    + MechanismConstants.POLLEN_GATE_CLOSED) / 2.0) {
+            if (t > FAULT_AT_S + 0.3 && BiobuzzMatch.pollenGateOpenAt(sim.pollenGatePlant.getPosition())) {
                 gateOpened[0] = true;
             }
         };

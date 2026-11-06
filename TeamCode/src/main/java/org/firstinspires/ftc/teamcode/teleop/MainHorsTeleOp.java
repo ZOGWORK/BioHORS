@@ -44,9 +44,9 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *                           a timed window, then let go. Y again cancels. See "Y volley" below.
  *   Dpad down ............. toggle both shooters on/off (each at its own target), for spinning
  *                           without aiming
- *   Dpad left / right ..... POLLEN shooter target RPM - / + (MechanismConstants.POLLEN_TRIM_STEP_RPM)
- *   Left bumper ........... NECTAR shooter target RPM - (MechanismConstants.NECTAR_TRIM_STEP_RPM).
- *                           While aiming, it nudges the aim LEFT one step instead.
+ *   Dpad left / right ..... BOTH shooters' target RPM - / +, the same step each
+ *                           (MechanismConstants.SHOOTER_TRIM_STEP_RPM)
+ *   Left bumper ........... while aiming, nudges the aim LEFT one step. Nothing otherwise.
  *                           The nudge (AIM_NUDGE_STEP_RAD a press, up to AIM_NUDGE_MAX_RAD) stays
  *                           until an X reset; the Pose line shows it.
  *   B ..................... toggle both gates open / closed. No pose or aim check: the driver decides.
@@ -423,7 +423,7 @@ public class MainHorsTeleOp extends LinearOpMode {
             }
 
             // ----- Shooters: on while dpad down has them toggled on, or while aiming (held through
-            // an open volley). Dpad left/right trims pollen. Each target is its distance table's rpm
+            // an open volley). Dpad left/right trims both by the same step. Each target is its distance table's rpm
             // plus its trim. -----
             boolean dpadDownNow = gamepad1.dpad_down || gamepad2.dpad_down;
             if (dpadDownNow && !dpadDownLast) shootersToggledOn = !shootersToggledOn;
@@ -447,16 +447,19 @@ public class MainHorsTeleOp extends LinearOpMode {
             double nectarTrimBefore = nectarTrimRpm;
 
             boolean dpadLeftNow = gamepad1.dpad_left || gamepad2.dpad_left;
-            if (dpadLeftNow && !dpadLeftLast) pollenTrimRpm = trimmed(pollenTrimRpm, -MechanismConstants.POLLEN_TRIM_STEP_RPM, pollenTableRpm);
+            if (dpadLeftNow && !dpadLeftLast) {
+                pollenTrimRpm = trimmed(pollenTrimRpm, -MechanismConstants.SHOOTER_TRIM_STEP_RPM, pollenTableRpm);
+                nectarTrimRpm = trimmed(nectarTrimRpm, -MechanismConstants.SHOOTER_TRIM_STEP_RPM, nectarTableRpm);
+            }
             dpadLeftLast = dpadLeftNow;
 
             boolean dpadRightNow = gamepad1.dpad_right || gamepad2.dpad_right;
-            if (dpadRightNow && !dpadRightLast) pollenTrimRpm = trimmed(pollenTrimRpm, MechanismConstants.POLLEN_TRIM_STEP_RPM, pollenTableRpm);
+            if (dpadRightNow && !dpadRightLast) {
+                pollenTrimRpm = trimmed(pollenTrimRpm, MechanismConstants.SHOOTER_TRIM_STEP_RPM, pollenTableRpm);
+                nectarTrimRpm = trimmed(nectarTrimRpm, MechanismConstants.SHOOTER_TRIM_STEP_RPM, nectarTableRpm);
+            }
             dpadRightLast = dpadRightNow;
 
-            // Nectar has its own trim and step: left bumper down (not while aiming: there it
-            // nudges the aim), A up.
-            if (lbNow && !lbLast && !aimHeld) nectarTrimRpm = trimmed(nectarTrimRpm, -MechanismConstants.NECTAR_TRIM_STEP_RPM, nectarTableRpm);
             lbLast = lbNow;
 
 
