@@ -1057,6 +1057,37 @@ class MainHorsTeleOpSimTest {
         return t;
     }
 
+    /**
+     * A held from the Y press on: the volley still spins up, fires and feeds with nothing running
+     * out; once it ends, the held A outtakes (so A really was held and only the volley kept it off).
+     */
+    @Test
+    void aHeldDuringAVolleyNeverOuttakes() {
+        BioHorsSim sim = new BioHorsSim();
+        startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);   // facing the south cell
+        double[] intakeAt = new double[400];
+        boolean[] openAt = new boolean[400];
+        runWatching(sim, 300, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g1.y = tick >= 5 && tick < 7;
+            g1.a = tick >= 5;   // held through the whole volley and after
+        }, tick -> {
+            intakeAt[tick] = sim.intakeLeft.getPower();
+            openAt[tick] = commandedOpen(sim.pollenGate, MechanismConstants.POLLEN_GATE_OPEN);
+        });
+        int lastOpen = -1, fed = 0, outDuringVolley = 0;
+        for (int i = 0; i < 300; i++) if (openAt[i]) lastOpen = i;
+        assertTrue(lastOpen > 0, "the volley fired");
+        for (int i = 7; i <= lastOpen; i++) {
+            if (intakeAt[i] < 0) outDuringVolley++;
+            if (intakeAt[i] > 0) fed++;
+        }
+        assertEquals(0, outDuringVolley, "A never runs the intake out during the volley");
+        assertTrue(fed > 0, "the volley still feeds: " + fed + " ticks");
+        assertEquals(org.firstinspires.ftc.teamcode.subsystems.IntakeController.OUTTAKE_POWER, intakeAt[290], 1e-9,
+                "after the volley the still-held A outtakes");
+    }
+
     @Test
     void yFromIdleSpinsUpThenFiresOneWindowAndGoesBackToIdle() {
         BioHorsSim sim = new BioHorsSim();
