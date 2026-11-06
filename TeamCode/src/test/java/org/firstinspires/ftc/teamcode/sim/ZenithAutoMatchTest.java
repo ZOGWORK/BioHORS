@@ -215,10 +215,12 @@ class ZenithAutoMatchTest {
             System.out.print("PHYSICS (shot " + SHOT_PITCH_DEG + " deg, what-if grip " + WHAT_IF_GRIP + ")"
                     + b.report);
 
-            // Every pollen the robot held left it, and each launch is accounted for: seated or missed.
             // Every pollen that came aboard (the preloads, and each one the intake took, a stray that
-            // rolled back under it included) left the robot.
-            assertEquals(PRELOAD_PHYSICS + b.match.collected(), b.match.launched(), "pollen launched\n" + b.report);
+            // rolled back under it included) left the robot, or is still aboard at the end: the intake
+            // runs all AUTO, so one rolling under it after the last volley (on the park, say) stays in.
+            assertEquals(PRELOAD_PHYSICS + b.match.collected(), b.match.launched() + b.match.held(),
+                    "pollen launched or still aboard\n" + b.report);
+            assertTrue(b.match.held() <= 1, "more than a stray left aboard at the end\n" + b.report);
             assertTrue(b.match.collected() >= 8, "the flower's 4 and the garden's 4 come aboard\n" + b.report);
             // From the scoring spots 48 in out, at SIM_SEATING_RPM's ball speed, every real shot seats (under the
             // what-if shot), and the hive tips twice: 3 on the staged nectar, then 8 in the empty cell.
@@ -254,7 +256,9 @@ class ZenithAutoMatchTest {
             System.out.print("PHYSICS BLUE" + c.report);
             assertEquals(b.match.scored(), c.match.scored(), "BLUE real shots seated\n" + c.report);
             assertEquals(b.match.tips(), c.match.tips(), "BLUE tips in physics\n" + c.report);
-            assertEquals(PRELOAD_PHYSICS + c.match.collected(), c.match.launched(), "BLUE pollen launched\n" + c.report);
+            assertEquals(PRELOAD_PHYSICS + c.match.collected(), c.match.launched() + c.match.held(),
+                    "BLUE pollen launched or still aboard\n" + c.report);
+            assertTrue(c.match.held() <= 1, "BLUE: more than a stray left aboard at the end\n" + c.report);
             assertTrue(c.match.unintendedContacts().isEmpty(), "BLUE structure contact: " + c.match.unintendedContacts());
             assertTrue(b.match.barUpIntoFlower().isEmpty(), "RED physics drove in to the flower before the bar was down: " + b.match.barUpIntoFlower());
             assertTrue(c.match.barUpIntoFlower().isEmpty(), "BLUE physics drove in to the flower before the bar was down: " + c.match.barUpIntoFlower());

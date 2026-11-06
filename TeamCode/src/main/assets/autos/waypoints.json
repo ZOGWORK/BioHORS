@@ -28,9 +28,9 @@
     },
     "flowerNorthPickup": {
       "xIn": -24.0,
-      "yIn": 53.5,
+      "yIn": 56.0,
       "headingRad": 1.5708,
-      "provenance": "SET BY HAND (2026-11-06, the team: in a little more): 1.0 in further north than 52.5, so the flower bar's tip (14.19 in ahead of the drive centre, MEASURED FROM CAD) reaches 0.59 in into flower1's foot as the field file draws it (y = 67.1); the real bar is built to slide into the retrieval opening, and the sim counts touching the foot while the intake runs as intended. Was 52.5 (bar tip 0.41 in short, 2026-10-30). NEEDS MEASUREMENT on the real field: drive in until the bar seats."
+      "provenance": "SET BY HAND (2026-11-06, the team: in about 3 more): 2.5 in further north than 53.5, so the flower bar's tip (14.19 in ahead of the drive centre, MEASURED FROM CAD) ends at y = 70.19, 3.09 in into flower1's foot as the field file draws it (y = 67.1), inside its 3.57 in deep retrieval opening (SPEC), whose back is FIRST's CAD wall (y = 70.674). A full 3.0 (56.5) was tried: the follower settles about 0.1 in past the pickup, which put the tip past the opening's back, into the wall, and the sim took only 3 of the 4. The sim counts touching the foot while the intake runs as intended. Was 53.5 (2026-11-06), 52.5 before. NEEDS MEASUREMENT on the real field: drive in until the bar seats."
     },
     "aboveGardenLane": {
       "xIn": -36.0,

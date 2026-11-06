@@ -211,7 +211,7 @@
           "from": "current",
           "to": {
             "xIn": 24,
-            "yIn": -53.5,
+            "yIn": -56,
             "headingRad": -1.5707926535897931,
             "provenance": "SET BY HAND (2026-11-06, the team: the point mirror of waypoints.json flowerNorthPickup (see its provenance there)"
           }
