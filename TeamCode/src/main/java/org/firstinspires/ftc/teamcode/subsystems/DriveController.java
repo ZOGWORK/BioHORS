@@ -29,10 +29,12 @@ public class DriveController {
 
     // ===== Drive shaping config (starting points, tune to this robot) =====
     public static double STICK_DEADBAND = 0.05; // PLACEHOLDER
-    public static double TRANSLATION_EXPO = 1.6; // PLACEHOLDER; 1.0 = linear, >1 more precision near center
-    public static double YAW_EXPO = 1.8; // PLACEHOLDER
-    public static double MAX_TRANSLATION = 1.0; // PLACEHOLDER
-    public static double MAX_YAW = 0.85; // PLACEHOLDER; slight cap helps prevent spinouts
+    // Set for speed (the team, 2026-11-05: "make it really fast"): the stick is linear, so part
+    // stick is no longer far slower than it feels, and turning has no cap.
+    public static double TRANSLATION_EXPO = 1.0; // SET BY HAND; 1.0 = linear, >1 more precision near center (was 1.6)
+    public static double YAW_EXPO = 1.3; // SET BY HAND (was 1.8): a little curve left so aiming by stick is not twitchy
+    public static double MAX_TRANSLATION = 1.0; // SET BY HAND
+    public static double MAX_YAW = 1.0; // SET BY HAND (was 0.85)
 
     public DriveController(DcMotor frontLeft, DcMotor frontRight, DcMotor backLeft, DcMotor backRight) {
         this.frontLeft = frontLeft;
