@@ -154,13 +154,24 @@ class ZenithAutoMatchTest {
      */
     static final double SHOT_PITCH_DEG = ShotModel.POLLEN_PITCH_MEASURED_DEG;
     static final double WHAT_IF_GRIP = 0.8;
+    /**
+     * The flywheel rpm that seats a pollen from the scoring spots, 48 in out, under this what-if shot.
+     * SET FROM SIM: the middle of ShotSweepTest's 1650-1800. The robot's own AUTO_POLLEN_RPM is the
+     * team's real-field speed (3100); with a guessed ball speed that overshoots, so the physics tests
+     * fire at this ball speed instead. Measure one real shot's speed and the two can be reconciled.
+     */
+    static final double SIM_SEATING_RPM = 1750.0;
     static final int PRELOAD_PHYSICS = 4;   // SET BY HAND: the auto's start holds (two-tip.auto.json)
 
     @Test
     void theAutoWithRealBallsInPhysics() throws IOException {
         double savedPitch = ShotModel.POLLEN_PITCH_DEG, savedGrip = ShotModel.GRIP_EFFICIENCY;
         ShotModel.POLLEN_PITCH_DEG = SHOT_PITCH_DEG;
-        ShotModel.GRIP_EFFICIENCY = WHAT_IF_GRIP;
+        // The robot's code runs in the sim's own classloader at its real AUTO_POLLEN_RPM, so the ball
+        // speed is matched instead: exit speed is rpm x grip, and this grip gives the speed the
+        // what-if shot has at SIM_SEATING_RPM.
+        ShotModel.GRIP_EFFICIENCY = WHAT_IF_GRIP * SIM_SEATING_RPM
+                / org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_POLLEN_RPM;
         try {
             String auto = System.getProperty("zenith.auto", AUTO_NAME);
             Result a = runMatch(auto, "RED", "physics1", true);
@@ -179,7 +190,7 @@ class ZenithAutoMatchTest {
             // rolled back under it included) left the robot.
             assertEquals(PRELOAD_PHYSICS + b.match.collected(), b.match.launched(), "pollen launched\n" + b.report);
             assertTrue(b.match.collected() >= 8, "the flower's 4 and the garden's 4 come aboard\n" + b.report);
-            // From the scoring spots 48 in out, at AUTO_POLLEN_RPM, every real shot seats (under the
+            // From the scoring spots 48 in out, at SIM_SEATING_RPM's ball speed, every real shot seats (under the
             // what-if shot), and the hive tips twice: 3 on the staged nectar, then 8 in the empty cell.
             assertEquals(EXPECTED_SCORED, b.match.scored(), "real shots seated\n" + b.report);
             assertEquals(EXPECTED_TIPS, b.match.tips(), "tips in physics\n" + b.report);

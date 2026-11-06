@@ -57,8 +57,8 @@
           "from": "current",
           "control": [
             {
-              "xIn": -46.0,
-              "yIn": -50.0,
+              "xIn": -46,
+              "yIn": -50,
               "provenance": "SET BY HAND: the starter example's first control point moved 6 in west and 4 in south, tuned to BioHORS: the 22 in robot clears the hive frame's west bar as it turns"
             },
             {
@@ -313,17 +313,17 @@
           "from": "current",
           "control": [
             {
-              "xIn": -48.0,
-              "yIn": 50.0,
-              "provenance": "SET BY HAND: the starter example's first control point moved north-west, tuned to BioHORS: the 22 in robot heads away from the hive frame before turning south"
+              "xIn": -56,
+              "yIn": 52,
+              "provenance": "SET BY HAND (2026-11-05): moved 8 in west and 2 in north of (-48, 50) after the real robot hit the hive frame's west bar on this leg; with (-60, -24) the rotated footprint (bar tip 14.2 in ahead, back 7.8 in, 17.84 in wide) clears the frame bar and leg feet by 10.4 in (was 4.3) and the west wall by 13.8 in"
             },
             {
-              "xIn": -50.0,
-              "yIn": -30.0,
-              "provenance": "SET BY HAND: the starter example's middle control point moved down the west side, tuned to BioHORS: the 22 in robot stays west of the hive frame's bar and legs"
+              "xIn": -60,
+              "yIn": -24,
+              "provenance": "SET BY HAND (2026-11-05): moved 10 in west and 6 in north of (-50, -30) after the real robot hit the hive frame's west bar on this leg; with (-56, 52) the rotated footprint clears the frame bar and leg feet by 10.4 in (was 4.3) and the west wall by 13.8 in"
             },
             {
-              "xIn": -26.0,
+              "xIn": -26,
               "yIn": -54.7,
               "provenance": "SET BY HAND: the starter example's last control point moved down the west side and toward the lane, tuned to BioHORS, then 1.3 in north with FIRST's CAD south wall (y = -70.674): the 22 in robot's corner stays inside the wall as it turns onto the lane heading."
             }
@@ -342,7 +342,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": -1.5708,
-              "toRad": -2.0558
+              "toRad": -2.2333
             }
           },
           {
@@ -350,8 +350,8 @@
             "endT": 0.3186,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.0558,
-              "toRad": -1.8395
+              "fromRad": -2.2333,
+              "toRad": -1.9282
             }
           },
           {
@@ -359,8 +359,8 @@
             "endT": 0.4186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.8395,
-              "toRad": -1.7005
+              "fromRad": -1.9282,
+              "toRad": -1.7248
             }
           },
           {
@@ -368,8 +368,8 @@
             "endT": 0.5186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.7005,
-              "toRad": -1.5969
+              "fromRad": -1.7248,
+              "toRad": -1.5752
             }
           },
           {
@@ -377,8 +377,8 @@
             "endT": 0.6186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.5969,
-              "toRad": -1.5113
+              "fromRad": -1.5752,
+              "toRad": -1.4545
             }
           },
           {
@@ -386,8 +386,8 @@
             "endT": 0.7186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.5113,
-              "toRad": -1.4357
+              "fromRad": -1.4545,
+              "toRad": -1.3504
             }
           },
           {
@@ -395,8 +395,8 @@
             "endT": 0.8186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.4357,
-              "toRad": -1.3693
+              "fromRad": -1.3504,
+              "toRad": -1.2591
             }
           },
           {
@@ -404,8 +404,8 @@
             "endT": 0.9186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.3693,
-              "toRad": -1.348
+              "fromRad": -1.2591,
+              "toRad": -1.2058
             }
           },
           {
@@ -413,7 +413,7 @@
             "endT": 1.0,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.348,
+              "fromRad": -1.2058,
               "toRad": -3.1416
             }
           }
@@ -515,8 +515,8 @@
               "from": "current",
               "control": [
                 {
-                  "xIn": -50.0,
-                  "yIn": -40.0,
+                  "xIn": -50,
+                  "yIn": -40,
                   "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), first control point moved off the garden lane, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide)"
                 },
                 {
@@ -677,7 +677,7 @@
       "heading": {
         "mode": "linear",
         "fromRad": -1.5708,
-        "toRad": 0.0
+        "toRad": 0
       },
       "notes": "After the last volley (the team's sketch): out toward the north wall, then west along it past flower1, turning from facing the hive to facing the field (east; counter-clockwise, a quarter turn) on the way, to a spot straight north of the park spot."
     },
@@ -695,7 +695,7 @@
       ],
       "heading": {
         "mode": "constant",
-        "headingRad": 0.0
+        "headingRad": 0
       },
       "notes": "Slides south into the park spot, back to the west wall and the intake facing the field: where the teleop starts (MainHorsTeleOp's default start pose)."
     }

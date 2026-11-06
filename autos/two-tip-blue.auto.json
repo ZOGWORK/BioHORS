@@ -331,14 +331,14 @@
           "from": "current",
           "control": [
             {
-              "xIn": 48,
-              "yIn": -50,
-              "provenance": "SET BY HAND: the starter example's first control point moved north-west, tuned to BioHORS: the 22 in robot heads away from the hive frame before turning south"
+              "xIn": 56,
+              "yIn": -52,
+              "provenance": "SET BY HAND (2026-11-05): moved 8 in west and 2 in north of (-48, 50) after the real robot hit the hive frame's west bar on this leg; with (-60, -24) the rotated footprint (bar tip 14.2 in ahead, back 7.8 in, 17.84 in wide) clears the frame bar and leg feet by 10.4 in (was 4.3) and the west wall by 13.8 in"
             },
             {
-              "xIn": 50,
-              "yIn": 30,
-              "provenance": "SET BY HAND: the starter example's middle control point moved down the west side, tuned to BioHORS: the 22 in robot stays west of the hive frame's bar and legs"
+              "xIn": 60,
+              "yIn": 24,
+              "provenance": "SET BY HAND (2026-11-05): moved 10 in west and 6 in north of (-50, -30) after the real robot hit the hive frame's west bar on this leg; with (-56, 52) the rotated footprint clears the frame bar and leg feet by 10.4 in (was 4.3) and the west wall by 13.8 in"
             },
             {
               "xIn": 26,
@@ -363,7 +363,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": 1.5707926535897931,
-              "toRad": 1.085792653589793
+              "toRad": 0.9082926535897933
             }
           },
           {
@@ -371,8 +371,8 @@
             "endT": 0.3186,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.085792653589793,
-              "toRad": 1.3020926535897932
+              "fromRad": 0.9082926535897933,
+              "toRad": 1.2133926535897932
             }
           },
           {
@@ -380,8 +380,8 @@
             "endT": 0.4186,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.3020926535897932,
-              "toRad": 1.4410926535897932
+              "fromRad": 1.2133926535897932,
+              "toRad": 1.416792653589793
             }
           },
           {
@@ -389,8 +389,8 @@
             "endT": 0.5186,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.4410926535897932,
-              "toRad": 1.5446926535897931
+              "fromRad": 1.416792653589793,
+              "toRad": 1.5663926535897932
             }
           },
           {
@@ -398,8 +398,8 @@
             "endT": 0.6186,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.5446926535897931,
-              "toRad": 1.630292653589793
+              "fromRad": 1.5663926535897932,
+              "toRad": 1.6870926535897932
             }
           },
           {
@@ -407,8 +407,8 @@
             "endT": 0.7186,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.630292653589793,
-              "toRad": 1.7058926535897931
+              "fromRad": 1.6870926535897932,
+              "toRad": 1.791192653589793
             }
           },
           {
@@ -416,8 +416,8 @@
             "endT": 0.8186,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.7058926535897931,
-              "toRad": 1.7722926535897932
+              "fromRad": 1.791192653589793,
+              "toRad": 1.882492653589793
             }
           },
           {
@@ -425,8 +425,8 @@
             "endT": 0.9186,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.7722926535897932,
-              "toRad": 1.793592653589793
+              "fromRad": 1.882492653589793,
+              "toRad": 1.9357926535897931
             }
           },
           {
@@ -434,7 +434,7 @@
             "endT": 1,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.793592653589793,
+              "fromRad": 1.9357926535897931,
               "toRad": -0.000007346410206832132
             }
           }
@@ -478,7 +478,7 @@
           "kind": "line",
           "from": "current",
           "to": {
-            "xIn": 59.6,
+            "xIn": 59,
             "yIn": 61.62,
             "headingRad": 0.000007346410206832132,
             "provenance": "SET BY HAND: the point mirror of waypoints.json gardenSweepEnd (see its provenance there)"

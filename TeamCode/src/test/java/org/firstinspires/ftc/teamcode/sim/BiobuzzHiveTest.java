@@ -91,7 +91,7 @@ class BiobuzzHiveTest {
     static final double[] SPREAD_IN = {0.0, 1.2, -1.2, 2.4, -2.4, 0.6, -0.6, 1.8, -1.8, 0.0, 1.2, -1.2};
 
     /**
-     * How many real shots (ShotModel at its measured angle, AUTO_POLLEN_RPM from 48 in south of RED's hive, spread as SPREAD_IN)
+     * How many real shots (ShotModel at its measured angle, ZenithAutoMatchTest.SIM_SEATING_RPM from 48 in south of RED's hive, spread as SPREAD_IN)
      * it takes to tip it from south-up, one every 0.3 s as the robot feeds; -1 if 12 did not.
      */
     static int shotsToTip(double comHeight) {
@@ -113,7 +113,7 @@ class BiobuzzHiveTest {
                 run(tracker, nectar ? 3.0 : 1.0);
                 for (int n = 1; n <= 12 && out[0] < 0; n++) {
                     double[] l = ShotModel.pollenLaunch(-13.0 + SPREAD_IN[(n - 1) % SPREAD_IN.length], -48.0, Math.PI / 2,
-                            org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.AUTO_POLLEN_RPM, 0, 0);
+                            ZenithAutoMatchTest.SIM_SEATING_RPM, 0, 0);
                     int id = tracker.addHeldPiece("pollen", R);
                     tracker.launch(id, "shot", l[0], l[1], l[2], l[3], l[4], l[5]);
                     run(tracker, 0.3);
