@@ -34,12 +34,12 @@ public final class AutoPoses {
 
     // ---- Bezier control points ----
     public static final Pose[] TO_OTHER_SIDE = {
-            new Pose(-46.0, -50.0), new Pose(-50.0, 4.79), new Pose(-40.0, 34.0)};
+            new Pose(-50.0, -50.0), new Pose(-58.0, 0.0), new Pose(-48.0, 40.0)};
     public static final Pose[] TO_SCORE_NORTH = {new Pose(-24.0, 46.0), new Pose(-13.0, 60.0)};
     public static final Pose[] TO_GARDEN = {
-            new Pose(-56.0, 52.0), new Pose(-60.0, -24.0), new Pose(-26.0, -54.7)};
+            new Pose(-60.0, 52.0), new Pose(-62.0, -30.0), new Pose(-26.0, -54.7)};
     public static final Pose[] DRIVE_BACK = {
-            new Pose(-50.0, -40.0), new Pose(-58.0, 62.0), new Pose(-13.0, 56.0)};
+            new Pose(-54.0, -30.0), new Pose(-60.0, 62.0), new Pose(-13.0, 56.0)};
     public static final Pose[] TO_PARK_LANE = {new Pose(-13.0, 55.0), new Pose(-35.0, 55.0)};
 
     // ---- headings along the curves, piece by piece (radians, RED), as in the draft ----
@@ -48,25 +48,25 @@ public final class AutoPoses {
     // linear pieces between the curve's true direction, each starting where the last ended.
     // AutoPosesTest checks there is no jump.
     public static final HeadingPiece[] TO_OTHER_SIDE_HEADING = {
-            HeadingPiece.linear(0.2038, 1.5708, 2.2316), HeadingPiece.linear(0.3038, 2.2316, 1.9476),
-            HeadingPiece.linear(0.4038, 1.9476, 1.7628), HeadingPiece.linear(0.5038, 1.7628, 1.6217),
-            HeadingPiece.linear(0.6038, 1.6217, 1.4946), HeadingPiece.linear(0.7038, 1.4946, 1.3587),
-            HeadingPiece.linear(0.8038, 1.3587, 1.1845), HeadingPiece.linear(0.8679, 1.1845, 1.0273),
-            HeadingPiece.linear(1.0, 1.0273, 1.5708)};
+            HeadingPiece.linear(0.2038, 1.5708, 2.3582), HeadingPiece.linear(0.3038, 2.3582, 2.0403),
+            HeadingPiece.linear(0.4038, 2.0403, 1.8193), HeadingPiece.linear(0.5038, 1.8193, 1.6477),
+            HeadingPiece.linear(0.6038, 1.6477, 1.4906), HeadingPiece.linear(0.7038, 1.4906, 1.3167),
+            HeadingPiece.linear(0.8038, 1.3167, 1.0776), HeadingPiece.linear(0.8679, 1.0776, 0.8458),
+            HeadingPiece.linear(1.0, 0.8458, 1.5708)};
     public static final HeadingPiece[] TO_SCORE_NORTH_HEADING = {
             HeadingPiece.constant(0.2041, 1.5708), HeadingPiece.linear(0.3742, 1.5708, 3.1416),
             HeadingPiece.linear(0.5442, 3.1416, 4.7124), HeadingPiece.constant(1.0, -1.5708)};
     public static final HeadingPiece[] TO_GARDEN_HEADING = {
-            HeadingPiece.linear(0.2186, -1.5708, -2.2333), HeadingPiece.linear(0.3186, -2.2333, -1.9282),
-            HeadingPiece.linear(0.4186, -1.9282, -1.7248), HeadingPiece.linear(0.5186, -1.7248, -1.5752),
-            HeadingPiece.linear(0.6186, -1.5752, -1.4545), HeadingPiece.linear(0.7186, -1.4545, -1.3504),
-            HeadingPiece.linear(0.8186, -1.3504, -1.2591), HeadingPiece.linear(0.9186, -1.2591, -1.2058),
-            HeadingPiece.linear(1.0, -1.2058, -3.1416)};
+            HeadingPiece.linear(0.2186, -1.5708, -2.2816), HeadingPiece.linear(0.3186, -2.2816, -1.965),
+            HeadingPiece.linear(0.4186, -1.965, -1.7479), HeadingPiece.linear(0.5186, -1.7479, -1.586),
+            HeadingPiece.linear(0.6186, -1.586, -1.4528), HeadingPiece.linear(0.7186, -1.4528, -1.3342),
+            HeadingPiece.linear(0.8186, -1.3342, -1.2231), HeadingPiece.linear(0.9186, -1.2231, -1.1337),
+            HeadingPiece.linear(1.0, -1.1337, -3.1416)};
     public static final HeadingPiece[] DRIVE_BACK_HEADING = {
-            HeadingPiece.linear(0.1612, 3.1416, 4.7009), HeadingPiece.linear(0.2612, 4.7009, 4.656),
-            HeadingPiece.linear(0.3612, 4.656, 4.6031), HeadingPiece.linear(0.4612, 4.6031, 4.5376),
-            HeadingPiece.linear(0.5612, 4.5376, 4.4518), HeadingPiece.linear(0.6612, 4.4518, 4.3299),
-            HeadingPiece.linear(0.707, 4.3299, 4.2536), HeadingPiece.linear(0.8242, 4.2536, 4.7124),
+            HeadingPiece.linear(0.1612, 3.1416, 4.7527), HeadingPiece.linear(0.2612, 4.7527, 4.6899),
+            HeadingPiece.linear(0.3612, 4.6899, 4.6223), HeadingPiece.linear(0.4612, 4.6223, 4.5418),
+            HeadingPiece.linear(0.5612, 4.5418, 4.4383), HeadingPiece.linear(0.6612, 4.4383, 4.2932),
+            HeadingPiece.linear(0.707, 4.2932, 4.2037), HeadingPiece.linear(0.8242, 4.2037, 4.7124),
             HeadingPiece.constant(1.0, -1.5708)};
 
     /** One piece of a path's heading, up to {@code endT} of the path: Zenith's piecewise modes. */

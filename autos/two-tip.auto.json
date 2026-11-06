@@ -57,19 +57,19 @@
           "from": "current",
           "control": [
             {
-              "xIn": -46,
-              "yIn": -50,
-              "provenance": "SET BY HAND: the starter example's first control point moved 6 in west and 4 in south, tuned to BioHORS: the 22 in robot clears the hive frame's west bar as it turns"
-            },
-            {
               "xIn": -50,
-              "yIn": 4.79,
-              "provenance": "PLACEHOLDER: starter example, a curve control point that takes the robot around the west of the hive frame, clear of its west bar and legs, so the whole footprint stays on RED's side of the centre line"
+              "yIn": -50,
+              "provenance": "SET BY HAND (2026-11-06, the team: not so close to the hive, down the middle): with (-58, 0) and (-48, 40) the centre passes the hive at x -45..-49, the middle of the lane between the frame bar (-24.76) and FIRST's CAD west wall (-70.674); the rotated footprint clears the frame by 10.5 in (was 5.1) and the west wall by 11.9 in"
             },
             {
-              "xIn": -40,
-              "yIn": 34,
-              "provenance": "PLACEHOLDER: starter example, a curve control point that takes the robot around the west of the hive frame, clear of its west bar and legs, so the whole footprint stays on RED's side of the centre line"
+              "xIn": -58,
+              "yIn": 0,
+              "provenance": "SET BY HAND (2026-11-06, the team: down the middle of the lane west of the hive): see the first control point"
+            },
+            {
+              "xIn": -48,
+              "yIn": 40,
+              "provenance": "SET BY HAND (2026-11-06, the team: down the middle of the lane west of the hive): stays west until north of the frame, then crosses east to the flower approach; see the first control point"
             }
           ],
           "to": {
@@ -86,7 +86,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": 1.5708,
-              "toRad": 2.2316
+              "toRad": 2.3582
             }
           },
           {
@@ -94,8 +94,8 @@
             "endT": 0.3038,
             "heading": {
               "mode": "linear",
-              "fromRad": 2.2316,
-              "toRad": 1.9476
+              "fromRad": 2.3582,
+              "toRad": 2.0403
             }
           },
           {
@@ -103,8 +103,8 @@
             "endT": 0.4038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.9476,
-              "toRad": 1.7628
+              "fromRad": 2.0403,
+              "toRad": 1.8193
             }
           },
           {
@@ -112,8 +112,8 @@
             "endT": 0.5038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.7628,
-              "toRad": 1.6217
+              "fromRad": 1.8193,
+              "toRad": 1.6477
             }
           },
           {
@@ -121,8 +121,8 @@
             "endT": 0.6038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.6217,
-              "toRad": 1.4946
+              "fromRad": 1.6477,
+              "toRad": 1.4906
             }
           },
           {
@@ -130,8 +130,8 @@
             "endT": 0.7038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.4946,
-              "toRad": 1.3587
+              "fromRad": 1.4906,
+              "toRad": 1.3167
             }
           },
           {
@@ -139,8 +139,8 @@
             "endT": 0.8038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.3587,
-              "toRad": 1.1845
+              "fromRad": 1.3167,
+              "toRad": 1.0776
             }
           },
           {
@@ -148,8 +148,8 @@
             "endT": 0.8679,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.1845,
-              "toRad": 1.0273
+              "fromRad": 1.0776,
+              "toRad": 0.8458
             }
           },
           {
@@ -157,7 +157,7 @@
             "endT": 1.0,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.0273,
+              "fromRad": 0.8458,
               "toRad": 1.5708
             }
           }
@@ -313,14 +313,14 @@
           "from": "current",
           "control": [
             {
-              "xIn": -56,
+              "xIn": -60,
               "yIn": 52,
-              "provenance": "SET BY HAND (2026-11-05): moved 8 in west and 2 in north of (-48, 50) after the real robot hit the hive frame's west bar on this leg; with (-60, -24) the rotated footprint (bar tip 14.2 in ahead, back 7.8 in, 17.84 in wide) clears the frame bar and leg feet by 10.4 in (was 4.3) and the west wall by 13.8 in"
+              "provenance": "SET BY HAND (2026-11-06, the team: not so close to the hive, down the middle; the real robot hit the frame's west bar on this leg): with (-62, -30) the centre passes the hive at x -46..-49, the middle of the lane between the frame bar (-24.76) and FIRST's CAD west wall (-70.674); the rotated footprint clears the frame by 12.0 in (4.3 before 2026-11-05) and the west wall by 11.7 in"
             },
             {
-              "xIn": -60,
-              "yIn": -24,
-              "provenance": "SET BY HAND (2026-11-05): moved 10 in west and 6 in north of (-50, -30) after the real robot hit the hive frame's west bar on this leg; with (-56, 52) the rotated footprint clears the frame bar and leg feet by 10.4 in (was 4.3) and the west wall by 13.8 in"
+              "xIn": -62,
+              "yIn": -30,
+              "provenance": "SET BY HAND (2026-11-06, the team: down the middle of the lane west of the hive): see the first control point"
             },
             {
               "xIn": -26,
@@ -342,7 +342,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": -1.5708,
-              "toRad": -2.2333
+              "toRad": -2.2816
             }
           },
           {
@@ -350,8 +350,8 @@
             "endT": 0.3186,
             "heading": {
               "mode": "linear",
-              "fromRad": -2.2333,
-              "toRad": -1.9282
+              "fromRad": -2.2816,
+              "toRad": -1.965
             }
           },
           {
@@ -359,8 +359,8 @@
             "endT": 0.4186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.9282,
-              "toRad": -1.7248
+              "fromRad": -1.965,
+              "toRad": -1.7479
             }
           },
           {
@@ -368,8 +368,8 @@
             "endT": 0.5186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.7248,
-              "toRad": -1.5752
+              "fromRad": -1.7479,
+              "toRad": -1.586
             }
           },
           {
@@ -377,8 +377,8 @@
             "endT": 0.6186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.5752,
-              "toRad": -1.4545
+              "fromRad": -1.586,
+              "toRad": -1.4528
             }
           },
           {
@@ -386,8 +386,8 @@
             "endT": 0.7186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.4545,
-              "toRad": -1.3504
+              "fromRad": -1.4528,
+              "toRad": -1.3342
             }
           },
           {
@@ -395,8 +395,8 @@
             "endT": 0.8186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.3504,
-              "toRad": -1.2591
+              "fromRad": -1.3342,
+              "toRad": -1.2231
             }
           },
           {
@@ -404,8 +404,8 @@
             "endT": 0.9186,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.2591,
-              "toRad": -1.2058
+              "fromRad": -1.2231,
+              "toRad": -1.1337
             }
           },
           {
@@ -413,7 +413,7 @@
             "endT": 1.0,
             "heading": {
               "mode": "linear",
-              "fromRad": -1.2058,
+              "fromRad": -1.1337,
               "toRad": -3.1416
             }
           }
@@ -515,14 +515,14 @@
               "from": "current",
               "control": [
                 {
-                  "xIn": -50,
-                  "yIn": -40,
-                  "provenance": "SET BY HAND: the starter example's (Zenith examples/starter collect-and-score), first control point moved off the garden lane, tuned to BioHORS (CAD footprint: bar tip 14.2 in ahead of the drive centre, back 7.8 in behind, 17.84 in wide)"
+                  "xIn": -54,
+                  "yIn": -30,
+                  "provenance": "SET BY HAND (2026-11-06, the team: not so close to the hive, down the middle): with (-60, 62) the centre passes the hive at x -46..-52, in the lane between the frame bar (-24.76) and FIRST's CAD west wall (-70.674); the rotated footprint clears the frame by 12.0 in (was 9.4) and the west wall by 9.1 in"
                 },
                 {
-                  "xIn": -58,
+                  "xIn": -60,
                   "yIn": 62,
-                  "provenance": "PLACEHOLDER: starter example, a curve control point that takes the robot around the west of the hive frame, clear of its west bar and legs, so the whole footprint stays on RED's side of the centre line"
+                  "provenance": "SET BY HAND (2026-11-06, the team: down the middle of the lane west of the hive): see the first control point"
                 },
                 {
                   "xIn": -13,
@@ -544,7 +544,7 @@
                 "heading": {
                   "mode": "linear",
                   "fromRad": 3.1416,
-                  "toRad": 4.7009
+                  "toRad": 4.7527
                 }
               },
               {
@@ -552,8 +552,8 @@
                 "endT": 0.2612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.7009,
-                  "toRad": 4.656
+                  "fromRad": 4.7527,
+                  "toRad": 4.6899
                 }
               },
               {
@@ -561,8 +561,8 @@
                 "endT": 0.3612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.656,
-                  "toRad": 4.6031
+                  "fromRad": 4.6899,
+                  "toRad": 4.6223
                 }
               },
               {
@@ -570,8 +570,8 @@
                 "endT": 0.4612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.6031,
-                  "toRad": 4.5376
+                  "fromRad": 4.6223,
+                  "toRad": 4.5418
                 }
               },
               {
@@ -579,8 +579,8 @@
                 "endT": 0.5612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.5376,
-                  "toRad": 4.4518
+                  "fromRad": 4.5418,
+                  "toRad": 4.4383
                 }
               },
               {
@@ -588,8 +588,8 @@
                 "endT": 0.6612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.4518,
-                  "toRad": 4.3299
+                  "fromRad": 4.4383,
+                  "toRad": 4.2932
                 }
               },
               {
@@ -597,8 +597,8 @@
                 "endT": 0.707,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.3299,
-                  "toRad": 4.2536
+                  "fromRad": 4.2932,
+                  "toRad": 4.2037
                 }
               },
               {
@@ -606,7 +606,7 @@
                 "endT": 0.8242,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.2536,
+                  "fromRad": 4.2037,
                   "toRad": 4.7124
                 }
               },
