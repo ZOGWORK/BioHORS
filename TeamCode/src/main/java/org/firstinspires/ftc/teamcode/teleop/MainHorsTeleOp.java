@@ -704,11 +704,13 @@ public class MainHorsTeleOp extends LinearOpMode {
     /**
      * {@code current / target rpm STATE}: OFF, SPINNING UP (on, not at target) or OK; ENCODER? once
      * the encoder check has found the wheel driven but silent (it then runs on feedforward alone).
+     * OFF, coasting: switched off (no power) but the flywheel still turning down, since the shooter
+     * motors FLOAT; the target shown is what it would spin to if switched on again.
      */
     private void addShooterTelemetry(String label, ShooterController s) {
         String state = s.encoderReversed() ? "ENCODER REVERSED? (reads backwards)"
                 : s.encoderFault() ? "ENCODER? (no speed reading)"
-                : !s.isShooterOn() ? "OFF"
+                : !s.isShooterOn() ? (s.getCurrentRpm() > MechanismConstants.SHOOTER_COAST_SHOW_RPM ? "OFF, coasting" : "OFF")
                 : !shootersFiring ? "IDLE"
                 : s.isAtTarget() ? "OK" : "SPINNING UP";
         telemetry.addData(label, "%.0f / %.0f rpm %s", s.getCurrentRpm(), s.getTargetRpm(), state);
