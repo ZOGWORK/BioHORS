@@ -33,6 +33,7 @@ class AutoPosesTest {
         named.put("start", AutoPoses.START);
         named.put("scoreSouth", AutoPoses.SCORE_SOUTH);
         named.put("scoreNorth", AutoPoses.SCORE_NORTH);
+        named.put("scoreNorthSecond", AutoPoses.SCORE_NORTH_SECOND);
         named.put("flowerNorthApproach", AutoPoses.FLOWER_NORTH_APPROACH);
         named.put("flowerNorthPickup", AutoPoses.FLOWER_NORTH_PICKUP);
         named.put("aboveGardenLane", AutoPoses.ABOVE_GARDEN_LANE);

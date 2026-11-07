@@ -343,7 +343,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
             case DRIVE_BACK:
                 spunUpOnTheWay = false;
-                go(curve(DRIVE_BACK, SCORE_NORTH).heading(pieces(DRIVE_BACK_HEADING)), HIVE_LANE_SPEED);
+                go(curve(DRIVE_BACK, SCORE_NORTH_SECOND).heading(pieces(DRIVE_BACK_HEADING)), HIVE_LANE_SPEED);
                 break;
 
             case TO_PARK_LANE:

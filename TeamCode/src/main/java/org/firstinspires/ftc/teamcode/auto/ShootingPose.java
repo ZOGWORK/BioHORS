@@ -24,7 +24,7 @@ public final class ShootingPose {
     // and how long a volley that is knocked off its spot waits to get back before it ends.
     public static double WAIT_FOR_POSE_S = 1.0;
 
-    private static final Pose[] SPOTS = {AutoPoses.SCORE_SOUTH, AutoPoses.SCORE_NORTH};
+    private static final Pose[] SPOTS = {AutoPoses.SCORE_SOUTH, AutoPoses.SCORE_NORTH, AutoPoses.SCORE_NORTH_SECOND};
 
     private ShootingPose() {
     }
