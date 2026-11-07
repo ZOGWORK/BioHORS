@@ -76,9 +76,12 @@ public final class MechanismConstants {
         POLLEN_SHOOTER.ffReferenceMaxTicksPerSec = 2250.8;
         POLLEN_SHOOTER.kF = 1.0;
         POLLEN_SHOOTER.kS = 0.0;
-        POLLEN_SHOOTER.kP = 0.007130;
+        // P and D: SET BY HAND (the team, 2026-11-06: higher, for rapid fire; kF kept): 1.5x the autotune's,
+        // kP 0.56 Ku (Ku measured on the robot above), well short of where the loop oscillates. NEEDS
+        // CHECKING on the robot: fire a volley and watch the rpm recover without ringing.
+        POLLEN_SHOOTER.kP = 0.010700;   // was 0.007130
         POLLEN_SHOOTER.kI = 0.000000;
-        POLLEN_SHOOTER.kD = 0.000197;
+        POLLEN_SHOOTER.kD = 0.000296;   // was 0.000197
 
         NECTAR_SHOOTER.label = "Nectar";
         applySharedPlaceholders(NECTAR_SHOOTER);
@@ -93,9 +96,12 @@ public final class MechanismConstants {
         NECTAR_SHOOTER.ffReferenceMaxTicksPerSec = 2229.4;
         NECTAR_SHOOTER.kF = 1.0;
         NECTAR_SHOOTER.kS = 0.0;
-        NECTAR_SHOOTER.kP = 0.007130;
+        // P and D: SET BY HAND (the team, 2026-11-06: higher, for rapid fire; kF kept): 1.5x the autotune's,
+        // kP 0.56 Ku (Ku measured on the robot above), well short of where the loop oscillates. NEEDS
+        // CHECKING on the robot: fire a volley and watch the rpm recover without ringing.
+        NECTAR_SHOOTER.kP = 0.010700;   // was 0.007130
         NECTAR_SHOOTER.kI = 0.000000;
-        NECTAR_SHOOTER.kD = 0.000260;
+        NECTAR_SHOOTER.kD = 0.000390;   // was 0.000260
     }
 
     /**
