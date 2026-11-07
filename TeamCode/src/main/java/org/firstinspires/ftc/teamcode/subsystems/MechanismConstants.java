@@ -149,7 +149,7 @@ public final class MechanismConstants {
     public static double POLLEN_GATE_OPEN = 0.485;   // SET BY HAND
     public static double POLLEN_GATE_CLOSED = 0.35;   // SET BY HAND
     public static double NECTAR_GATE_OPEN = 0.485;   // SET BY HAND
-    public static double NECTAR_GATE_CLOSED = 0.35;   // SET BY HAND
+    public static double NECTAR_GATE_CLOSED = 0.2;   // SET BY HAND
 
     // ===== Flower bar servo positions =====
     // The number is the LEFT servo's. The right servo faces the other way and is REVERSE, so it
