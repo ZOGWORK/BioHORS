@@ -59,11 +59,13 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *                           BLUE), wiping the Pinpoint's drift, and the pad rumbles. A tap does
  *                           nothing: the reset also tells PoseSanity to trust the pose again, so a
  *                           fat-fingered press mid-field would aim on a wrong pose unchecked.
- *   Dpad up ............... toggle the flower bar: DOWN (collect from a flower) / UP. It starts
+ *   Dpad up (gamepad1) .... toggle the flower bar: DOWN (collect from a flower) / UP. It starts
  *                           STOWED (FLOWER_BAR_START); the first press puts it down. While
  *                           it is DOWN the drive is capped at BAR_DOWN_SPEED_CAP (the Fire line
  *                           says BAR DOWN: slow). Optional
  *                           (BAR_AUTO_STOW_ENABLED, off): a sustained full-stick sprint stows it.
+ *   Left trigger (gamepad2) gamepad2's only flower bar control: pulling it puts the bar DOWN,
+ *                           letting go stows it. Gamepad2's dpad up does nothing (the team, 2026-11-06).
 
  *
  * Before PLAY: dpad left = RED, dpad right = BLUE. If an auto ran first, its alliance and last
@@ -215,6 +217,7 @@ public class MainHorsTeleOp extends LinearOpMode {
 
     // Edge-detect state (a press fires once, not every loop).
     private boolean dpadDownLast, dpadLeftLast, dpadRightLast, dpadUpLast, bLast, xLast, lbLast, rbLast, yLast;
+    private boolean gp2BarLast;
 
     // Loop time for the driver display: the period from the start of one loop to the start of the
     // next, ms. Display only; nothing reads it to decide anything.
@@ -525,10 +528,15 @@ public class MainHorsTeleOp extends LinearOpMode {
             robot.pollenGate.setClosed(!gatesOpen || pollenFault);
             robot.nectarGate.setClosed(!gatesOpen || nectarFault);
 
-            // ----- Flower bar: dpad up toggles down / stowed; lifted slightly while the gates are open -----
-            boolean dpadUpNow = gamepad1.dpad_up || gamepad2.dpad_up;
+            // ----- Flower bar: gamepad1's dpad up toggles down / stowed. Gamepad2's only control is its
+            // left trigger: pulled puts the bar down, let go stows it (the team, 2026-11-06). Both act on
+            // the change, so either driver's last move wins. -----
+            boolean dpadUpNow = gamepad1.dpad_up;
             if (dpadUpNow && !dpadUpLast) robot.flowerBar.toggle();
             dpadUpLast = dpadUpNow;
+            boolean gp2BarNow = gamepad2.left_trigger > TRIGGER_THRESHOLD;
+            if (gp2BarNow != gp2BarLast) robot.flowerBar.setDown(gp2BarNow);
+            gp2BarLast = gp2BarNow;
 
             // ----- X held RESET_HOLD_S: reset the pose to the reset spot (wipes Pinpoint drift). The
             // driver puts the robot there first: pushed into the corner past the loading zone, back
@@ -616,7 +624,8 @@ public class MainHorsTeleOp extends LinearOpMode {
         dpadLeftLast = gamepad1.dpad_left;
         dpadRightLast = gamepad1.dpad_right;
         xLast = gamepad1.x || gamepad2.x;
-        dpadUpLast = gamepad1.dpad_up || gamepad2.dpad_up;
+        dpadUpLast = gamepad1.dpad_up;
+        gp2BarLast = gamepad2.left_trigger > TRIGGER_THRESHOLD;
         bLast = gamepad1.b || gamepad2.b;
         lbLast = gamepad1.left_bumper || gamepad2.left_bumper;
         rbLast = gamepad1.right_bumper || gamepad2.right_bumper;

@@ -555,6 +555,42 @@ class MainHorsTeleOpSimTest {
                 "dpad up again stows the right side too");
         OpMode.blackboard.clear();
 
+        // Gamepad2 (the team, 2026-11-06): its dpad up does nothing; its left trigger holds the bar down.
+        BioHorsSim gp2Dpad = new BioHorsSim();
+        startAt(gp2Dpad, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double[] gp2DpadLate = servosAt(gp2Dpad, 50, 45, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g2.dpad_up = tick >= 2 && tick < 5;
+        });
+        assertEquals(MechanismConstants.FLOWER_BAR_START, gp2DpadLate[2], 0.02, "gamepad2's dpad up does not move the bar");
+        OpMode.blackboard.clear();
+
+        BioHorsSim gp2Held = new BioHorsSim();
+        startAt(gp2Held, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double[] gp2HeldLate = servosAt(gp2Held, 60, 55, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g2.left_trigger = tick >= 2 ? 1f : 0f;
+        });
+        assertEquals(MechanismConstants.FLOWER_BAR_DOWN, gp2HeldLate[2], 0.02, "gamepad2's left trigger held: bar down");
+        assertEquals(1.0 - MechanismConstants.FLOWER_BAR_DOWN, gp2HeldLate[3], 0.02, "the right side too");
+        OpMode.blackboard.clear();
+
+        BioHorsSim gp2Let = new BioHorsSim();
+        startAt(gp2Let, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double[] gp2LetLate = servosAt(gp2Let, 60, 55, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g2.left_trigger = tick >= 2 && tick < 30 ? 1f : 0f;
+        });
+        assertEquals(MechanismConstants.FLOWER_BAR_STOWED, gp2LetLate[2], 0.02, "let go: the bar goes back up");
+        OpMode.blackboard.clear();
+
+        BioHorsSim gp1Still = new BioHorsSim();
+        startAt(gp1Still, "RED", -13.0, -63.0, Math.PI / 2.0);
+        double[] gp1StillLate = servosAt(gp1Still, 60, 55, (phase, tick, g1, g2) -> {
+            if (phase != OpModePhase.ACTIVE) return;
+            g2.left_trigger = tick >= 2 && tick < 10 ? 1f : 0f;   // gamepad2 down and up
+            g1.dpad_up = tick >= 20 && tick < 23;                 // then gamepad1 still toggles it down
+        });
+        assertEquals(MechanismConstants.FLOWER_BAR_DOWN, gp1StillLate[2], 0.02, "gamepad1's dpad up still toggles");
+        OpMode.blackboard.clear();
+
         BioHorsSim start = new BioHorsSim();
         startAt(start, "RED", -13.0, -63.0, Math.PI / 2.0);
         double[] startLate = servosAt(start, 30, 25, GamepadScript.NONE);

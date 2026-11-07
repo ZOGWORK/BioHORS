@@ -55,7 +55,8 @@ Shooter/gate names, directions, and tuning values live in
 | A (hold) | **Outtake**: both intake motors run out. Wins over right trigger; locked out while the Y volley runs |
 | B | Toggle both gates open / closed. No pose, aim or speed check: you decide. The Fire line still says `READY`, or `NOT READY: ...` with the reason, so you know whether the shot would score |
 | X (hold 0.5 s) | **Reset the pose** (wipes Pinpoint drift): push the robot into your alliance's corner past the loading zone (RED: north-west, BLUE: south-east), back flat on the side wall and its side flat on the end wall, intake facing the field, then hold X until the pad rumbles. A tap does nothing |
-| Dpad up | Flower bar down / stowed. It starts stowed (0.80); the first press puts it down (0.0), the next stows it. The right servo is reversed, so it gets 1 minus the left's number. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
+| Dpad up (gamepad1 only) | Flower bar down / stowed. It starts stowed (0.80); the first press puts it down (0.0), the next stows it. The right servo is reversed, so it gets 1 minus the left's number. While it is down the drive is capped at 0.6x (`BAR DOWN: slow`) |
+| Gamepad2 left trigger (hold) | Gamepad2's only flower bar control: held, the bar goes down; let go, it goes back up. Gamepad2's dpad up does nothing |
 
 Before PLAY, pick the alliance: dpad left = RED, dpad right = BLUE. If an auto ran first, its
 alliance and final pose are picked up automatically (the SDK blackboard), once, and only if the
