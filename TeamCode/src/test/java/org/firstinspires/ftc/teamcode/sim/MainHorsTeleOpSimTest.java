@@ -1003,38 +1003,50 @@ class MainHorsTeleOpSimTest {
     /** A jammed roller in the sim: the load takes 90 % of the motor's torque. PLACEHOLDER (a test load). */
     static final double JAM_TORQUE_FRACTION = -0.9;
 
+    /** The intake's stall detect time in sim ticks (the team, 2026-11-06: 5 s). */
+    static final int DETECT_TICKS = (int) Math.round(MechanismConstants.INTAKE_JAM_DETECT_S / TICK_S);
+    /** A wedged ball that never clears from tick 40: the tick by which the guard has given up, with margin. */
+    static final int GIVE_UP_TICK = 40 + (int) Math.ceil((MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES + 1)
+            * (MechanismConstants.INTAKE_SENSE_SETTLE_S + MechanismConstants.INTAKE_JAM_DETECT_S
+            + MechanismConstants.INTAKE_JAM_REVERSE_S) / TICK_S) + 20;
+
     @Test
     void aStalledIntakeReversesBrieflyAndTheDisplaySaysSo() {
-        for (boolean jam : new boolean[] {false, true}) {
+        // free; stalled 0.2 s short of the detect time, then free again (never reversed: the team,
+        // 2026-11-06); stalled until the reverse spits it out
+        for (String kind : new String[] {"free", "short", "jam"}) {
+            boolean jam = kind.equals("jam"), stall = !kind.equals("free");
+            int clearTick = jam ? 40 + DETECT_TICKS + 35 : 40 + DETECT_TICKS - 10;
+            int ticks = clearTick + 45;
             BioHorsSim sim = new BioHorsSim();
             startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
             int[] reverseTicks = {0};
             double[] powerAtEnd = {Double.NaN};
-            OpModeRunResult result = runWatching(sim, 120, (phase, tick, g1, g2) -> {
+            OpModeRunResult result = runWatching(sim, ticks, (phase, tick, g1, g2) -> {
                 if (phase == OpModePhase.ACTIVE) g1.right_trigger = 1f;
             }, tick -> {
-                if (jam && tick == 40) {
+                if (stall && tick == 40) {
                     sim.setIntakeLoad(JAM_TORQUE_FRACTION);
                 }
-                if (jam && tick == 75) { // the jam clears (the reverse spat it out)
+                if (stall && tick == clearTick) { // the ball comes free (or the reverse spat it out)
                     sim.setIntakeLoad(0.0);
                 }
                 if (sim.intakeLeft.getPower() < 0) reverseTicks[0]++;
-                if (tick == 115) powerAtEnd[0] = sim.intakeLeft.getPower();
+                if (tick == ticks - 5) powerAtEnd[0] = sim.intakeLeft.getPower();
             });
             boolean jamShown = false;
             for (List<String> sent : result.telemetry().transmissions()) {
                 jamShown |= lineIn(sent, "Fire").contains("INTAKE JAM");
             }
             if (!jam) {
-                assertEquals(0, reverseTicks[0], "a free intake never reverses");
-                assertFalse(jamShown, "and the display never says JAM");
+                assertEquals(0, reverseTicks[0], kind + ": the intake never reverses");
+                assertFalse(jamShown, kind + ": and the display never says JAM");
             } else {
                 assertEquals(MechanismConstants.INTAKE_JAM_REVERSE_S, reverseTicks[0] * TICK_S, 1.5 * TICK_S,
                         "one reverse of the set length");
                 assertTrue(jamShown, "the Fire line says INTAKE JAM while it reverses");
             }
-            assertEquals(1.0, powerAtEnd[0], 1e-9, (jam ? "jam cleared" : "free") + ": pulling in at the end");
+            assertEquals(1.0, powerAtEnd[0], 1e-9, kind + ": pulling in at the end");
             OpMode.blackboard.clear();
         }
     }
@@ -1301,18 +1313,19 @@ class MainHorsTeleOpSimTest {
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);
         int[] reverseTicks = {0};
         double[] power = {Double.NaN, Double.NaN};
-        OpModeRunResult result = runWatching(sim, 270, (phase, tick, g1, g2) -> {
-            if (phase == OpModePhase.ACTIVE) g1.right_trigger = tick < 235 || tick >= 240 ? 1f : 0f;
+        int g = GIVE_UP_TICK;
+        OpModeRunResult result = runWatching(sim, g + 40, (phase, tick, g1, g2) -> {
+            if (phase == OpModePhase.ACTIVE) g1.right_trigger = tick < g + 5 || tick >= g + 10 ? 1f : 0f;
         }, tick -> {
             if (tick == 40) {   // a ball wedges for good
                 sim.setIntakeLoad(JAM_TORQUE_FRACTION);
             }
-            if (tick == 236) {  // the driver clears it by hand with the trigger released
+            if (tick == g + 6) {  // the driver clears it by hand with the trigger released
                 sim.setIntakeLoad(0.0);
             }
             if (sim.intakeLeft.getPower() < 0) reverseTicks[0]++;
-            if (tick == 230) power[0] = sim.intakeLeft.getPower();
-            if (tick == 265) power[1] = sim.intakeLeft.getPower();
+            if (tick == g) power[0] = sim.intakeLeft.getPower();
+            if (tick == g + 35) power[1] = sim.intakeLeft.getPower();
         });
         boolean shown = false;
         for (List<String> sent : result.telemetry().transmissions()) {
@@ -1331,17 +1344,18 @@ class MainHorsTeleOpSimTest {
         startAt(sim, "RED", -13.0, -63.0, Math.PI / 2.0);   // on target, so the volley does fire
         double[] power = {Double.NaN, Double.NaN};
         boolean[] fedAfterGiveUp = {false};
-        OpModeRunResult result = runWatching(sim, 400, (phase, tick, g1, g2) -> {
+        int g = GIVE_UP_TICK;
+        OpModeRunResult result = runWatching(sim, g + 170, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.right_trigger = 1f;                  // held the whole time
-            g1.y = tick >= 235 && tick < 237;       // a volley after the guard has given up
+            g1.y = tick >= g + 5 && tick < g + 7;   // a volley after the guard has given up
         }, tick -> {
             if (tick == 40) {
                 sim.setIntakeLoad(JAM_TORQUE_FRACTION);
             }
-            if (tick == 230) power[0] = sim.intakeLeft.getPower();
-            if (tick > 230 && sim.intakeLeft.getPower() != 0.0) fedAfterGiveUp[0] = true;
-            if (tick == 390) power[1] = sim.intakeLeft.getPower();
+            if (tick == g) power[0] = sim.intakeLeft.getPower();
+            if (tick > g && sim.intakeLeft.getPower() != 0.0) fedAfterGiveUp[0] = true;
+            if (tick == g + 160) power[1] = sim.intakeLeft.getPower();
         });
         assertEquals(0.0, power[0], 1e-9, "given up before the volley");
         assertFalse(fedAfterGiveUp[0], "neither the volley nor the held trigger restarts a given-up intake");
