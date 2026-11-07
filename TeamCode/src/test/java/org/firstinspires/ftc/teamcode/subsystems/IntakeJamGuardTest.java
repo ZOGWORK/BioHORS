@@ -40,6 +40,12 @@ class IntakeJamGuardTest {
         r.setExternalTorqueFraction(torqueFraction);
     }
 
+    static final double DETECT = MechanismConstants.INTAKE_JAM_DETECT_S;
+    static final double SETTLE = MechanismConstants.INTAKE_SENSE_SETTLE_S;
+    /** Long enough for every reverse of a jam that never clears, and the give-up after them. */
+    static final double GIVE_UP_S = (MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES + 1) * (SETTLE + DETECT
+            + MechanismConstants.INTAKE_JAM_REVERSE_S) + 1.0;
+
     /** Ticks pulling in for seconds; returns the first tick (from 0) that reversed, or -1. */
     int firstReverse(double seconds) {
         int n = (int) Math.round(seconds / TICK);
@@ -49,21 +55,33 @@ class IntakeJamGuardTest {
 
     @Test
     void aFreeIntakeNeverReverses() {
-        assertEquals(-1, firstReverse(3.0));
+        assertEquals(-1, firstReverse(DETECT + 3.0));
+        assertEquals(0, guard.jams());
+    }
+
+    /** The team (2026-11-06): no flipping the intake on a short stall, only one over 5 s. */
+    @Test
+    void aStallShorterThanTheDetectTimeNeverReverses() {
+        assertEquals(5.0, DETECT, 1e-12, "the team's 5 s");
+        assertEquals(-1, firstReverse(1.0), "running free first");
+        load(JAM_TORQUE_FRACTION);
+        assertEquals(-1, firstReverse(DETECT - 0.1), "stalled 4.9 s: still pulling in");
+        load(0.0);
+        assertEquals(-1, firstReverse(2.0), "it came free on its own: never reversed");
         assertEquals(0, guard.jams());
     }
 
     @Test
     void aFullRobotIsNotReadAsAJam() {
         load(-MechanismConstants.INTAKE_SLOWDOWN_PER_PIECE * MechanismConstants.HOPPER_CAPACITY);
-        assertEquals(-1, firstReverse(3.0), "a full hopper slows the intake, but must not be reversed out");
+        assertEquals(-1, firstReverse(DETECT + 3.0), "a full hopper slows the intake, but must not be reversed out");
     }
 
     @Test
     void aJamFromTheStartWaitsOutTheSpinUpThenReverses() {
         load(JAM_TORQUE_FRACTION);
-        int at = firstReverse(2.0);
-        double expectS = MechanismConstants.INTAKE_SENSE_SETTLE_S + MechanismConstants.INTAKE_JAM_DETECT_S;
+        int at = firstReverse(SETTLE + DETECT + 1.0);
+        double expectS = SETTLE + DETECT;
         assertEquals(expectS, at * TICK, 2.5 * TICK, "reverses once the settle and the detect time are up");
         assertTrue(guard.reversing());
     }
@@ -72,7 +90,7 @@ class IntakeJamGuardTest {
     void aJamReversesForTheSetTimeThenPullsInAgain() {
         assertEquals(-1, firstReverse(1.0), "running free first");
         load(JAM_TORQUE_FRACTION);
-        int at = firstReverse(1.0);
+        int at = firstReverse(DETECT + 1.0);
         assertTrue(at >= 0, "a stall mid-run reverses");
         assertTrue(at * TICK >= MechanismConstants.INTAKE_JAM_DETECT_S - TICK,
                 "not before the stall has lasted the detect time: " + at * TICK + " s");
@@ -87,7 +105,7 @@ class IntakeJamGuardTest {
     @Test
     void lettingGoEndsAReverseAtOnce() {
         load(JAM_TORQUE_FRACTION);
-        assertTrue(firstReverse(2.0) >= 0);
+        assertTrue(firstReverse(SETTLE + DETECT + 1.0) >= 0);
         assertEquals(0.0, tick(0.0), 1e-12, "trigger released: the intake stops, no more reverse");
         assertFalse(guard.reversing());
         assertEquals(-1.0, tick(-1.0), 1e-12, "the driver's own outtake passes straight through");
@@ -104,7 +122,7 @@ class IntakeJamGuardTest {
     @Test
     void aJamThatNeverClearsGivesUpAfterTheSetReversesUntilLetGo() {
         load(JAM_TORQUE_FRACTION);
-        reverseTicks(6.0);
+        reverseTicks(GIVE_UP_S);
         assertEquals(MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES, guard.jams(), "the set number of reverses, then no more");
         assertTrue(guard.givenUp());
         assertEquals(0.0, tick(1.0), 1e-12, "given up: stopped, still pulling the trigger");
@@ -121,7 +139,7 @@ class IntakeJamGuardTest {
         load(0.0);                      // that reverse spat it out
         assertEquals(0, reverseTicks(1.5), "running free again");
         load(JAM_TORQUE_FRACTION);      // a new jam, trigger held throughout
-        reverseTicks(6.0);
+        reverseTicks(GIVE_UP_S);
         assertEquals(2 * MechanismConstants.INTAKE_JAM_GIVE_UP_REVERSES - 1, guard.jams(),
                 "the new jam gets the full set of reverses");
         assertTrue(guard.givenUp());
@@ -130,7 +148,7 @@ class IntakeJamGuardTest {
     @Test
     void aHoldIsNotARelease() {
         load(JAM_TORQUE_FRACTION);
-        reverseTicks(6.0);
+        reverseTicks(GIVE_UP_S);
         assertTrue(guard.givenUp());
         for (int i = 0; i < 25; i++) assertEquals(0.0, guard.hold(), 1e-12);
         assertTrue(guard.givenUp(), "the teleop stopping the intake does not clear the give-up");

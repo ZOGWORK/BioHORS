@@ -151,7 +151,7 @@ for `INTAKE_FREE_TICKS_PER_S`. `INTAKE_SENSOR_ENABLED = false` falls back to the
 
 `IntakeJamGuard`: while right trigger pulls in, if both intake motors' average speed stays below
 `INTAKE_JAM_TICKS_PER_S` (700 ticks/s, PLACEHOLDER: a quarter of the free speed) for
-`INTAKE_JAM_DETECT_S` (0.25 s), the intake runs outward for `INTAKE_JAM_REVERSE_S` (0.3 s), then
+`INTAKE_JAM_DETECT_S` (5 s, the team: no reversing on a short stall), the intake runs outward for `INTAKE_JAM_REVERSE_S` (0.3 s), then
 pulls in again. It waits `INTAKE_SENSE_SETTLE_S` after every start, so the spin-up is not a jam.
 Letting go of the trigger ends a reverse at once.
 

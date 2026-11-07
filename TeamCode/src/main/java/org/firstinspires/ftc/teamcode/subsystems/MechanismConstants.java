@@ -217,8 +217,9 @@ public final class MechanismConstants {
     /** Below this average intake speed, ticks/s, the intake counts as stalled. PLACEHOLDER: a quarter of
      *  the free speed. NEEDS MEASUREMENT: hold a pollen against the rollers and read "Intake speed". */
     public static double INTAKE_JAM_TICKS_PER_S = 700.0;
-    /** The stall must last this long before the intake reverses, seconds. PLACEHOLDER. */
-    public static double INTAKE_JAM_DETECT_S = 0.25;
+    /** The stall must last this long before the intake reverses, seconds. SET BY HAND (the team,
+     *  2026-11-06: no reversing on a short stall, only one that lasts more than 5 s; was 0.25). */
+    public static double INTAKE_JAM_DETECT_S = 5.0;
     /** How long a jam reverse runs before pulling in again, seconds. PLACEHOLDER. */
     public static double INTAKE_JAM_REVERSE_S = 0.3;
     /** Reverses in a row that do not clear a jam before the guard stops the intake. SET BY HAND. */
