@@ -570,9 +570,9 @@
               ],
               "to": {
                 "xIn": 13,
-                "yIn": -48,
+                "yIn": -51,
                 "headingRad": 1.5707926535897931,
-                "provenance": "SET FROM SIM: the point mirror of waypoints.json scoreNorth (see its provenance there)"
+                "provenance": "SET BY HAND (2026-11-07, the team): the point mirror of waypoints.json scoreNorthSecond (see its provenance there)"
               }
             }
           ],
@@ -585,7 +585,7 @@
                 "heading": {
                   "mode": "linear",
                   "fromRad": 0.000007346410206832132,
-                  "toRad": 1.5884073464102073
+                  "toRad": 1.5880073464102065
                 }
               },
               {
@@ -593,8 +593,8 @@
                 "endT": 0.2612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.5884073464102073,
-                  "toRad": 1.5440073464102069
+                  "fromRad": 1.5880073464102065,
+                  "toRad": 1.5422073464102066
                 }
               },
               {
@@ -602,8 +602,8 @@
                 "endT": 0.3612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.5440073464102069,
-                  "toRad": 1.453607346410207
+                  "fromRad": 1.5422073464102066,
+                  "toRad": 1.449807346410207
                 }
               },
               {
@@ -611,8 +611,8 @@
                 "endT": 0.4612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.453607346410207,
-                  "toRad": 1.326007346410207
+                  "fromRad": 1.449807346410207,
+                  "toRad": 1.321007346410207
                 }
               },
               {
@@ -620,8 +620,8 @@
                 "endT": 0.5612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.326007346410207,
-                  "toRad": 1.1828073464102067
+                  "fromRad": 1.321007346410207,
+                  "toRad": 1.1794073464102066
                 }
               },
               {
@@ -629,8 +629,8 @@
                 "endT": 0.6612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.1828073464102067,
-                  "toRad": 1.0444073464102068
+                  "fromRad": 1.1794073464102066,
+                  "toRad": 1.0461073464102073
                 }
               },
               {
@@ -638,8 +638,8 @@
                 "endT": 0.7612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 1.0444073464102068,
-                  "toRad": 0.9170073464102071
+                  "fromRad": 1.0461073464102073,
+                  "toRad": 0.9279073464102066
                 }
               },
               {
@@ -647,8 +647,8 @@
                 "endT": 0.86,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 0.9170073464102071,
-                  "toRad": 0.788407346410207
+                  "fromRad": 0.9279073464102066,
+                  "toRad": 0.8171073464102068
                 }
               },
               {
@@ -656,7 +656,7 @@
                 "endT": 0.97,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 0.788407346410207,
+                  "fromRad": 0.8171073464102068,
                   "toRad": 1.5708073464102066
                 }
               },

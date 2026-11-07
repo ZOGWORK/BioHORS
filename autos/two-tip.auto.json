@@ -539,7 +539,7 @@
                 }
               ],
               "to": {
-                "ref": "scoreNorth"
+                "ref": "scoreNorthSecond"
               }
             }
           ],
@@ -552,7 +552,7 @@
                 "heading": {
                   "mode": "linear",
                   "fromRad": 3.1416,
-                  "toRad": 4.73
+                  "toRad": 4.7296
                 }
               },
               {
@@ -560,8 +560,8 @@
                 "endT": 0.2612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.73,
-                  "toRad": 4.6856
+                  "fromRad": 4.7296,
+                  "toRad": 4.6838
                 }
               },
               {
@@ -569,8 +569,8 @@
                 "endT": 0.3612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.6856,
-                  "toRad": 4.5952
+                  "fromRad": 4.6838,
+                  "toRad": 4.5914
                 }
               },
               {
@@ -578,8 +578,8 @@
                 "endT": 0.4612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.5952,
-                  "toRad": 4.4676
+                  "fromRad": 4.5914,
+                  "toRad": 4.4626
                 }
               },
               {
@@ -587,8 +587,8 @@
                 "endT": 0.5612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.4676,
-                  "toRad": 4.3244
+                  "fromRad": 4.4626,
+                  "toRad": 4.321
                 }
               },
               {
@@ -596,8 +596,8 @@
                 "endT": 0.6612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.3244,
-                  "toRad": 4.186
+                  "fromRad": 4.321,
+                  "toRad": 4.1877
                 }
               },
               {
@@ -605,8 +605,8 @@
                 "endT": 0.7612,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.186,
-                  "toRad": 4.0586
+                  "fromRad": 4.1877,
+                  "toRad": 4.0695
                 }
               },
               {
@@ -614,8 +614,8 @@
                 "endT": 0.86,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 4.0586,
-                  "toRad": 3.93
+                  "fromRad": 4.0695,
+                  "toRad": 3.9587
                 }
               },
               {
@@ -623,7 +623,7 @@
                 "endT": 0.97,
                 "heading": {
                   "mode": "linear",
-                  "fromRad": 3.93,
+                  "fromRad": 3.9587,
                   "toRad": 4.7124
                 }
               },

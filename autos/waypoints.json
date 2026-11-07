@@ -20,6 +20,12 @@
       "headingRad": -1.5708,
       "provenance": "SET FROM SIM: 48 in from the hive axle (y = 48), where the pollen shot seats in the up cell in SimLoop's physics (ShotSweepTest: 1650-1800 rpm all seat from 46-50 in out). The shot leaves at the hood's 75 deg (MEASURED FROM CAD, the team's Onshape sketch: 15 deg off vertical); its speed is a WHAT-IF 0.8 of the rim speed. North of the RED hive, facing the north cell. NEEDS MEASUREMENT: film a shot, then re-run ShotSweepTest and move this to where the real shot scores."
     },
+    "scoreNorthSecond": {
+      "xIn": -13.0,
+      "yIn": 51.0,
+      "headingRad": -1.5708,
+      "provenance": "SET BY HAND (2026-11-07, the team): the second volley at the north spot (the garden pollen, the second tip) 3 in further back from the hive than scoreNorth (y = 48), facing the north cell. The flower volley stays at scoreNorth. NEEDS MEASUREMENT."
+    },
     "flowerNorthApproach": {
       "xIn": -21.0,
       "yIn": 42.0,

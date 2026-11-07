@@ -23,6 +23,8 @@ public final class AutoPoses {
     public static final Pose START = new Pose(-13.0, -62.87, Math.PI / 2);
     public static final Pose SCORE_SOUTH = new Pose(-13.0, -48.0, Math.PI / 2);
     public static final Pose SCORE_NORTH = new Pose(-13.0, 48.0, -Math.PI / 2);
+    /** The second volley there (the garden pollen): 3 in further back from the hive (the team, 2026-11-07). */
+    public static final Pose SCORE_NORTH_SECOND = new Pose(-13.0, 51.0, -Math.PI / 2);
     public static final Pose FLOWER_NORTH_APPROACH = new Pose(-21.0, 42.0, Math.PI / 2);
     public static final Pose FLOWER_NORTH_PICKUP = new Pose(-21.0, 58.0, Math.PI / 2);
     public static final Pose ABOVE_GARDEN_LANE = new Pose(-36.0, -54.7, Math.PI);
@@ -63,11 +65,11 @@ public final class AutoPoses {
             HeadingPiece.linear(0.7, -1.525, -1.3838), HeadingPiece.linear(0.8, -1.3838, -1.259),
             HeadingPiece.linear(0.9, -1.259, -1.1682), HeadingPiece.linear(1.0, -1.1682, -3.1416)};
     public static final HeadingPiece[] DRIVE_BACK_HEADING = {
-            HeadingPiece.linear(0.1612, 3.1416, 4.73), HeadingPiece.linear(0.2612, 4.73, 4.6856),
-            HeadingPiece.linear(0.3612, 4.6856, 4.5952), HeadingPiece.linear(0.4612, 4.5952, 4.4676),
-            HeadingPiece.linear(0.5612, 4.4676, 4.3244), HeadingPiece.linear(0.6612, 4.3244, 4.186),
-            HeadingPiece.linear(0.7612, 4.186, 4.0586), HeadingPiece.linear(0.86, 4.0586, 3.93),
-            HeadingPiece.linear(0.97, 3.93, 4.7124), HeadingPiece.constant(1.0, -1.5708)};
+            HeadingPiece.linear(0.1612, 3.1416, 4.7296), HeadingPiece.linear(0.2612, 4.7296, 4.6838),
+            HeadingPiece.linear(0.3612, 4.6838, 4.5914), HeadingPiece.linear(0.4612, 4.5914, 4.4626),
+            HeadingPiece.linear(0.5612, 4.4626, 4.321), HeadingPiece.linear(0.6612, 4.321, 4.1877),
+            HeadingPiece.linear(0.7612, 4.1877, 4.0695), HeadingPiece.linear(0.86, 4.0695, 3.9587),
+            HeadingPiece.linear(0.97, 3.9587, 4.7124), HeadingPiece.constant(1.0, -1.5708)};
 
     /** One piece of a path's heading, up to {@code endT} of the path: Zenith's piecewise modes. */
     public static final class HeadingPiece {
