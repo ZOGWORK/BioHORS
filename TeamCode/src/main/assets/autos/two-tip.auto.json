@@ -92,7 +92,7 @@
             "heading": {
               "mode": "linear",
               "fromRad": 1.5708,
-              "toRad": 2.5549
+              "toRad": 2.5276
             }
           },
           {
@@ -100,8 +100,8 @@
             "endT": 0.3038,
             "heading": {
               "mode": "linear",
-              "fromRad": 2.5549,
-              "toRad": 2.2514
+              "fromRad": 2.5276,
+              "toRad": 2.2384
             }
           },
           {
@@ -109,8 +109,8 @@
             "endT": 0.4038,
             "heading": {
               "mode": "linear",
-              "fromRad": 2.2514,
-              "toRad": 1.8318
+              "fromRad": 2.2384,
+              "toRad": 1.8396
             }
           },
           {
@@ -118,8 +118,8 @@
             "endT": 0.5038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.8318,
-              "toRad": 1.4724
+              "fromRad": 1.8396,
+              "toRad": 1.4854
             }
           },
           {
@@ -127,8 +127,8 @@
             "endT": 0.6038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.4724,
-              "toRad": 1.2436
+              "fromRad": 1.4854,
+              "toRad": 1.2526
             }
           },
           {
@@ -136,8 +136,8 @@
             "endT": 0.7038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.2436,
-              "toRad": 1.087
+              "fromRad": 1.2526,
+              "toRad": 1.0923
             }
           },
           {
@@ -145,8 +145,8 @@
             "endT": 0.8038,
             "heading": {
               "mode": "linear",
-              "fromRad": 1.087,
-              "toRad": 0.9551
+              "fromRad": 1.0923,
+              "toRad": 0.9581
             }
           },
           {
@@ -154,8 +154,8 @@
             "endT": 0.9,
             "heading": {
               "mode": "linear",
-              "fromRad": 0.9551,
-              "toRad": 0.8345
+              "fromRad": 0.9581,
+              "toRad": 0.8359
             }
           },
           {
@@ -163,7 +163,7 @@
             "endT": 1.0,
             "heading": {
               "mode": "linear",
-              "fromRad": 0.8345,
+              "fromRad": 0.8359,
               "toRad": 1.5708
             }
           }

@@ -21,7 +21,7 @@ public final class AutoPoses {
 
     // ---- named waypoints (autos/waypoints.json) ----
     public static final Pose START = new Pose(-13.0, -62.87, Math.PI / 2);
-    public static final Pose SCORE_SOUTH = new Pose(-13.0, -48.0, Math.PI / 2);
+    public static final Pose SCORE_SOUTH = new Pose(-13.0, -50.0, Math.PI / 2);   // the team, 2026-11-07: 2 in further back (was -48)
     public static final Pose SCORE_NORTH = new Pose(-13.0, 48.0, -Math.PI / 2);
     /** The second volley there (the garden pollen): 3 in further back from the hive (the team, 2026-11-07). */
     public static final Pose SCORE_NORTH_SECOND = new Pose(-13.0, 51.0, -Math.PI / 2);
@@ -50,11 +50,11 @@ public final class AutoPoses {
     // linear pieces between the curve's true direction, each starting where the last ended.
     // AutoPosesTest checks there is no jump.
     public static final HeadingPiece[] TO_OTHER_SIDE_HEADING = {
-            HeadingPiece.linear(0.2038, 1.5708, 2.5549), HeadingPiece.linear(0.3038, 2.5549, 2.2514),
-            HeadingPiece.linear(0.4038, 2.2514, 1.8318), HeadingPiece.linear(0.5038, 1.8318, 1.4724),
-            HeadingPiece.linear(0.6038, 1.4724, 1.2436), HeadingPiece.linear(0.7038, 1.2436, 1.087),
-            HeadingPiece.linear(0.8038, 1.087, 0.9551), HeadingPiece.linear(0.9, 0.9551, 0.8345),
-            HeadingPiece.linear(1.0, 0.8345, 1.5708)};
+            HeadingPiece.linear(0.2038, 1.5708, 2.5276), HeadingPiece.linear(0.3038, 2.5276, 2.2384),
+            HeadingPiece.linear(0.4038, 2.2384, 1.8396), HeadingPiece.linear(0.5038, 1.8396, 1.4854),
+            HeadingPiece.linear(0.6038, 1.4854, 1.2526), HeadingPiece.linear(0.7038, 1.2526, 1.0923),
+            HeadingPiece.linear(0.8038, 1.0923, 0.9581), HeadingPiece.linear(0.9, 0.9581, 0.8359),
+            HeadingPiece.linear(1.0, 0.8359, 1.5708)};
     public static final HeadingPiece[] TO_SCORE_NORTH_HEADING = {
             HeadingPiece.constant(0.2041, 1.5708), HeadingPiece.linear(0.3742, 1.5708, 3.1416),
             HeadingPiece.linear(0.5442, 3.1416, 4.7124), HeadingPiece.constant(1.0, -1.5708)};
