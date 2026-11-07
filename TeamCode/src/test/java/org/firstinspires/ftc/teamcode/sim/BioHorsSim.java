@@ -161,6 +161,12 @@ public final class BioHorsSim {
         flowerRightPlant = new PositionalServoPlant(flowerRight, GATE);
     }
 
+    /**
+     * Field structure the chassis cannot drive through: given {x, y, heading} after the plant moves,
+     * returns the same array, or the pose pushed back out. The Pinpoint sees only where it ends up.
+     */
+    public java.util.function.UnaryOperator<double[]> blocker;
+
     /** Puts the chassis at a field pose without driving there; the Pinpoint does not count it as motion. */
     public void placeAt(double xIn, double yIn, double headingRad) {
         drivePlant.setPose(xIn, yIn, headingRad);
@@ -170,6 +176,11 @@ public final class BioHorsSim {
     /** The world's response to one tick of robot code. Pass to OpModeRunner.eachTick. */
     public void step(double dt) {
         drivePlant.update(dt);
+        if (blocker != null) {
+            double[] at = {drivePlant.getX(), drivePlant.getY(), drivePlant.getHeading()};
+            double[] to = blocker.apply(at);
+            if (to != at) drivePlant.setPose(to[0], to[1], to[2]);
+        }
         pinpoint.moveChassisTo(drivePlant.getX() * MM_PER_IN, drivePlant.getY() * MM_PER_IN,
                 drivePlant.getHeading());
         pollenGatePlant.update(dt);

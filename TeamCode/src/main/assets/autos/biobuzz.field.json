@@ -163,8 +163,8 @@
       "maxYIn": 72,
       "minZIn": 0,
       "maxZIn": 21.5,
-      "solidToRobot": true,
-      "provenance": "APPROX: a 6 in (along the wall) by 4.9 in box flush with the y = +72 wall, centred on the flower's station at x = -24 (BIOBUZZ Competition Manual V1 §9.7, Figs 9-2 and 9-4), up to the top ring at 21.5 in (Fig 9-12). FIRST's BIOBUZZ field CAD (STEP v26-27.2) measures the ring plates' footprint at 5.951 by 5.013 in, within 0.11 in of this box."
+      "solidToRobot": false,
+      "provenance": "SET BY HAND (2026-11-07, the team): not solid to the robot. The box is the retrieval opening (3.57 in deep, as far as the wall), and the intake pressing into it is the pickup; on the real field the robot gets closer than this box allows. Was solid. APPROX: a 6 in (along the wall) by 4.9 in box flush with the y = +72 wall, centred on the flower's station at x = -24 (BIOBUZZ Competition Manual V1 §9.7, Figs 9-2 and 9-4), up to the top ring at 21.5 in (Fig 9-12). FIRST's BIOBUZZ field CAD (STEP v26-27.2) measures the ring plates' footprint at 5.951 by 5.013 in, within 0.11 in of this box."
     },
     {
       "id": "flower2Foot",
@@ -187,8 +187,8 @@
       "maxYIn": -67.1,
       "minZIn": 0,
       "maxZIn": 21.5,
-      "solidToRobot": true,
-      "provenance": "APPROX: a 6 in (along the wall) by 4.9 in box flush with the y = -72 wall, centred on the flower's station at x = +24 (BIOBUZZ Competition Manual V1 §9.7, Figs 9-2 and 9-4), up to the top ring at 21.5 in (Fig 9-12). FIRST's BIOBUZZ field CAD (STEP v26-27.2) measures the ring plates' footprint at 5.951 by 5.013 in, within 0.11 in of this box."
+      "solidToRobot": false,
+      "provenance": "SET BY HAND (2026-11-07, the team): not solid to the robot. The box is the retrieval opening (3.57 in deep, as far as the wall), and the intake pressing into it is the pickup; on the real field the robot gets closer than this box allows. Was solid. APPROX: a 6 in (along the wall) by 4.9 in box flush with the y = -72 wall, centred on the flower's station at x = +24 (BIOBUZZ Competition Manual V1 §9.7, Figs 9-2 and 9-4), up to the top ring at 21.5 in (Fig 9-12). FIRST's BIOBUZZ field CAD (STEP v26-27.2) measures the ring plates' footprint at 5.951 by 5.013 in, within 0.11 in of this box."
     }
   ],
   "zones": [
