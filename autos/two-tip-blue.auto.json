@@ -211,7 +211,7 @@
           "from": "current",
           "to": {
             "xIn": 21,
-            "yIn": -56,
+            "yIn": -58,
             "headingRad": -1.5707926535897931,
             "provenance": "SET BY HAND (2026-11-06, the team: the point mirror of waypoints.json flowerNorthPickup (see its provenance there)"
           }
@@ -226,7 +226,8 @@
         "collectFrom": "flower1",
         "count": 4
       },
-      "notes": "Drives slowly all the way in to flower1 with the intake running and the bar down (0.2, SET BY HAND, the team: slower, and in closer). It no longer stops early when the hopper reads full: it always reaches the pickup, and expect tells the ledger it takes the flower's four pollen. Heading held square to the wall (a tangent heading turns a small sideways offset into a yaw that swings the mouth off the opening)."
+      "notes": "Drives slowly all the way in to flower1 with the intake running and the bar down (0.2, SET BY HAND, the team: slower, and in closer). It no longer stops early when the hopper reads full: it always reaches the pickup, and expect tells the ledger it takes the flower's four pollen. Heading held square to the wall (a tangent heading turns a small sideways offset into a yaw that swings the mouth off the opening). Ends after 2.5 s (Zenith estimates the drive at 2.07 s) (SET BY HAND, 2026-11-07): the pickup is 2 in deeper than FIRST's CAD allows (the team, from the real field), so a robot the flower stops goes on.",
+      "timeoutS": 2.5
     },
     {
       "id": "waitForFull",

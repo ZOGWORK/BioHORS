@@ -265,6 +265,29 @@ public final class BiobuzzMatch {
                 if (boxNames.get(i).equals(f.id + "Foot")) f.setFoot(boxes.get(i));
             }
         }
+        // The flower bar cannot be pushed through the wall behind a flower's opening: a robot driving
+        // for a pickup past it stops there, as on the field.
+        sim.blocker = this::stopAtFlowerBack;
+    }
+
+    /** The robot pushed back so its bar tip is no further than the back of any flower's opening. */
+    private double[] stopAtFlowerBack(double[] pose) {
+        double x = pose[0], y = pose[1], h = pose[2];
+        double fwdX = Math.cos(h), fwdY = Math.sin(h);
+        double down = org.firstinspires.ftc.teamcode.subsystems.MechanismConstants.FLOWER_BAR_DOWN;
+        boolean barDown = Math.abs(sim.flowerLeftPlant.getPosition() - down) < 0.05;
+        double tip = barDown ? barMouthOffsetX + barMouthHalfDepth : mouthOffsetX + mouthHalfDepth;
+        double[] out = pose;
+        for (Flower f : flowers) {
+            double mx = x + fwdX * tip - fwdY * mouthOffsetY, my = y + fwdY * tip + fwdX * mouthOffsetY;
+            double past = f.pastBack(mx, my, fwdX, fwdY);
+            if (past > 0) {
+                x += f.inX * past;
+                y += f.inY * past;
+                out = new double[] {x, y, h};
+            }
+        }
+        return out;
     }
 
     /**
@@ -1076,6 +1099,15 @@ public final class BiobuzzMatch {
                 openX = x;
                 openY = y < 0 ? b[3] : b[2];
             }
+        }
+
+        /** How far, inches, a bar tip at (mx, my) facing this flower is past the back of the opening; 0 if not. */
+        double pastBack(double mx, double my, double fwdX, double fwdY) {
+            if (-(fwdX * inX + fwdY * inY) < Math.cos(Math.toRadians(FACING_CONE_DEG))) return 0;
+            double dx = mx - openX, dy = my - openY;
+            double across = Math.abs(dx * inY - dy * inX);
+            if (across > Math.max(OPENING_REACH_IN, mouthHalfWidth - openingWidthIn / 2.0)) return 0;
+            return Math.max(0, -(dx * inX + dy * inY) - openingDepthIn);
         }
 
         boolean reachable(double mx, double my, double fwdX, double fwdY) {

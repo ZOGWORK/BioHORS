@@ -54,6 +54,7 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
     /** Fraction of top speed for paths with no stated speed (as the Zenith project's default). */
     public static double DEFAULT_SPEED = 0.8;   // SET BY HAND
     public static double HIVE_LANE_SPEED = 0.6; // SET BY HAND (2026-11-06, the team: go slow through the lane west of the hive, a partner robot may stand by the loading zone)
+    public static double COLLECT_FLOWER_TIMEOUT_S = 2.5;   // SET BY HAND (2026-11-07): the pickup is past FIRST's CAD; a robot the flower stops goes on
     public static double PICKUP_SPEED = 0.2;    // SET BY HAND (the team): slower into the flower
     public static double GARDEN_SWEEP_SPEED = 0.2;   // SET BY HAND (team): slower along the garden row, so every pollen goes in
     public static double SLIDE_SPEED = 0.3;     // SET BY HAND: slow sideways onto the garden lane, so it stops on time
@@ -242,7 +243,12 @@ public class TwoTipStateMachineAuto extends LinearOpMode {
                 break;
             case COLLECT_FLOWER:
                 // Always all the way in to the pickup (the team: closer); the wait after it covers full.
-                if (!follower.isBusy()) next();
+                if (!follower.isBusy()) {
+                    next();
+                } else if (stateTimer.seconds() >= COLLECT_FLOWER_TIMEOUT_S) {
+                    follower.hold(here());   // the flower stopped it short of the pickup: stop pushing
+                    next();
+                }
                 break;
             case FLOWER_DWELL:
                 if (stateTimer.seconds() >= FLOWER_DWELL_S) next();
