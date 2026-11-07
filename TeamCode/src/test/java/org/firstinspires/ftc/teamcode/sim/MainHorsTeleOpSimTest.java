@@ -401,7 +401,10 @@ class MainHorsTeleOpSimTest {
         OpModeRunResult result = run(sim, 250, (phase, tick, g1, g2) -> {
             if (phase != OpModePhase.ACTIVE) return;
             g1.dpad_down = tick >= 2 && tick < 5;     // shooters on
-            g2.dpad_right = tick >= 10 && tick < 13;  // operator trims both +1 step
+            g1.dpad_right = tick >= 10 && tick < 13;  // the driver trims both +1 step
+            // gamepad2 cannot trim (the team, 2026-11-06): its presses change nothing
+            g2.dpad_right = (tick >= 20 && tick < 23) || (tick >= 30 && tick < 33);
+            g2.dpad_left = tick >= 40 && tick < 43;
         }, null);
 
         assertEquals(POLLEN_RPM + STEP_RPM, sim.pollenShooterRpm(), 100.0, "pollen shooter should hold its trimmed target");

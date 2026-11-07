@@ -50,7 +50,7 @@ Shooter/gate names, directions, and tuning values live in
 | Right trigger | Intake in (a stalled intake reverses for 0.3 s on its own; the Fire line says `INTAKE JAM`. After 3 reverses that do not clear it the intake stops: `INTAKE JAMMED: clear by hand`, until you let go) |
 | Y | **Volley**: spins both shooters up; once they are at speed (or after 2 s if they never get there) both gates open and the intake runs for 1 s, then the gates close and the intake stops. No pose or aim check; it does not aim. B and the intake trigger are locked out while it runs. Y again cancels. Fire line: `Y SEQ` |
 | Dpad down | Toggle both shooters on/off, each at its own target (start OFF), to keep them spinning without aiming |
-| Dpad left / right | **Both** shooters' target RPM − / +, the same 50 rpm each press |
+| Dpad left / right | **Both** shooters' target RPM − / +, the same 50 rpm each press. **Gamepad1 only**: gamepad2's dpad left / right do nothing |
 | Left bumper | **While aiming:** each press nudges the aim 1° left. Nothing otherwise. The nudge (up to ±10°) stays until an X reset; the Pose line shows it |
 | A (hold) | **Outtake**: both intake motors run out. Wins over right trigger; locked out while the Y volley runs |
 | B | Toggle both gates open / closed. No pose, aim or speed check: you decide. The Fire line still says `READY`, or `NOT READY: ...` with the reason, so you know whether the shot would score |

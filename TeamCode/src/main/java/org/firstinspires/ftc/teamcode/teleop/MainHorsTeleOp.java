@@ -33,7 +33,7 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
 /**
  * The MainHORS teleop: the MainHORS control scheme on this robot, plus odometry aim.
  *
- * Controls (gamepad1; gamepad2 mirrors the mechanism buttons):
+ * Controls (gamepad1; gamepad2 mirrors the mechanism buttons, except the rpm trim):
  *   Left stick ............ drive (forward / strafe)
  *   Right stick X ......... turn (overridden while aiming)
  *   Left trigger (hold) ... AIM: turn the robot to face our hive's cell on this half of the field,
@@ -45,7 +45,8 @@ import org.firstinspires.ftc.teamcode.utilities.PreMatchCheck;
  *   Dpad down ............. toggle both shooters on/off (each at its own target), for spinning
  *                           without aiming
  *   Dpad left / right ..... BOTH shooters' target RPM - / +, the same step each
- *                           (MechanismConstants.SHOOTER_TRIM_STEP_RPM)
+ *                           (MechanismConstants.SHOOTER_TRIM_STEP_RPM). Gamepad1 only: gamepad2's
+ *                           dpad left / right do nothing (the team, 2026-11-06)
  *   Left bumper ........... while aiming, nudges the aim LEFT one step. Nothing otherwise.
  *                           The nudge (AIM_NUDGE_STEP_RAD a press, up to AIM_NUDGE_MAX_RAD) stays
  *                           until an X reset; the Pose line shows it.
@@ -446,14 +447,15 @@ public class MainHorsTeleOp extends LinearOpMode {
             double pollenTrimBefore = pollenTrimRpm;
             double nectarTrimBefore = nectarTrimRpm;
 
-            boolean dpadLeftNow = gamepad1.dpad_left || gamepad2.dpad_left;
+            // The rpm trim is gamepad1's alone (the team, 2026-11-06): gamepad2 cannot change it.
+            boolean dpadLeftNow = gamepad1.dpad_left;
             if (dpadLeftNow && !dpadLeftLast) {
                 pollenTrimRpm = trimmed(pollenTrimRpm, -MechanismConstants.SHOOTER_TRIM_STEP_RPM, pollenTableRpm);
                 nectarTrimRpm = trimmed(nectarTrimRpm, -MechanismConstants.SHOOTER_TRIM_STEP_RPM, nectarTableRpm);
             }
             dpadLeftLast = dpadLeftNow;
 
-            boolean dpadRightNow = gamepad1.dpad_right || gamepad2.dpad_right;
+            boolean dpadRightNow = gamepad1.dpad_right;
             if (dpadRightNow && !dpadRightLast) {
                 pollenTrimRpm = trimmed(pollenTrimRpm, MechanismConstants.SHOOTER_TRIM_STEP_RPM, pollenTableRpm);
                 nectarTrimRpm = trimmed(nectarTrimRpm, MechanismConstants.SHOOTER_TRIM_STEP_RPM, nectarTableRpm);
@@ -611,8 +613,8 @@ public class MainHorsTeleOp extends LinearOpMode {
     /** Sets every edge detector to the buttons' current state. */
     private void seedEdgeDetectors() {
         dpadDownLast = gamepad1.dpad_down || gamepad2.dpad_down;
-        dpadLeftLast = gamepad1.dpad_left || gamepad2.dpad_left;
-        dpadRightLast = gamepad1.dpad_right || gamepad2.dpad_right;
+        dpadLeftLast = gamepad1.dpad_left;
+        dpadRightLast = gamepad1.dpad_right;
         xLast = gamepad1.x || gamepad2.x;
         dpadUpLast = gamepad1.dpad_up || gamepad2.dpad_up;
         bLast = gamepad1.b || gamepad2.b;
